@@ -10,8 +10,6 @@ XORG_CONFIG := xorg.conf.d/10-steamos-virtualdisplaysize.conf
 
 SERVICES_IN := $(wildcard systemd/*.service.in)
 SERVICES := $(patsubst %.in,%,$(SERVICES_IN))
-MOUNTS := $(wildcard systemd/*.mount)
-UNITS := $(SERVICES) $(MOUNTS)
 
 all: $(BINARIES) $(SERVICES)
 
@@ -29,5 +27,5 @@ install: all
 	install -d $(DESTDIR)$(datadir)/X11/xorg.conf.d
 	install -m 0644 $(XORG_CONFIG) $(DESTDIR)$(datadir)/X11/xorg.conf.d
 	install -d $(DESTDIR)$(systemdunitsdir)
-	install -m 0644 $(UNITS) $(DESTDIR)$(systemdunitsdir)
-	$(call enable-systemd-units,$(DESTDIR)$(systemdunitsdir),$(notdir $(UNITS)))
+	install -m 0644 $(SERVICES) $(DESTDIR)$(systemdunitsdir)
+	$(call enable-systemd-units,$(DESTDIR)$(systemdunitsdir),$(notdir $(SERVICES)))
