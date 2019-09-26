@@ -21,10 +21,10 @@ USERNAME=steamos
 ADDITIONAL_GROUPS='adm sudo'
 
 make_steamos_user() {
-    adduser $USERNAME --gecos "" --disabled-password --add_extra_groups
+    useradd $USERNAME
     for group in $ADDITIONAL_GROUPS; do
         getent group $group >/dev/null || continue
-        addgroup $USERNAME $group
+        usermod $USERNAME -aG $group
     done
     echo "$USERNAME:$USERNAME" | chpasswd
 }
