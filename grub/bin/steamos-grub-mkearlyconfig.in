@@ -1,0 +1,140 @@
+#!/bin/bash
+# -*- mode: sh; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
+# vim: et sts=4 sw=4
+
+#  SPDX-License-Identifier: LGPL-2.1+
+#
+#  Copyright © 2019 Collabora Ltd.
+#  Copyright © 2019 Valve Corporation.
+#
+#  This file is part of steamos-customizations.
+#
+#  steamos-customizations is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU Lesser General Public License as published
+#  by the Free Software Foundation; either version 2.1 of the License, or
+#  (at your option) any later version.
+
+set -e
+set -u
+
+# Helpers
+
+fail() { echo >&2 "$@"; exit 1; }
+
+usage() {
+    local status=${1-2}
+
+    if [ $status -ne 0 ]; then
+        exec >&2
+    fi
+
+    echo
+    echo "Usage: $(basename $0)"
+    echo
+    echo "Generate the GRUB early config for SteamOS. The purpose of this early config"
+    echo "is to find the *real* GRUB config, as it's stored in a non-standard location."
+    echo
+    echo "The content of this early config embeds the UUIDs of the root and the var"
+    echo "filesystems, so it's tied to the current OS. If you want to generate a"
+    echo "config for another set of SteamOS partitions, make sure to use a chroot."
+    echo
+    echo "This early config is meant to be embedded in a memdisk, and additionally you"
+    echo "must instruct GRUB lo load this memdisk using an even *earlier* config (the"
+    echo "so-called bootstrap config), that you pass to grub-mkimage through --config=."
+    echo
+
+    exit $status
+}
+
+# Arguments
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -h|--help)
+            usage 0
+            ;;
+        *)
+            usage 1
+            ;;
+    esac
+done
+
+# Get UUIDs for root and var partitions
+
+ROOTUUID=$(findmnt -no uuid /)
+VARUUID=$(findmnt -no uuid /var)
+
+[ "$ROOTUUID" ] || fail "Failed to get root fs uuid"
+[ "$VARUUID"  ] || fail "Failed to get var fs uuid"
+
+# Generate the grub early config
+
+cat << EOF
+echo "---- Entering early config ----"
+echo "cmdpath: \$cmdpath"
+echo "root   : \$root"
+echo "prefix : \$prefix"
+echo "-------------------------------"
+
+set cfg=
+
+if [ -z "\$cfg" -a -e \$cmdpath/grub-var.cfg ]; then
+
+    # If we have both a config file for the VAR partition,
+    # and a /boot/grub directory in the VAR partition,
+    # then use that.
+
+    set altroot=
+
+    search --fs-uuid --no-floppy --set=altroot $VARUUID
+
+    if [ -n "\$altroot" -a -d (\$altroot)/boot/grub ]; then
+        echo "var partition $VARUUID selected to boot"
+        set root=\$altroot
+        set prefix=(\$altroot)/boot/grub
+        set cfg=\$cmdpath/grub-var.cfg
+    fi
+
+    unset altroot
+
+fi
+
+if [ -z "\$cfg" -a -e \$cmdpath/grub-root.cfg ]; then
+
+    # If we have both a config file for the ROOT partition,
+    # and a /boot/grub directory in the ROOT partition,
+    # then use that.
+
+    set altroot=
+
+    search --fs-uuid --no-floppy --set=altroot $ROOTUUID
+
+    if [ -n "\$altroot" -a -d (\$altroot)/boot/grub ]; then
+        echo "root partition $ROOTUUID selected to boot"
+        set root=\$altroot
+        set prefix=(\$altroot)/boot/grub
+        set cfg=\$cmdpath/grub-root.cfg
+    fi
+
+    unset altroot
+
+fi
+
+if [ -z "\$cfg" ]; then
+
+    # Fallback to the usual default
+
+    echo "falling back to grub's usual default (unexpected)"
+    set cfg=\$prefix/grub.cfg
+
+fi
+
+echo "---- Leaving early config ----"
+echo "root   : \$root"
+echo "prefix : \$prefix"
+echo "cfg    : \$cfg"
+echo "------------------------------"
+
+#sleep --verbose 10
+configfile \$cfg
+EOF

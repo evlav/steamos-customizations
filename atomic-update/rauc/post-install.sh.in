@@ -1,0 +1,212 @@
+#!/bin/bash
+# -*- mode: sh; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
+# vim: et sts=4 sw=4
+
+#  SPDX-License-Identifier: LGPL-2.1+
+#
+#  Copyright © 2019 Collabora Ltd.
+#  Copyright © 2019 Valve Corporation.
+#
+#  This file is part of steamos-customizations.
+#
+#  steamos-customizations is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU Lesser General Public License as published
+#  by the Free Software Foundation; either version 2.1 of the License, or
+#  (at your option) any later version.
+
+set -e
+set -u
+
+ERR=0 # the error code returned by this script
+
+SYMLINKS_DIR=@udev_symlinks_absdir@
+BOOTCONF_RELPATH=@bootconf_relpath@
+PARTDEFS_RELDIR=@partdefs_reldir@
+ROOTHASH_RELPATH=@roothash_relpath@
+GRUB_VARCFG_RELPATH=@grub_var_config_relpath@
+ETC_OVERLAY_RELDIR=@etc_overlay_reldir@
+
+#
+# Helpers
+#
+
+log () { echo >&2 "$@"; }
+warn() { echo >&2 "Warning:" "$@"; }
+err () { echo >&2 "Error:" "$@"; ERR=1; }
+fail() { echo >&2 "Error:" "$@"; exit 1; }
+
+
+#
+# Re-enable systemd timers
+#
+
+RAUC_RUNTIME_DIR=/run/rauc
+ACTIVE_TIMERS=$RAUC_RUNTIME_DIR/active-timers
+
+if [ -e "$ACTIVE_TIMERS" ]; then
+    while read timer; do
+        systemctl start "$timer"
+    done < "$ACTIVE_TIMERS"
+fi
+
+rm -f $ACTIVE_TIMERS
+
+#
+# Handle the 'other' efi partition
+#
+
+configure_other_efi() {
+    local efi=$1
+    local roothash_update_file=$2
+    local bootconf=
+    local partdefs=
+    local roothash=
+    local grub_varcfg=
+
+    bootconf=$efi/$BOOTCONF_RELPATH
+    if ! [ -e "$bootconf" ]; then
+        log "Initializing 'other' efi bootconf: '$bootconf'"
+        mkdir -p "$(dirname "$bootconf")"
+        steamos-bootconf > "$bootconf"
+    fi
+
+    partdefs=$efi/$PARTDEFS_RELDIR
+    if ! [ -e "$partdefs" ]; then
+        self_partdefs="/efi/$PARTDEFS_RELDIR"
+        log "Initializing 'other' efi partdefs: '$self_partdefs' -> '$partdefs'"
+        mkdir -p "$partdefs"
+        cp "$self_partdefs/all"    "$partdefs/"
+        cp "$self_partdefs/other"  "$partdefs/self"   # swapped!
+        cp "$self_partdefs/self"   "$partdefs/other"  # swapped!
+        cp "$self_partdefs/shared" "$partdefs/"
+    fi
+
+    roothash=$efi/$ROOTHASH_RELPATH
+    mkdir -p "$(dirname "$roothash")"
+    cp -f "$roothash_update_file" "$roothash"
+
+    grub_varcfg=$efi/$GRUB_VARCFG_RELPATH
+    rm -f $grub_varcfg
+}
+
+log "Configuring the 'other' efi"
+
+EFI_DEVICE_OTHER=$(realpath $SYMLINKS_DIR/other/efi)
+[ -b "$EFI_DEVICE_OTHER" ] || fail "Other efi device '$EFI_DEVICE_OTHER' not found"
+
+mount "$EFI_DEVICE_OTHER" /mnt
+configure_other_efi /mnt "$RAUC_UPDATE_SOURCE/roothash" || \
+    err "Failed to configure the 'other' efi"
+umount /mnt
+
+#
+# Handle the 'other' var partition
+#
+
+ismounted() {
+    local device=$1
+
+    findmnt --real --source "$device" >/dev/null 2>&1
+}
+
+reformat_device_ext4() {
+    local device=$1
+    local opts=
+    local label=
+
+    device=$(readlink -f "$device")
+    if ! [ -b "$device" ]; then
+        warn "'$device' is not a block device"
+        return
+    fi
+
+    if ismounted "$device"; then
+        umount -v "$device"
+    fi
+
+    if ismounted "$device"; then
+        umount -v -f "$device"
+    fi
+
+    label=$(e2label "$device")
+    if [ "$label" ]; then
+        opts="$opts -L $label"
+    fi
+
+    mkfs.ext4 -q -F $opts "$device"
+}
+
+sync_var_mountpoints() {
+    local src=$1
+    local dst=$2
+
+    # --delete is not needed as we formatted the partition before, but let's
+    # leave it there in case this changes in the future, and --delete is needed
+    # again but forgotten and then we have a bug...
+    #
+    # There's a bunch of directories that we want to exclude from the sync:
+    #
+    # Logs from the current OS are not relevant in the new OS, so we exclude /var/log.
+    #
+    # For all the directories that are initialized from /usr/share/factory, we know
+    # that there is no state we want to keep, but instead we really want these dirs
+    # to match what's in the factory, like if it was a "first boot". So we don't
+    # sync those, and let systemd initialize it from factory.
+    #
+    # We also need to take care of (nvidia,dkms,initrd), when the updated OS will be
+    # booted for the first time, we expect the OS to build the nvidia drivers, setup
+    # the glx alternatives, and rebuild the initrd. In other words, we don't want to
+    # keep this state from the current OS, so we don't sync the glx alternative, and
+    # we don't sync the /boot directory.
+
+    fsfreeze -f "$src"
+    rsync \
+        --archive \
+        --delete \
+        --one-file-system \
+        --exclude="/boot/" \
+        --exclude="/cache/debconf/" \
+        --exclude="/lib/dkms/" \
+        --exclude="/lib/dpkg/" \
+        --exclude="/lib/pacman" \
+        --exclude="/lib/modules/" \
+        --exclude="/$ETC_OVERLAY_RELDIR/upper/alternatives/glx**" \
+        --exclude="/log/" \
+        --exclude="/lost+found/" \
+        "$src/" "$dst/" 
+    fsfreeze -u "$src"
+}
+
+log "Syncing the var partitions from 'self' to 'other'"
+
+VAR_DEVICE_OTHER=$(realpath $SYMLINKS_DIR/other/var)
+[ -b "$VAR_DEVICE_OTHER" ] || fail "Other var device '$VAR_DEVICE_OTHER' not found"
+
+reformat_device_ext4 "$VAR_DEVICE_OTHER" || \
+    err "Failed to reformat other var partition"
+
+mount "$VAR_DEVICE_OTHER" /mnt
+sync_var_mountpoints /var /mnt || \
+    err "Failed to sync var partitions"
+umount /mnt
+
+#
+# Handle the bootloaders
+# 
+
+log "Installing the bootloaders"
+
+steamos-chroot --partset other -- \
+    bash -c "set -eux; \
+    steamcl-install; \
+    steamos-grub-mkimage; \
+    update-grub;" || \
+    err "Failed to install bootloaders"
+
+#
+# Notify that we should reboot to other
+#
+
+touch /run/steamos/reboot-other
+
+exit $ERR

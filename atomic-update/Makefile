@@ -1,0 +1,27 @@
+include ../common.mk
+
+BINARIES := $(wildcard bin/*)
+RAUC_CONFIG_IN := rauc/system.conf.in
+RAUC_CONFIG :=  $(patsubst %.in,%,$(RAUC_CONFIG_IN))
+RAUC_HOOKS_IN := $(wildcard rauc/*.sh.in)
+RAUC_HOOKS := $(patsubst %.in,%,$(RAUC_HOOKS_IN))
+STEAMOS_ATOMUPD_CONFIG := steamos-atomupd/client.conf
+SERVICES_IN := $(wildcard systemd/*.service.in)
+SERVICES := $(patsubst %.in,%,$(SERVICES_IN))
+TARGETS := $(wildcard systemd/*.target)
+
+all: $(RAUC_CONFIG) $(RAUC_HOOKS) $(SERVICES)
+
+install: all
+	install -d $(DESTDIR)$(sbindir)
+	install -m 0755 $(BINARIES) $(DESTDIR)$(sbindir)
+	install -d $(DESTDIR)$(sysconfdir)/rauc
+	install -m 0644 $(RAUC_CONFIG) $(DESTDIR)$(sysconfdir)/rauc
+	install -d $(DESTDIR)$(libdir)/rauc
+	install -m 0755 $(RAUC_HOOKS) $(DESTDIR)$(libdir)/rauc
+	install -d $(DESTDIR)$(sysconfdir)/steamos-atomupd
+	install -m 0644 $(STEAMOS_ATOMUPD_CONFIG) $(DESTDIR)$(sysconfdir)/steamos-atomupd
+	install -d $(DESTDIR)$(systemdunitsdir)
+	install -m 644 $(SERVICES) $(DESTDIR)$(systemdunitsdir)
+	$(call enable-systemd-units,$(DESTDIR)$(systemdunitsdir),$(notdir $(SERVICES)))
+	install -m 644 $(TARGETS) $(DESTDIR)$(systemdunitsdir)

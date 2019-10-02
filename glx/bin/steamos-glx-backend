@@ -1,0 +1,146 @@
+#!/bin/bash
+# -*- mode: sh; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
+# vim: et sts=4 sw=4
+
+#  SPDX-License-Identifier: LGPL-2.1+
+#
+#  Copyright © 2019 Collabora Ltd.
+#  Copyright © 2019 Valve Corporation.
+#
+#  This file is part of steamos-customizations.
+#
+#  steamos-customizations is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU Lesser General Public License as published
+#  by the Free Software Foundation; either version 2.1 of the License, or
+#  (at your option) any later version.
+
+set -eu;
+
+export LC_ALL=C;
+export LANG=C;
+
+PCI_DISPLAY_CONTROLLER=0300;
+PCI_VENDOR_NVIDIA=10de;
+
+gpu_class=;
+gpu_class_list=;
+glx_alt_path=;
+
+have_glx_alts ()
+{
+    update-alternatives --get-selections | grep -q '^glx\s';
+}
+
+get_glx_alt_path ()
+{
+    local classes=$1;
+    local path=;
+    local prio=;
+    local k=;
+    local v=;
+
+    local chosen_prio=0;
+    glx_alt_path=auto;
+
+    if ! have_glx_alts;
+    then
+        echo No GLX alternatives installed;
+        glx_alt_path=none;
+        return;
+    fi;
+
+    # nvidia alts have the highest prio, so nothing to do here
+    # NOTE: the bumblee vs vanilla nvidia priority is handled
+    # internally by the nvidia glx alternatives package:
+    case $classes in
+        *\ nvidia\ *) return; ;;
+    esac;
+
+    # pick the highest prio non-nvidia choice
+    while read k v;
+    do
+        case $k in
+            Alternative:) path=$v; ;;
+            Priority:)    prio=$v; ;;
+        esac;
+
+        if [ "$path" ] && [ "$prio" ];
+        then
+            case $path in
+                *nvidia*) true; ;;
+                *)
+                    echo GLX path $path at priority $prio;
+                    if [ $prio -gt $chosen_prio ];
+                    then
+                        chosen_prio=$prio;
+                        glx_alt_path=$path;
+                    fi;
+                    ;;
+            esac;
+            path=;
+            prio=;
+        fi;
+    done < <(update-alternatives --query glx)
+}
+
+gpu_class_from_id ()
+{
+    local vend=$1;
+    local dev=$2; # Not used at present
+
+    gpu_class=;
+
+    if [ "$vend" = $PCI_VENDOR_NVIDIA ];
+    then
+        gpu_class="nvidia";
+    elif [ "$vend" ];
+    then
+         gpu_class="mesa";
+    fi;
+}
+
+get_gpu_class_list ()
+{
+    local k=;
+    local v=;
+
+    local device=;
+    local vendor=;
+    local class=;
+
+    gpu_class_list=;
+
+    while read k v;
+    do
+        case $k in
+            Slot:)   class=; device=; vendor=; ;;
+            Class:)  class=$v;                 ;;
+            Vendor:) vendor=$v;                ;;
+            Device:) device=$v;                ;;
+        esac;
+        if [ "$class" = $PCI_DISPLAY_CONTROLLER ] &&
+           [ "$vendor" ] && [ "$device" ];
+        then
+            gpu_class_from_id "$vendor" "$device";
+            echo Device $vendor:$class is in class "'$gpu_class'";
+            vendor=;
+            class=;
+            gpu_class_list=${gpu_class_list}" "${gpu_class}" ";
+        fi
+    done < <(lspci -vmmn);
+}
+
+get_gpu_class_list;
+get_glx_alt_path "$gpu_class_list";
+
+echo Chose GLX path: $glx_alt_path;
+echo GPUs found: $gpu_class_list;
+
+case $glx_alt_path in
+    none) true; ;;
+    auto) update-alternatives --auto glx; ;;
+    /*)   update-alternatives --set glx $glx_alt_path;
+esac;
+
+steamos-glx-driver "$gpu_class_list";
+

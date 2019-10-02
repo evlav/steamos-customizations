@@ -1,0 +1,154 @@
+#!/bin/bash
+# -*- mode: sh; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
+# vim: et sts=4 sw=4
+
+#  SPDX-License-Identifier: LGPL-2.1+
+#
+#  Copyright © 2019 Collabora Ltd.
+#  Copyright © 2019 Valve Corporation.
+#
+#  This file is part of steamos-customizations.
+#
+#  steamos-customizations is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU Lesser General Public License as published
+#  by the Free Software Foundation; either version 2.1 of the License, or
+#  (at your option) any later version.
+
+set -e
+set -u
+
+FORMAT= # --format=
+OUTPUT= # --output=
+PREFIX= # --prefix=
+PREFIX_SET=0 # prefix can be set to null...
+
+DEFAULT_FORMAT=x86_64-efi
+DEFAULT_OUTPUT=/efi/@grub_binary_relpath@
+
+# Helpers
+
+fail() { echo >&2 "$@"; exit 1; }
+
+usage() {
+    local status=${1-2}
+
+    if [ $status -ne 0 ]; then
+        exec >&2
+    fi
+
+    echo
+    echo "Usage: $(basename $0) OPTIONS"
+    echo
+    echo "Generate a GRUB image suitable for SteamOS, and install it to $DEFAULT_OUTPUT."
+    echo
+    echo "For SteamOS purpose, this script should be run without any arguments,"
+    echo "and it will do the right things (TM)."
+    echo
+    echo "This script also supports a subset of grub-mkimage arguments, so that it"
+    echo "can be called by grub-install. If you're not grub-install, you shouldn't"
+    echo "need to provide any argument."
+    echo
+    echo "The content of this image embeds the UUIDs of the root and the var"
+    echo "filesystems, so it's tied to the current OS. If you want to generate a"
+    echo "config for another set of SteamOS partitions, make sure to use a chroot."
+    echo
+
+    exit $status
+}
+
+# Arguments
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -h|--help)
+            usage 0
+            ;;
+        -O|--format)
+            shift
+            [ "${1:-}" ] || usage 1
+            FORMAT=$1
+            shift
+            ;;
+        -o|--output)
+            shift
+            [ "${1:-}" ] || usage 1
+            OUTPUT=$1
+            shift
+            ;;
+        -p|--prefix)
+            shift
+            # prefix can be null
+            #[ "${1:-}" ] || usage 1
+            PREFIX=$1
+            PREFIX_SET=1
+            shift
+            ;;
+        *)
+            usage 1
+            ;;
+    esac
+done
+
+if [ -z "$FORMAT" ] && [ -z "$OUTPUT" ]; then
+    [ "$(uname -m)" = "x86_64" ] || \
+        fail "Unsupported architecture, we expect x86_64"
+    FORMAT=$DEFAULT_FORMAT
+    OUTPUT=$DEFAULT_OUTPUT
+fi
+
+if [ $PREFIX_SET -eq 0 ]; then
+    BOOT_EFI_HINTS=$(grub-probe -t efi_hints /boot) # -> hd0,gpt8
+    BOOT_GPT_NUMBER=$(echo $BOOT_EFI_HINTS | sed -e 's/^.*,//' -e 's/ *$//')
+    PREFIX="(,$BOOT_GPT_NUMBER)/boot/grub"
+    PREFIX_SET=1
+fi
+
+[ "$FORMAT" ] || fail "No format provided, no default either"
+[ "$OUTPUT" ] || fail "No output provided, no default either"
+[ $PREFIX_SET -eq 1 ] || fail "No prefix was set"
+
+# Work in a temporary directory
+
+WORKDIR=$(mktemp -d)
+trap "rm -fr $WORKDIR" EXIT
+cd $WORKDIR
+
+# Create the early config, pack it in a memdisk
+
+MEMDISK=grub-memdisk.tar
+
+steamos-grub-mkearlyconfig > grub.cfg
+tar -cf - grub.cfg > $MEMDISK
+
+EARLY_CONFIG_MODULES=" \
+  search search_fs_uuid \
+  ext2 fat part_gpt \
+  configfile test echo sleep \
+  "
+
+# Create the bootstrap config
+
+BOOTSTRAP_CONFIG=grub-bootstrap.cfg
+
+echo 'normal (memdisk)/grub.cfg' > $BOOTSTRAP_CONFIG
+
+BOOTSTRAP_MODULES=" \
+  normal memdisk tar \
+  "
+
+# Create the grub image
+
+MODULES=" \
+  $EARLY_CONFIG_MODULES \
+  $BOOTSTRAP_MODULES \
+  "
+
+mkdir -p "$(dirname $OUTPUT)"
+
+grub-mkimage \
+  --config="$BOOTSTRAP_CONFIG" \
+  --memdisk="$MEMDISK" \
+  --prefix="$PREFIX" \
+  --format="$FORMAT" \
+  --output="$OUTPUT" \
+  $MODULES

@@ -1,0 +1,5 @@
+bin/steamos-chroot
+bin/steamos-clone
+bin/steamos-factory-reset
+bin/steamos-partdefs
+systemd/*.service

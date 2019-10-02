@@ -1,0 +1,48 @@
+#!/bin/bash
+# -*- mode: sh; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
+# vim: et sts=4 sw=4
+
+#  SPDX-License-Identifier: LGPL-2.1+
+#
+#  Copyright © 2019 Collabora Ltd.
+#  Copyright © 2019 Valve Corporation.
+#
+#  This file is part of steamos-customizations.
+#
+#  steamos-customizations is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU Lesser General Public License as published
+#  by the Free Software Foundation; either version 2.1 of the License, or
+#  (at your option) any later version.
+
+set -eu;
+
+STEAMOS_BOOTCONF=/efi/@bootconf_relpath@
+
+op=${1:-invalid};
+cf_args="--output-to input $STEAMOS_BOOTCONF";
+op_args=;
+
+case "$op" in
+    halt|poweroff) op_args="--mode shutdown"; ;;
+    reboot)        op_args="--mode reboot"  ; ;;
+    *)
+        echo "Usage: $0 <halt|poweroff|reboot>" >&2;
+        exit 1;
+        ;;
+esac;
+
+if [ -f /run/steamos/update ];
+then
+    op_args="--mode update";
+elif [ -f /run/steamos/update-other ];
+then
+    op_args="--mode update-other";
+elif [ -f /run/steamos/reboot-other ];
+then
+    op_args="--mode reboot-other";
+fi;
+
+mount /efi;
+echo "steamos-bootconf $op_args $cf_args" >&2;
+steamos-bootconf $op_args $cf_args;
+umount /efi;

@@ -1,0 +1,74 @@
+#!/bin/sh
+# -*- mode: sh; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
+# vim: et sts=4 sw=4
+
+#  SPDX-License-Identifier: LGPL-2.1+
+#
+#  Copyright © 2019 Collabora Ltd.
+#  Copyright © 2019 Valve Corporation.
+#
+#  This file is part of steamos-customizations.
+#
+#  steamos-customizations is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU Lesser General Public License as published
+#  by the Free Software Foundation; either version 2.1 of the License, or
+#  (at your option) any later version.
+
+# Perform a factory reset
+
+FACTORY_RESET_STAMPFILE=@factory_reset_stampfile@
+SYMLINKS_DIR=@udev_symlinks_absdir@
+VAR_A_DEVICE=$SYMLINKS_DIR/all/var-A
+VAR_B_DEVICE=$SYMLINKS_DIR/all/var-B
+HOME_DEVICE=$SYMLINKS_DIR/all/home
+
+. /lib/dracut-lib.sh
+
+reset_device_ext4() {
+    local device=$1
+    local opts=
+    local label=
+    local features=
+    local tmp=
+
+    device=$(readlink -f "$device")
+    if ! [ -b "$device" ]; then
+        echo "'$device' is not a block device"
+	return
+    fi
+
+    if ismounted "$device"; then
+        umount -v "$device"
+    fi
+
+    if ismounted "$device"; then
+        umount -v -f "$device"
+    fi
+
+    label=$(e2label "$device")
+    if [ "$label" ]; then
+        opts="$opts -L $label"
+    fi
+
+    features=$(tune2fs -l "$device" | sed -n 's/^Filesystem features:\s*//p')
+    for tmp in $features; do
+       if [ "$tmp" = "casefold" ]; then
+          opts="$opts -O casefold" 
+          break
+       fi
+    done
+
+    echo "Making ext4 filesystem on device $device (options: $opts)"
+    mkfs.ext4 -q -F $opts "$device"
+}
+
+[ -e $FACTORY_RESET_STAMPFILE ] || return 0
+
+warn "A factory reset was required, let's execute"
+reset_device_ext4 "$VAR_A_DEVICE" 2>&1 | vinfo
+reset_device_ext4 "$VAR_B_DEVICE" 2>&1 | vinfo
+reset_device_ext4 "$HOME_DEVICE"  2>&1 | vinfo
+
+# vinfo might return 1, which cause the hook to be restarted
+# <https://github.com/dracutdevs/dracut/pull/576>
+true

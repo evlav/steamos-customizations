@@ -1,0 +1,175 @@
+#!/bin/bash
+# -*- mode: sh; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
+# vim: et sts=4 sw=4
+
+#  SPDX-License-Identifier: LGPL-2.1+
+#
+#  Copyright © 2019 Collabora Ltd.
+#  Copyright © 2019 Valve Corporation.
+#
+#  This file is part of steamos-customizations.
+#
+#  steamos-customizations is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU Lesser General Public License as published
+#  by the Free Software Foundation; either version 2.1 of the License, or
+#  (at your option) any later version.
+
+set -e
+set -u
+
+DISK=       # --disk=
+PARTSET=    # --partset=
+
+SYMLINKS_DIR=@udev_symlinks_absdir@
+
+[ -e @libdir@/steamos-partitions-lib ] && \
+    . @libdir@/steamos-partitions-lib  || \
+    { echo "Failed to source '@libdir@/steamos-partitions-lib'"; exit 1; }
+
+# Helpers
+
+fail() { echo >&2 "$@"; exit 1; }
+
+usage() {
+    local status=${1-2}
+
+    if [ $status -ne 0 ]; then
+        exec >&2
+    fi
+
+    echo
+    echo "Usage: $(basename $0) [--disk=DISK] --partset=A|B|self|other -- COMMAND"
+    echo
+    echo "Run COMMAND in a chroot. The chroot is SteamOS specific, which means"
+    echo "that the various SteamOS partitions are mounted within the chroot."
+    echo
+    echo "There are two use-cases for this command:"
+    echo
+    echo "1. Chroot into the 'other' SteamOS, useful for atomic update. For example:"
+    echo
+    echo "    $(basename $0) --partset other -- COMMAND"
+    echo
+    echo "2. Chroot into another SteamOS install, on another disk. For example:"
+    echo
+    echo "    $(basename $0) --disk /dev/sdb --partset A -- COMMAND"
+    echo
+    echo "The second mode works if SteamOS is installed alone on the disk, however"
+    echo "if there are other partitions on the disk then it's not guaranteed to work."
+    echo "This is because we rely on partition labels to find SteamOS partitions and"
+    echo "setup the chroot. This is too fragile, and if we're unlucky there could be"
+    echo "another partition that doesn't belong to SteamOS but uses the same partition"
+    echo "label."
+    echo
+
+    exit $status
+}
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -h|--help)
+            usage 0
+            ;;
+        -d|--disk)
+            shift
+            [ "${1:-}" ] || usage 1
+            DISK=$1
+            shift
+            ;;
+        -p|--partset)
+            shift
+            [ "${1:-}" ] || usage 1
+            PARTSET=$1
+            shift
+            ;;
+        --)
+            shift
+            break
+            ;;
+        *)
+            usage 1
+            ;;
+    esac
+done
+
+[ "$PARTSET" ] || usage 1
+
+# Find devices
+
+ESP_DEVICE=
+EFI_DEVICE=
+ROOTFS_DEVICE=
+
+if [ "$DISK" ]; then
+    # A disk was provided, which means that we're chrooting into another
+    # SteamOS install. We do our best to 'guess' the partitions, ie. we
+    # mostly rely on partition labels. This is OK if SteamOS is alone on
+    # this disk, but it's fragile if it's installed along another OS.
+    [ -b "$DISK" ] || fail "'$DISK' is not a block device"
+    ROOTFS_DEVICE=$(get_device_by_partlabel $DISK rootfs-$PARTSET)
+    EFI_DEVICE=$(get_device_by_partlabel $DISK efi-$PARTSET)
+    VAR_DEVICE=$(get_device_by_partlabel $DISK var-$PARTSET)
+    ESP_DEVICE=$(get_device_by_partlabel $DISK esp)
+    if [ -z "$ESP_DEVICE" ]; then
+        ESP_DEVICE=$(get_device_by_typeuuid $DISK \
+            c12a7328-f81f-11d2-ba4b-00a0c93ec93b)
+    fi
+else
+    # No disk was provided, which means that we're chrooting into the
+    # 'other' install, A or B. We can find these partitions reliably
+    # using the existing symlinks.
+    ROOTFS_DEVICE=$(realpath $SYMLINKS_DIR/$PARTSET/rootfs)
+    EFI_DEVICE=$(realpath $SYMLINKS_DIR/$PARTSET/efi)
+    ESP_DEVICE=$(realpath $SYMLINKS_DIR/shared/esp)
+    VAR_DEVICE=$(realpath $SYMLINKS_DIR/$PARTSET/var)
+fi
+
+[ -b "$ROOTFS_DEVICE" ] || fail "'$ROOTFS_DEVICE' is not a block device"
+[ -b "$EFI_DEVICE"    ] || fail "'$EFI_DEVICE' is not a block device"
+[ -b "$ESP_DEVICE"    ] || fail "'$ESP_DEVICE' is not a block device"
+[ -b "$VAR_DEVICE"    ] || fail "'$VAR_DEVICE' is not a block device"
+
+# Do the job
+
+prepare_chroot_at() {
+
+    local dir=$1
+
+    mount -o ro "$ROOTFS_DEVICE" $dir
+    mount --bind /dev  $dir/dev
+    mount --bind /proc $dir/proc
+    mount --bind /run  $dir/run
+    mount --bind /sys  $dir/sys
+    mount -t tmpfs -o size=128M tmpfs $dir/tmp
+    mount "$EFI_DEVICE" $dir/efi
+    mount "$ESP_DEVICE" $dir/esp
+    mount "$VAR_DEVICE" $dir/var
+    if [ -d $dir/var/boot ]; then
+        mount --bind $dir/var/boot $dir/boot
+    fi
+}
+
+cleanup_chroot_at() {
+
+    local dir=$1
+
+    if mountpoint -q $dir/boot; then
+        umount $dir/boot || :
+    fi
+    umount $dir/var  || :
+    umount $dir/esp  || :
+    umount $dir/efi  || :
+    umount $dir/tmp  || :
+    umount $dir/sys  || :
+    umount $dir/run  || :
+    umount $dir/proc || :
+    umount $dir/dev  || :
+    umount $dir      || :
+
+    rmdir $dir
+}
+
+CHROOTDIR=$(mktemp -d)
+trap "cleanup_chroot_at $CHROOTDIR" EXIT
+
+prepare_chroot_at $CHROOTDIR
+chroot $CHROOTDIR "$@"

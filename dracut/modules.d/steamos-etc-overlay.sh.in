@@ -1,0 +1,85 @@
+#!/bin/sh
+# -*- mode: sh; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
+# vim: et sts=4 sw=4
+
+#  SPDX-License-Identifier: LGPL-2.1+
+#
+#  Copyright © 2019 Collabora Ltd.
+#  Copyright © 2019 Valve Corporation.
+#
+#  This file is part of steamos-customizations.
+#
+#  steamos-customizations is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU Lesser General Public License as published
+#  by the Free Software Foundation; either version 2.1 of the License, or
+#  (at your option) any later version.
+
+# Mount the etc overlay for steamos atomic
+#
+# Mount the /etc overlay now (that is, in the initrd), which is needed for
+# systemd to successfully commit a generated machine-id on the very first
+# boot, and to find this existing machine-id on subsequent boots.
+#
+# Since the overlay is defined in `/etc/fstab`, one could try to add the
+# option `x-initrd.mount`, and let things happen automatically, right?
+#
+# Well, no, for two reasons. One is that we need to make sure that the
+# various directories used for the overlay (upper and work dir) exist,
+# which is not the case for a first boot scenario.
+#
+# Another reason is that, even though systemd-fstab-generator is smart enough
+# to prefix the mountpoints found in fstab with `/sysroot`, I don't think
+# it's smart enough to do the same with the overlay options `upperdir=`,
+# `workdir=` and so on.
+#
+# For these reasons, we do the job manually here.
+
+. /lib/dracut-lib.sh
+
+mount_etc_overlay() {
+
+    # Inspect fstab, and if there's an overlay defined for /etc, mount it.
+
+    local overlay_target=
+    local overlay_upperdir=
+    local overlay_workdir=
+    local src target fs opts freq passno
+    local dir tmp
+
+    [ -f "$NEWROOT/etc/fstab" ] || return
+
+    while read src target fs opts freq passno; do
+        [ "$src" ] || continue
+        [ "${src%%#*}" = "$src" ] || continue
+        [ "$target" = '/etc' -o "$target" = '/etc/' ] || continue
+        [ "$fs" = 'overlay' ] || continue
+        overlay_target=$target
+        tmp=${opts#*upperdir=}
+        overlay_upperdir=${tmp%%,*}
+        tmp=${opts#*workdir=}
+        overlay_workdir=${tmp%%,*}
+        break
+    done < "$NEWROOT/etc/fstab"
+
+    [ "$overlay_target"   ] || return
+    [ "$overlay_upperdir" ] || return
+    [ "$overlay_workdir"  ] || return
+
+    # upper dir contains persistent data, create it only if it doesn't exist
+    dir="$NEWROOT/$overlay_upperdir"
+    if ! [ -d "$dir" ]; then
+        info "Creating overlay upper directory '$dir'"
+        rm -fr "$dir"
+        mkdir -p "$dir"
+    fi
+
+    # work dir must exist and be empty
+    dir="$NEWROOT/$overlay_workdir"
+    rm -fr "$dir"
+    mkdir -p "$dir"
+
+    info "Mounting overlay '$overlay_target'"
+    chroot "$NEWROOT" mount "$overlay_target"
+}
+
+mount_etc_overlay

@@ -1,0 +1,3 @@
+bin/steamos-grub-mkearlyconfig
+bin/steamos-grub-mkimage
+systemd/*.service

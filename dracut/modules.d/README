@@ -1,0 +1,16 @@
+This is the dracut module for SteamOS.
+
+This adds the following parameters:
+steamos.efi=
+        The efi partition that was booted. Similar to root=, the value can fed
+        "as is" to mount.
+
+Here's a brief description of the hooks:
+steamos-udev-rules.sh		(pre-mount)
+	Create udev rules for SteamOS partitions.
+steamos-etc-overlay.sh		(pre-pivot)
+	Mount a writable /etc overlay.
+steamos-var-lib-modules.sh	(pre-pivot)
+	Initialize /var/lib/modules from factory.
+steamos-factory-reset.sh	(shutdown)
+	Format data partitions.

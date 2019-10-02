@@ -1,0 +1,137 @@
+#!/bin/bash
+# -*- mode: sh; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
+# vim: et sts=4 sw=4
+
+#  SPDX-License-Identifier: LGPL-2.1+
+#
+#  Copyright © 2019 Collabora Ltd.
+#  Copyright © 2019 Valve Corporation.
+#
+#  This file is part of steamos-customizations.
+#
+#  steamos-customizations is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU Lesser General Public License as published
+#  by the Free Software Foundation; either version 2.1 of the License, or
+#  (at your option) any later version.
+
+set -eu;
+
+GPD=;
+DEBUG=0;
+XORG_CONF_FILE=/etc/X11/xorg.conf.d/40-rotation-quirk.conf;
+XORG_CONF_TEXT=$(cat - <<EOF
+Section "Monitor"
+  Identifier "eDP-1"
+  Option     "Rotate"        "right"
+  Option     "PreferredMode" "720x1280"
+EndSection
+
+Section "InputClass"
+  Identifier   "pointer:Goodix Capacitive TouchScreen"
+  Option       "Transformation Matrix" "0 1 0 -1 0 1 0 0 1"
+  MatchProduct "Goodix"
+EndSection
+EOF
+              );
+
+DEVICE_TEST=$(cat - <<EOF
+# this test block detects a thinkpad x220 which I use for 
+# testing when I don't have a GPD: edit to match your own hw
+dmi  system-manufacturer               EQ  LENOVO
+dmi  system-product-name               EQ  42914CG
+dmi  system-version                    EQ  ThinkPad\\ X220
+file /sys/class/drm/card0-LVDS-1/modes EQ  1366x768
+dmi  bios-release-date                 IN  07/18/2013
+EOF
+            );
+DEVICE_GPD=$(cat - <<EOF
+# This test block replicates the logic used by the kernel quirk 
+# code so if it's wrong we're going to be broken anyway:
+dmi  system-manufacturer               EQ  Default\\ string
+dmi  system-product-name               EQ  Default\\ string
+dmi  system-version                    EQ  Default\\ string
+file /sys/class/drm/card0-eDP-1/modes  EQ  720x1280
+dmi  bios-release-date                 IN  12/07/2017 05/24/2018 06/29/2018
+EOF
+          );
+
+trace ()
+{
+    if [ "$DEBUG" = "1" ];
+    then
+        echo "$@" >&2;
+    fi;
+}
+
+add-config ()
+{
+    local file=$1;
+    local text=$2;
+
+    mkdir -p $(dirname "$file");
+    echo "$text" > "$file";
+}
+
+del-config ()
+{
+    local file=$1;
+
+    if [ -f "$file" ]; then rm -f "$file"; fi;
+}
+
+export LC_ALL=C;
+export LANG=C;
+
+check-device-type ()
+{
+    local ruleset=$1;
+    local data=;
+    local src=;
+    local key=;
+    local op=;
+    local value=;
+    local gpd=1;
+    local allowed=;
+    local matched=;
+    
+    while read src key op value;
+    do
+        data="";
+        case $src in
+            dmi)  data=$(dmidecode -s "$key" 2>/dev/null); ;;
+            file) set +e; data=$(cat "$key" 2>/dev/null); set -e; ;;
+            *)    continue; ;;
+        esac;
+
+        case $op in
+            EQ)
+                read allowed <<<"$value";
+                trace $src $key $op;
+                trace Compare "[$data]" vs "[$allowed]";
+                if [ "$data" != "$allowed" ]; then gpd=0; fi; ;;
+            IN)
+                matched=0;
+                trace $src $key $op;
+                read -a allowed <<<"$value";
+                for x in "${allowed[@]}";
+                do
+                    trace Compare "[$data]" vs "[$x]"
+                    if [ "$x" = "$data" ]; then matched=1; break; fi;
+                done;
+                if [ $matched = 0 ]; then gpd=0; break; fi;
+                ;;
+        esac;
+    done <<<"$ruleset";
+
+    case $gpd in
+        1) return 0; ;;
+        *) return 1; ;;
+    esac;
+}
+
+if check-device-type "$DEVICE_GPD";
+then
+    add-config $XORG_CONF_FILE "$XORG_CONF_TEXT";
+else
+    del-config $XORG_CONF_FILE;
+fi;

@@ -1,0 +1,3 @@
+rauc/*.conf
+rauc/*.sh
+systemd/*.service

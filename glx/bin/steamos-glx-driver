@@ -1,0 +1,192 @@
+#!/bin/bash
+# -*- mode: sh; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
+# vim: et sts=4 sw=4
+
+#  SPDX-License-Identifier: LGPL-2.1+
+#
+#  Copyright © 2019 Collabora Ltd.
+#  Copyright © 2019 Valve Corporation.
+#
+#  This file is part of steamos-customizations.
+#
+#  steamos-customizations is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU Lesser General Public License as published
+#  by the Free Software Foundation; either version 2.1 of the License, or
+#  (at your option) any later version.
+
+set -eu;
+
+export LC_ALL=C;
+export LANG=C;
+
+module_list=;
+dracut_conf=/etc/dracut.conf.d/99-nvidia-dkms.conf;
+
+info ()
+{
+    local pfx=;
+
+    if ! [ -t 1 ]; then pfx="<6>"; fi;
+    echo "$pfx$@";
+}
+
+warn()
+{
+    local pfx=;
+
+    if ! [ -t 1 ]; then pfx="<4>"; fi;
+    echo "$pfx$@";
+}
+
+get_module_list ()
+{
+    local mod=$1;
+    local ver=$2;
+    local krn=${3:-$(uname -r)};
+    local arc=${4:-$(uname -m)};
+    local modpath=/var/lib/dkms/"$mod/$ver/$krn/$arc"/module;
+
+    module_list=;
+    module_list=$(ls -1 "$modpath" | sed -re 's/\.ko$//');
+}
+
+initrd_is_up_to_date ()
+{
+    local initrd=$1; shift;
+    local mod=$1;    shift;
+    local ver=$1;    shift;
+    local krn=$1;    shift;
+    local arc=$1;    shift
+
+    local imod=;
+    local allmods=;
+    local update=;
+    local modpath=/var/lib/dkms/"$mod/$ver/$krn/$arc"/module;
+    declare -A found;
+
+    while read l;
+    do
+        imod=${l##*/};
+        for m in "$@";
+        do
+            if [ "$imod" = "$m".ko ]; then found[$m]=1; fi;
+        done;
+    done < <(lsinitrd "$initrd" | grep \\.ko$);
+
+    allmods=1;
+    for m in "$@";
+    do
+        if [ ${found[$m]:-0} = 1 ]; then continue; fi;
+        allmods=0;
+    done;
+
+    if [ $allmods = 0 ];
+    then
+        info "Module list in $initrd incomplete:";
+        for m in "$@";
+        do
+            if [ ${found[$m]:-0} != 1 ];
+            then
+                info "  Missing: $m.ko";
+            fi;
+        done;
+        update=1;
+    else
+        update=0;
+        for m in "$@";
+        do
+            if [ "$modpath"/"$m".ko -nt "$initrd" ];
+            then
+                info "Initrd module $m.ko is out of date";
+                update=1;
+            fi;
+        done;
+    fi;
+
+    if [ $update = 0 ];
+    then
+        return 0;
+    fi;
+
+    return 1;
+}
+
+check_nvidia_dkms_modules ()
+{
+    local mod=;
+    local ver=;
+    local krn=;
+    local arc=;
+    local sta=;
+    local xxx=;
+    local regen=noop;
+    local kernel=${1:-$(uname -r)};
+    local initrd=/boot/initrd.img-"$kernel";
+
+    local oIFS="$IFS";
+    IFS="$IFS:,";
+    read mod ver krn arc sta xxx < <(dkms status nvidia-current);
+    if [ -z "$sta" ]; then sta=$krn; krn=; fi;
+
+    case $mod:$sta in
+        nvidia-current:installed)
+            info "nvidia-current module is built";
+            regen=no;
+            ;;
+        nvidia-current:*)
+            info "nvidia-current module needs to be built";
+            regen=yes;
+            ;;
+    esac;
+    IFS="$oIFS";
+
+    case $regen in
+        yes)
+            dkms build "$mod"/"$ver";
+            IFS="$IFS:,";
+            read mod ver krn arc sta xxx < <(dkms status nvidia-current);
+            if [ -z "$sta" ]; then sta=$krn; krn=; fi;
+            IFS="$oIFS";
+            ;;
+        no) true; ;;
+        *) rm -f ${dracut_conf:-/etc/dracut.conf.d/no-such-file}; ;;
+    esac;
+
+    # regen=noop means nothing else to do
+    if [ $regen = noop ]; then return 0; fi;
+
+    # even if regen was no we might need to update the initrd
+    get_module_list $mod $ver $krn $arc;
+    echo -n > $dracut_conf;
+    for m in $module_list;
+    do
+        info "Adding $m to dracut config";
+        echo "add_drivers+=\" $m \"" >> $dracut_conf;
+    done;
+
+    if initrd_is_up_to_date "$initrd" "$mod" "$ver" "$krn" "$arc" $module_list;
+    then
+        info "Initrd has up to date $mod/$ver:" $module_list;
+        return 0;
+    fi;
+
+    if [ "$sta" = installed ];
+    then
+        info "Rebuilding initrd to install $mod/$ver:" $module_list;
+        dracut -f "$initrd";
+    else
+        info "Installing $mod/$ver $module_list and rebuilding initrd";
+        dkms install "$mod"/"$ver";
+    fi;
+
+    # that would be better to ask systemd to go to the end of the current
+    # target (ie. sysinit.target) and reboot, but couldn't find how...
+    warn "Rebooting in 5 seconds...";
+    sleep 5s;
+    reboot;
+}
+
+case ${1:-} in
+    *\ nvidia\ *|nvidia) check_nvidia_dkms_modules; ;;
+    *) exit 0;
+esac;

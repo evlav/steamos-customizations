@@ -1,0 +1,84 @@
+#!/bin/sh
+# -*- mode: sh; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
+# vim: et sts=4 sw=4
+
+#  SPDX-License-Identifier: LGPL-2.1+
+#
+#  Copyright © 2019 Collabora Ltd.
+#  Copyright © 2019 Valve Corporation.
+#
+#  This file is part of steamos-customizations.
+#
+#  steamos-customizations is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU Lesser General Public License as published
+#  by the Free Software Foundation; either version 2.1 of the License, or
+#  (at your option) any later version.
+
+# Create udev rules for steamos partitions
+
+STEAMOS_PARTDEFS_RELDIR=@partdefs_reldir@
+UDEV_SYMLINKS_RELDIR=@udev_symlinks_reldir@
+UDEV_RULES_DIR=/run/udev/rules.d
+
+. /lib/dracut-lib.sh
+
+# Helpers
+
+make_udev_rule() {
+    local group=$1
+    local linkname=$2
+    local partuuid=$3
+
+    printf -- 'ENV{ID_PART_ENTRY_SCHEME}=="gpt", '
+    printf -- 'ENV{ID_PART_ENTRY_UUID}=="%s", ' "$partuuid"
+    printf -- 'SYMLINK+="%s/%s/%s"' "$UDEV_SYMLINKS_RELDIR" "$group" "$linkname"
+    printf -- '\n'
+}
+
+load_definitions() {
+    local definitions_dir=$1
+
+    if [ ! -d "$definitions_dir" ]; then
+        info "Definitions dir '$definitions_dir' not found"
+        return 1
+    fi
+
+    for group in self other shared all; do
+        local definitions_file=
+        local rules_file=
+
+        definitions_file="$definitions_dir/$group"
+        if ! [ -f "$definitions_file" ]; then
+            info "Definitions file '$definitions_file' not found"
+            continue
+        fi
+
+        # must be after 60-persistent-storage.rules, hence 90
+        rules_file=$UDEV_RULES_DIR/90-steamos-partitions-$group.rules
+        if [ -e "$rules_file" ]; then
+            info "Udev rules file '$rules_file' already exists, this is unexpected. Deleting."
+            rm -f "$rules_file"
+        fi
+
+        mkdir -p "$(dirname "$rules_file")"
+
+        while read linkname partuuid; do
+            make_udev_rule "$group" "$linkname" "$partuuid" >> "$rules_file"
+        done < "$definitions_file"
+    done
+}
+
+# Main
+
+EFI=$(getarg 'steamos.efi=')
+[ -z "$EFI" ] && die "No or empty steamos.efi= argument"
+
+info "Setting up SteamOS udev rules"
+
+mkdir /efi
+mount -o ro "$EFI" /efi
+load_definitions "/efi/$STEAMOS_PARTDEFS_RELDIR"
+umount /efi
+rmdir /efi
+
+udevadm control --reload-rules && udevadm trigger
