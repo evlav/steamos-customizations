@@ -3,7 +3,7 @@ include ../common.mk
 BINARIES_IN := $(wildcard bin/*.in)
 BINARIES := $(patsubst %.in,%,$(BINARIES_IN)) bin/mkswapfile bin/steamos-create-homedir-if-needed
 LIBRARIES := lib/steamos-partitions-lib
-SDDM_CONFIG := sddm.conf.d/autologin.conf
+SDDM_CONFIG := sddm.conf.d/steamos.conf
 SUDOERS_CONFIG := sudoers.d/no-fqdn
 TMPFILES_CONFIG := tmpfiles.d/0steamos.conf
 XORG_CONFIG := xorg.conf.d/10-steamos-virtualdisplaysize.conf
