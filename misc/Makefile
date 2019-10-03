@@ -1,7 +1,7 @@
 include ../common.mk
 
 BINARIES_IN := $(wildcard bin/*.in)
-BINARIES := $(patsubst %.in,%,$(BINARIES_IN)) bin/mkswapfile bin/steamos-mkuser
+BINARIES := $(patsubst %.in,%,$(BINARIES_IN)) bin/mkswapfile bin/steamos-create-homedir-if-needed
 LIBRARIES := lib/steamos-partitions-lib
 SDDM_CONFIG := sddm.conf.d/autologin.conf
 SUDOERS_CONFIG := sudoers.d/no-fqdn

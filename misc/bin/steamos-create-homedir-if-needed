@@ -1,0 +1,27 @@
+#!/bin/sh
+  
+# Copyright © 2015 Collabora Ltd.
+#
+# SPDX-License-Identifier: MPL-2.0
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+set -e
+
+test -n "$1" || exit 1
+
+UID=$(echo $1 | cut -d '-' -f 2);
+
+test -n "$UID" || exit 1
+
+HOMEDIR=$(getent passwd ${UID} | cut -d ':' -f 6)
+test -n "$HOMEDIR" || exit 1
+
+echo ${HOMEDIR}
+test -d $HOMEDIR && exit 0
+
+echo "Creating homedir for UID ${UID}"
+mkdir -p $HOMEDIR
+find /etc/skel -maxdepth 1 -mindepth 1 -exec cp -vPax {} $HOMEDIR \;
+chown -R ${UID}:${UID} $HOMEDIR

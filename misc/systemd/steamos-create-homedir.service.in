@@ -8,18 +8,13 @@
 #  (at your option) any later version.
 
 [Unit]
-Description=Create SteamOS User
-DefaultDependencies=no
-After=local-fs.target
-Before=shutdown.target sysinit.target
-Conflicts=shutdown.target
-ConditionFileIsExecutable=@sbindir@/steamos-mkuser
-ConditionPathExists=!/home/steamos
+Description=Ensure that uid 1000 has a home directory
+Before=systemd-user-sessions.service
 
 [Service]
 Type=oneshot
-RemainAfterExit=yes
-ExecStart=@sbindir@/steamos-mkuser
+RemainAfterExit=true
+ExecStart=@sbindir@/steamos-create-homedir-if-needed 1000
 
 [Install]
-WantedBy=sysinit.target
+WantedBy=multi-user.target
