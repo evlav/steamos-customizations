@@ -9,19 +9,15 @@
 
 set -e
 
-test -n "$1" || exit 1
+ID=$1
+test -n "$ID" || exit 1
 
-UID=$(echo $1 | cut -d '-' -f 2);
-
-test -n "$UID" || exit 1
-
-HOMEDIR=$(getent passwd ${UID} | cut -d ':' -f 6)
+HOMEDIR=$(getent passwd $ID | cut -d ':' -f 6)
 test -n "$HOMEDIR" || exit 1
 
-echo ${HOMEDIR}
 test -d $HOMEDIR && exit 0
 
-echo "Creating homedir for UID ${UID}"
+echo "Creating homedir $HOMEDIR for UID $ID"
 mkdir -p $HOMEDIR
 find /etc/skel -maxdepth 1 -mindepth 1 -exec cp -vPax {} $HOMEDIR \;
-chown -R ${UID}:${UID} $HOMEDIR
+chown -R $ID:$ID $HOMEDIR
