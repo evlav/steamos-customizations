@@ -44,8 +44,10 @@ depends() {
 # called by dracut
 installkernel() {
     instmods ext4 overlay
-    # vfat requires NLS things, https://wiki.gentoo.org/wiki/FAT
-    instmods fat vfat nls_ascii nls_cp437
+    # The ESP (hence vfat) requires various modules to be mounted, see:
+    # - https://wiki.gentoo.org/wiki/EFI_System_Partition
+    # - https://wiki.gentoo.org/wiki/FAT
+    instmods fat vfat nls_ascii nls_cp437 nls_iso8859-1
 }
 
 # called by dracut
