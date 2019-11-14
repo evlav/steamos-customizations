@@ -163,9 +163,7 @@ sync_var_mountpoints() {
         --delete \
         --one-file-system \
         --exclude="/boot/" \
-        --exclude="/cache/debconf/" \
         --exclude="/lib/dkms/" \
-        --exclude="/lib/dpkg/" \
         --exclude="/lib/pacman" \
         --exclude="/lib/modules/" \
         --exclude="/log/" \
