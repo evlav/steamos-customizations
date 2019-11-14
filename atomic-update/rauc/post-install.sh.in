@@ -164,8 +164,8 @@ sync_var_mountpoints() {
         --one-file-system \
         --exclude="/boot/" \
         --exclude="/lib/dkms/" \
-        --exclude="/lib/pacman" \
         --exclude="/lib/modules/" \
+        --exclude="/lib/pacman/" \
         --exclude="/log/" \
         --exclude="/lost+found/" \
         "$src/" "$dst/" 
