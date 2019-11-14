@@ -24,7 +24,6 @@ BOOTCONF_RELPATH=@bootconf_relpath@
 PARTDEFS_RELDIR=@partdefs_reldir@
 ROOTHASH_RELPATH=@roothash_relpath@
 GRUB_VARCFG_RELPATH=@grub_var_config_relpath@
-ETC_OVERLAY_RELDIR=@etc_overlay_reldir@
 
 #
 # Helpers
@@ -154,10 +153,9 @@ sync_var_mountpoints() {
     # sync those, and let systemd initialize it from factory.
     #
     # We also need to take care of (nvidia,dkms,initrd), when the updated OS will be
-    # booted for the first time, we expect the OS to build the nvidia drivers, setup
-    # the glx alternatives, and rebuild the initrd. In other words, we don't want to
-    # keep this state from the current OS, so we don't sync the glx alternative, and
-    # we don't sync the /boot directory.
+    # booted for the first time, we expect the OS to build the nvidia drivers and
+    # rebuild the initrd. In other words, we don't want to keep this state from the
+    # current OS, so we don't sync the /boot directory.
 
     fsfreeze -f "$src"
     rsync \
@@ -170,7 +168,6 @@ sync_var_mountpoints() {
         --exclude="/lib/dpkg/" \
         --exclude="/lib/pacman" \
         --exclude="/lib/modules/" \
-        --exclude="/$ETC_OVERLAY_RELDIR/upper/alternatives/glx**" \
         --exclude="/log/" \
         --exclude="/lost+found/" \
         "$src/" "$dst/" 
