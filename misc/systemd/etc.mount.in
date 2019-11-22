@@ -15,7 +15,7 @@ ConditionKernelCommandLine=roothash
 Where=/etc
 What=overlay
 Type=overlay
-Options=lowerdir=/etc,upperdir=/var/lib/overlays/etc/upper,workdir=/var/lib/overlays/etc/work
+Options=lowerdir=/etc,upperdir=@etc_overlay_absdir@/upper,workdir=@etc_overlay_absdir@/work
 
 [Install]
 WantedBy=local-fs.target

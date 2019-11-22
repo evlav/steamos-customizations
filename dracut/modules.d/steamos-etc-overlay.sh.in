@@ -34,6 +34,8 @@
 #
 # For these reasons, we do the job manually here.
 
+ETC_OVERLAY_ABSDIR=@etc_overlay_absdir@
+
 . /lib/dracut-lib.sh
 
 [ "$(getarg 'roothash=')" ] || return
@@ -43,7 +45,7 @@ prepare_etc_overlay() {
     # Prepare the directories needed for the /etc overlay
 
     local sysroot="$NEWROOT"
-    local overlaydir="/var/lib/overlays/etc"
+    local overlaydir="$ETC_OVERLAY_ABSDIR"
     local upperdir="${sysroot}${overlaydir}/upper"
     local workdir="${sysroot}${overlaydir}/work"
     local dir=
@@ -67,7 +69,7 @@ mount_etc_overlay() {
     # Mount the /etc overlay
 
     local sysroot="$NEWROOT"
-    local overlaydir="/var/lib/overlays/etc"
+    local overlaydir="$ETC_OVERLAY_ABSDIR"
     local lowerdir="${sysroot}/etc"
     local upperdir="${sysroot}${overlaydir}/upper"
     local workdir="${sysroot}${overlaydir}/work"

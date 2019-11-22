@@ -8,12 +8,13 @@ SUDOERS_CONFIG := sudoers.d/no-fqdn
 TMPFILES_CONFIG := tmpfiles.d/0steamos.conf
 XORG_CONFIG := xorg.conf.d/10-steamos-virtualdisplaysize.conf
 
-MOUNTS := $(wildcard systemd/*.mount)
+MOUNTS_IN := $(wildcard systemd/*.mount.in)
+MOUNTS := $(patsubst %.in,%,$(MOUNTS_IN))
 SERVICES_IN := $(wildcard systemd/*.service.in)
 SERVICES := $(patsubst %.in,%,$(SERVICES_IN))
 UNITS := $(SERVICES) $(MOUNTS)
 
-all: $(BINARIES) $(SERVICES)
+all: $(BINARIES) $(UNITS)
 
 install: all
 	install -d $(DESTDIR)$(sbindir)

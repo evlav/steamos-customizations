@@ -60,6 +60,9 @@ ROOTHASH_RELPATH := SteamOS/roothash
 # Factory reset stampfile
 FACTORY_RESET_STAMPFILE := /run/steamos/factory-reset
 
+# Directory for the /etc overlay
+ETC_OVERLAY_ABSDIR := /var/lib/overlays/etc
+
 # Directory where partition symlinks are created
 UDEV_SYMLINKS_ABSDIR := /dev/disk/steamos
 
@@ -81,6 +84,7 @@ UDEV_SYMLINKS_RELDIR := disk/steamos
 	  -e 's;@roothash_relpath@;$(ROOTHASH_RELPATH);g' \
 	  -e 's;@partdefs_reldir@;$(PARTDEFS_RELDIR);g' \
 	  -e 's;@factory_reset_stampfile@;$(FACTORY_RESET_STAMPFILE);g' \
+	  -e 's;@etc_overlay_absdir@;$(ETC_OVERLAY_ABSDIR);g' \
 	  -e 's;@udev_symlinks_absdir@;$(UDEV_SYMLINKS_ABSDIR);g' \
 	  -e 's;@udev_symlinks_reldir@;$(UDEV_SYMLINKS_RELDIR);g' \
 	  $< > $@
