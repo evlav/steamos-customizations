@@ -34,52 +34,52 @@
 #
 # For these reasons, we do the job manually here.
 
+ETC_OVERLAY_ABSDIR=@etc_overlay_absdir@
+
 . /lib/dracut-lib.sh
 
-mount_etc_overlay() {
+[ "$(getarg 'roothash=')" ] || return
 
-    # Inspect fstab, and if there's an overlay defined for /etc, mount it.
+prepare_etc_overlay() {
 
-    local overlay_target=
-    local overlay_upperdir=
-    local overlay_workdir=
-    local src target fs opts freq passno
-    local dir tmp
+    # Prepare the directories needed for the /etc overlay
 
-    [ -f "$NEWROOT/etc/fstab" ] || return
-
-    while read src target fs opts freq passno; do
-        [ "$src" ] || continue
-        [ "${src%%#*}" = "$src" ] || continue
-        [ "$target" = '/etc' -o "$target" = '/etc/' ] || continue
-        [ "$fs" = 'overlay' ] || continue
-        overlay_target=$target
-        tmp=${opts#*upperdir=}
-        overlay_upperdir=${tmp%%,*}
-        tmp=${opts#*workdir=}
-        overlay_workdir=${tmp%%,*}
-        break
-    done < "$NEWROOT/etc/fstab"
-
-    [ "$overlay_target"   ] || return
-    [ "$overlay_upperdir" ] || return
-    [ "$overlay_workdir"  ] || return
+    local sysroot="$NEWROOT"
+    local overlaydir="$ETC_OVERLAY_ABSDIR"
+    local upperdir="${sysroot}${overlaydir}/upper"
+    local workdir="${sysroot}${overlaydir}/work"
+    local dir=
 
     # upper dir contains persistent data, create it only if it doesn't exist
-    dir="$NEWROOT/$overlay_upperdir"
+    dir="$upperdir"
     if ! [ -d "$dir" ]; then
-        info "Creating overlay upper directory '$dir'"
+        echo "Creating overlay upper directory '$dir'"
         rm -fr "$dir"
         mkdir -p "$dir"
     fi
 
     # work dir must exist and be empty
-    dir="$NEWROOT/$overlay_workdir"
+    dir="$workdir"
     rm -fr "$dir"
     mkdir -p "$dir"
-
-    info "Mounting overlay '$overlay_target'"
-    chroot "$NEWROOT" mount "$overlay_target"
 }
 
+mount_etc_overlay() {
+
+    # Mount the /etc overlay
+
+    local sysroot="$NEWROOT"
+    local overlaydir="$ETC_OVERLAY_ABSDIR"
+    local lowerdir="${sysroot}/etc"
+    local upperdir="${sysroot}${overlaydir}/upper"
+    local workdir="${sysroot}${overlaydir}/work"
+
+    mount -v \
+        -t overlay \
+        -o lowerdir=$lowerdir,upperdir=$upperdir,workdir=$workdir \
+        overlay \
+        $lowerdir
+}
+
+prepare_etc_overlay
 mount_etc_overlay

@@ -1,0 +1,21 @@
+#  SPDX-License-Identifier: LGPL-2.1+
+#
+#  This file is part of steamos-customizations.
+#
+#  steamos-customizations is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU Lesser General Public License as published
+#  by the Free Software Foundation; either version 2.1 of the License, or
+#  (at your option) any later version.
+
+[Unit]
+Description=Etc Overlay
+ConditionKernelCommandLine=roothash
+
+[Mount]
+Where=/etc
+What=overlay
+Type=overlay
+Options=lowerdir=/etc,upperdir=@etc_overlay_absdir@/upper,workdir=@etc_overlay_absdir@/work
+
+[Install]
+WantedBy=local-fs.target

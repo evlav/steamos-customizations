@@ -8,10 +8,13 @@ SUDOERS_CONFIG := sudoers.d/no-fqdn
 TMPFILES_CONFIG := tmpfiles.d/0steamos.conf
 XORG_CONFIG := xorg.conf.d/10-steamos-virtualdisplaysize.conf
 
+MOUNTS_IN := $(wildcard systemd/*.mount.in)
+MOUNTS := $(patsubst %.in,%,$(MOUNTS_IN))
 SERVICES_IN := $(wildcard systemd/*.service.in)
 SERVICES := $(patsubst %.in,%,$(SERVICES_IN))
+UNITS := $(SERVICES) $(MOUNTS)
 
-all: $(BINARIES) $(SERVICES)
+all: $(BINARIES) $(UNITS)
 
 install: all
 	install -d $(DESTDIR)$(sbindir)
@@ -27,5 +30,5 @@ install: all
 	install -d $(DESTDIR)$(datadir)/X11/xorg.conf.d
 	install -m 0644 $(XORG_CONFIG) $(DESTDIR)$(datadir)/X11/xorg.conf.d
 	install -d $(DESTDIR)$(systemdunitsdir)
-	install -m 0644 $(SERVICES) $(DESTDIR)$(systemdunitsdir)
-	$(call enable-systemd-units,$(DESTDIR)$(systemdunitsdir),$(notdir $(SERVICES)))
+	install -m 0644 $(UNITS) $(DESTDIR)$(systemdunitsdir)
+	$(call enable-systemd-units,$(DESTDIR)$(systemdunitsdir),$(notdir $(UNITS)))

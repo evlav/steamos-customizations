@@ -3,3 +3,4 @@ bin/steamos-clone
 bin/steamos-factory-reset
 bin/steamos-partdefs
 systemd/*.service
+systemd/*.mount
