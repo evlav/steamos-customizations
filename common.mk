@@ -63,6 +63,9 @@ FACTORY_RESET_STAMPFILE := /run/steamos/factory-reset
 # Directory for the /etc overlay
 ETC_OVERLAY_ABSDIR := /var/lib/overlays/etc
 
+# Directory for the offloading scheme bind mounts
+OFFLOAD_ABSDIR := /home/.steamos/offload
+
 # Directory where partition symlinks are created
 UDEV_SYMLINKS_ABSDIR := /dev/disk/steamos
 
@@ -85,6 +88,7 @@ UDEV_SYMLINKS_RELDIR := disk/steamos
 	  -e 's;@partdefs_reldir@;$(PARTDEFS_RELDIR);g' \
 	  -e 's;@factory_reset_stampfile@;$(FACTORY_RESET_STAMPFILE);g' \
 	  -e 's;@etc_overlay_absdir@;$(ETC_OVERLAY_ABSDIR);g' \
+	  -e 's;@offload_absdir@;$(OFFLOAD_ABSDIR);g' \
 	  -e 's;@udev_symlinks_absdir@;$(UDEV_SYMLINKS_ABSDIR);g' \
 	  -e 's;@udev_symlinks_reldir@;$(UDEV_SYMLINKS_RELDIR);g' \
 	  $< > $@
