@@ -157,6 +157,8 @@ format_block_device() {
     local srcdisk=$1
     local dstdisk=$2
     local partlabel=$3
+    local srcdev=
+    local dstdev=
     local fs=
     local label=
     local mkfs=
@@ -286,17 +288,17 @@ cleanup_var() {
 
     # Cleanup var partition
     #
-    # Some data on these partitions don't make sense when we clone the
+    # Some data on the var partition don't make sense when we clone the
     # disk to another device, so we remove it. Namely:
     # - /var/log: not relevant
     # - /var/boot: might contain a dkms-rebuilt initrd, it's hardware specific
 
     local disk=$1
     local partset=$2
-    local partlabel=
+    local partlabel=var-$partset
+    local vardev=
     local mntpoint=
 
-    partlabel=var-$partset
     vardev=$(get_device_by_partlabel $disk $partlabel)
     if ! [ "$vardev" ]; then
         log "Could not find partlabel '$partlabel' on disk '$disk'"
@@ -308,8 +310,8 @@ cleanup_var() {
     mntpoint=$(mktemp -d)
     mount $vardev $mntpoint
 
-    rm -fr ${mntpoint:?}/boot
-    rm -fr ${mntpoint:?}/log
+    rm -fr $mntpoint/boot
+    rm -fr $mntpoint/log
 
     umount $mntpoint
     rmdir $mntpoint
