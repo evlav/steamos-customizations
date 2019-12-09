@@ -8,6 +8,7 @@ datadir    := $(prefix)/share
 libdir     := $(prefix)/lib
 sbindir    := $(prefix)/sbin
 systemdunitsdir := $(libdir)/systemd/system
+systemdgeneratorsdir := $(libdir)/systemd/system-generators
 
 
 # -------- Some tweaks -------- #

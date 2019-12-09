@@ -1,2 +1,3 @@
+generators/*.sh
 systemd/*.mount
 tmpfiles.d/*.conf
