@@ -163,7 +163,6 @@ sync_var_mountpoints() {
         --exclude="/lib/dkms/" \
         --exclude="/lib/modules/" \
         --exclude="/lib/pacman/" \
-        --exclude="/log/" \
         --exclude="/lost+found/" \
         "$src/" "$dst/" 
     fsfreeze -u "$src"
@@ -181,6 +180,14 @@ mount "$VAR_DEVICE_OTHER" /mnt
 sync_var_mountpoints /var /mnt || \
     err "Failed to sync var partitions"
 umount /mnt
+
+#
+# Handle the home partition
+#
+
+log "Removing 'other' logs from home partition"
+
+rm -fr /run/steamos/mnt/log-other/*
 
 #
 # Handle the bootloaders
