@@ -30,6 +30,7 @@ PARTDEFS_RELDIR=@partdefs_reldir@
 GRUB_BINARY_RELPATH=@grub_binary_relpath@
 GRUB_ROOTCFG_RELPATH=@grub_root_config_relpath@
 GRUB_VARCFG_RELPATH=@grub_var_config_relpath@
+OFFLOAD_RELDIR=@offload_reldir@
 
 STEAMOS_N_PARTITIONS=@steamos_n_partitions@
 STEAMOS_ALL_PARTLABELS='@steamos_all_partlabels@'
@@ -290,7 +291,6 @@ cleanup_var() {
     #
     # Some data on the var partition don't make sense when we clone the
     # disk to another device, so we remove it. Namely:
-    # - /var/log: not relevant
     # - /var/boot: might contain a dkms-rebuilt initrd, it's hardware specific
 
     local disk=$1
@@ -311,7 +311,37 @@ cleanup_var() {
     mount $vardev $mntpoint
 
     rm -fr $mntpoint/boot
-    rm -fr $mntpoint/log
+
+    umount $mntpoint
+    rmdir $mntpoint
+}
+
+cleanup_home() {
+
+    # Cleanup home partition
+    #
+    # Some data on the home partition don't make sense when we clone the
+    # disk to another device, so we remove it. Namely:
+    # - $offload_dir/var/log-*: the logs from the current system should not
+    #   be installed, I don't see any reason why we'd like to keep it.
+
+    local disk=$1
+    local partlabel=home
+    local homedev=
+    local mntpoint=
+
+    homedev=$(get_device_by_partlabel $disk $partlabel)
+    if ! [ "$homedev" ]; then
+        log "Could not find partlabel '$partlabel' on disk '$disk'"
+        return 1
+    fi
+
+    # TODO trap and exit!
+
+    mntpoint=$(mktemp -d)
+    mount $homedev $mntpoint
+
+    rm -fr $mntpoint/$OFFLOAD_RELDIR/var/log-*
 
     umount $mntpoint
     rmdir $mntpoint
@@ -501,6 +531,8 @@ if ! [ $FACTORY_RESET -eq 1 ]; then
     cleanup_var $DEVICE_OUT A
     log_step "Cleaning up var B"
     cleanup_var $DEVICE_OUT B
+    log_step "Cleaning up home"
+    cleanup_home $DEVICE_OUT
 fi
 
 log_step "Setting up efi A"
