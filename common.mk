@@ -69,10 +69,8 @@ OFFLOAD_RELDIR := .steamos/offload
 OFFLOAD_ABSDIR := /home/$(OFFLOAD_RELDIR)
 
 # Directory where partition symlinks are created
-UDEV_SYMLINKS_ABSDIR := /dev/disk/steamos
-
-# Directory where partition symlinks are created (relative to /dev)
 UDEV_SYMLINKS_RELDIR := disk/steamos
+UDEV_SYMLINKS_ABSDIR := /dev/$(UDEV_SYMLINKS_RELDIR)
 
 %: %.in
 	@echo "Substituting @variables@ in $<"
