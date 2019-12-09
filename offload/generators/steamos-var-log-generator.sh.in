@@ -54,22 +54,29 @@ Options=bind
 WantedBy=steamos-offload.target"
 }
 
-logdir=
+logdir_self=
+logdir_other=
 rootfs_a="$(readlink -f $UDEV_SYMLINKS_DIR/all/rootfs-A)"
 rootfs_b="$(readlink -f $UDEV_SYMLINKS_DIR/all/rootfs-B)"
 rootfs_self="$(readlink -f $UDEV_SYMLINKS_DIR/self/rootfs)"
 
 if [ "$rootfs_self" = "$rootfs_a" ]; then
-    logdir="$OFFLOAD_DIR/var/log-A"
+    logdir_self="$OFFLOAD_DIR/var/log-A"
+    logdir_other="$OFFLOAD_DIR/var/log-B"
 elif [ "$rootfs_self" = "$rootfs_b" ]; then
-    logdir="$OFFLOAD_DIR/var/log-B"
+    logdir_self="$OFFLOAD_DIR/var/log-B"
+    logdir_other="$OFFLOAD_DIR/var/log-A"
 else
     echo >&2 "Rootfs neither A or B? No good..."
     exit 0
 fi
 
 mkdir -p "$UNITS_DIR"
-make_mount_unit $logdir /var/log > "$UNITS_DIR/var-log.mount"
+make_mount_unit $logdir_self /var/log > "$UNITS_DIR/var-log.mount"
+make_mount_unit $logdir_self /run/steamos/mnt/log-self > "$UNITS_DIR/run-steamos-mnt-log-self.mount"
+make_mount_unit $logdir_other /run/steamos/mnt/log-other > "$UNITS_DIR/run-steamos-mnt-log-other.mount"
 
 mkdir -p "$UNITS_DIR/steamos-offload.target.wants"
-ln -sr "$UNITS_DIR/var-log.mount" "$UNITS_DIR/steamos-offload.target.wants/"
+for unit_name in var-log run-steamos-mnt-log-self run-steamos-mnt-log-other; do
+    ln -sr "$UNITS_DIR/$unit_name.mount" "$UNITS_DIR/steamos-offload.target.wants/"
+done
