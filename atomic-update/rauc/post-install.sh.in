@@ -88,7 +88,7 @@ configure_other_efi() {
     rm -f $grub_varcfg
 }
 
-log "Configuring the 'other' efi"
+log "Configuring the 'other' efi partition"
 
 EFI_DEVICE_OTHER=$(realpath $SYMLINKS_DIR/other/efi)
 [ -b "$EFI_DEVICE_OTHER" ] || fail "Other efi device '$EFI_DEVICE_OTHER' not found"
@@ -139,23 +139,20 @@ sync_var_mountpoints() {
     local src=$1
     local dst=$2
 
-    # --delete is not needed as we formatted the partition before, but let's
-    # leave it there in case this changes in the future, and --delete is needed
-    # again but forgotten and then we have a bug...
+    # --one-file-system makes sure that we ignore all the directories from /home
+    # that are bind-mounted onto /var directories.
     #
-    # There's a bunch of directories that we want to exclude from the sync:
+    # We exclude /var/log, as logs from the current OS are not relevant in the new OS.
     #
-    # Logs from the current OS are not relevant in the new OS, so we exclude /var/log.
+    # We exclude the directories /var/lib/{dkms,modules,pacman}, as they don't
+    # really represent a state that we want to keep, but rather a part of the
+    # rootfs that ends up leaving in /var for technical reasons. These pieces
+    # must be empty on first boot, so that they can be initialized from the
+    # factory that is shipped with the rootfs.
     #
-    # For all the directories that are initialized from /usr/share/factory, we know
-    # that there is no state we want to keep, but instead we really want these dirs
-    # to match what's in the factory, like if it was a "first boot". So we don't
-    # sync those, and let systemd initialize it from factory.
-    #
-    # We also need to take care of (nvidia,dkms,initrd), when the updated OS will be
-    # booted for the first time, we expect the OS to build the nvidia drivers and
-    # rebuild the initrd. In other words, we don't want to keep this state from the
-    # current OS, so we don't sync the /boot directory.
+    # We also need to exclude /var/boot, which might contain the initrd that
+    # was rebuilt to include nvidia drivers built by DKMS. Once again, this is
+    # not a state that we want to keep.
 
     fsfreeze -f "$src"
     rsync \
