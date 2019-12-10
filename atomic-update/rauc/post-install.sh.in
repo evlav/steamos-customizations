@@ -142,8 +142,6 @@ sync_var_mountpoints() {
     # --one-file-system makes sure that we ignore all the directories from /home
     # that are bind-mounted onto /var directories.
     #
-    # We exclude /var/log, as logs from the current OS are not relevant in the new OS.
-    #
     # We exclude the directories /var/lib/{dkms,modules,pacman}, as they don't
     # really represent a state that we want to keep, but rather a part of the
     # rootfs that ends up leaving in /var for technical reasons. These pieces
@@ -163,7 +161,6 @@ sync_var_mountpoints() {
         --exclude="/lib/dkms/" \
         --exclude="/lib/modules/" \
         --exclude="/lib/pacman/" \
-        --exclude="/log/" \
         --exclude="/lost+found/" \
         "$src/" "$dst/" 
     fsfreeze -u "$src"
