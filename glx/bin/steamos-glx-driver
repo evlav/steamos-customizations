@@ -19,6 +19,7 @@ set -eu;
 export LC_ALL=C;
 export LANG=C;
 
+initrd=;
 module_list=;
 dracut_conf=/etc/dracut.conf.d/99-nvidia-dkms.conf;
 
@@ -36,6 +37,19 @@ warn()
 
     if ! [ -t 1 ]; then pfx="<4>"; fi;
     echo "$pfx$@";
+}
+
+get_initrd ()
+{
+    local ver=$1;
+    
+    initrd=;
+    if [ -e /etc/arch-release ];
+    then
+        initrd="/boot/initramfs-linux.img";
+    else
+	initrd="/boot/initrd.img-$ver";
+    fi;
 }
 
 get_module_list ()
@@ -121,7 +135,6 @@ check_nvidia_dkms_modules ()
     local xxx=;
     local regen=noop;
     local kernel=${1:-$(uname -r)};
-    local initrd=/boot/initrd.img-"$kernel";
 
     local oIFS="$IFS";
     IFS="$IFS:,";
@@ -164,6 +177,7 @@ check_nvidia_dkms_modules ()
         echo "add_drivers+=\" $m \"" >> $dracut_conf;
     done;
 
+    get_initrd $ver;
     if initrd_is_up_to_date "$initrd" "$mod" "$ver" "$krn" "$arc" $module_list;
     then
         info "Initrd has up to date $mod/$ver:" $module_list;
