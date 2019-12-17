@@ -21,6 +21,7 @@ export LANG=C;
 
 initrd=;
 module_list=;
+nvidia_module=;
 dracut_conf=/etc/dracut.conf.d/99-nvidia-dkms.conf;
 
 info ()
@@ -49,6 +50,17 @@ get_initrd ()
         initrd="/boot/initramfs-linux.img";
     else
 	initrd="/boot/initrd.img-$ver";
+    fi;
+}
+
+get_nvidia_module ()
+{
+    nvidia_module=;
+    if [ -e /etc/arch-release ];
+    then
+        nvidia_module="nvidia";
+    else
+	nvidia_module="nvidia-current";
     fi;
 }
 
@@ -136,18 +148,19 @@ check_nvidia_dkms_modules ()
     local regen=noop;
     local kernel=${1:-$(uname -r)};
 
+    get_nvidia_module;
     local oIFS="$IFS";
     IFS="$IFS:,";
-    read mod ver krn arc sta xxx < <(dkms status nvidia-current);
+    read mod ver krn arc sta xxx < <(dkms status $nvidia_module);
     if [ -z "$sta" ]; then sta=$krn; krn=; fi;
 
     case $mod:$sta in
-        nvidia-current:installed)
-            info "nvidia-current module is built";
+        $nvidia_module:installed)
+            info "$nvidia_module module is built";
             regen=no;
             ;;
-        nvidia-current:*)
-            info "nvidia-current module needs to be built";
+        $nvidia_module:*)
+            info "$nvidia_module module needs to be built";
             regen=yes;
             ;;
     esac;
@@ -157,7 +170,7 @@ check_nvidia_dkms_modules ()
         yes)
             dkms build "$mod"/"$ver";
             IFS="$IFS:,";
-            read mod ver krn arc sta xxx < <(dkms status nvidia-current);
+            read mod ver krn arc sta xxx < <(dkms status $nvidia_module);
             if [ -z "$sta" ]; then sta=$krn; krn=; fi;
             IFS="$oIFS";
             ;;
