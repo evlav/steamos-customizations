@@ -26,6 +26,11 @@ gpu_class=;
 gpu_class_list=;
 glx_alt_path=;
 
+have_alts ()
+{
+    test -d /etc/alternatives;
+}
+
 have_glx_alts ()
 {
     update-alternatives --get-selections | grep -q '^glx\s';
@@ -131,16 +136,19 @@ get_gpu_class_list ()
 }
 
 get_gpu_class_list;
-get_glx_alt_path "$gpu_class_list";
-
-echo Chose GLX path: $glx_alt_path;
 echo GPUs found: $gpu_class_list;
 
-case $glx_alt_path in
-    none) true; ;;
-    auto) update-alternatives --auto glx; ;;
-    /*)   update-alternatives --set glx $glx_alt_path;
-esac;
+if have_alts;
+then
+    get_glx_alt_path "$gpu_class_list";
+    echo Chose GLX path: $glx_alt_path;
+
+    case $glx_alt_path in
+        none) true; ;;
+        auto) update-alternatives --auto glx; ;;
+        /*)   update-alternatives --set glx $glx_alt_path;
+    esac;
+fi;
 
 steamos-glx-driver "$gpu_class_list";
 
