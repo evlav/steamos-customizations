@@ -32,7 +32,7 @@ info ()
     echo "$pfx$@";
 }
 
-warn()
+warn ()
 {
     local pfx=;
 
@@ -82,7 +82,7 @@ initrd_is_up_to_date ()
     local mod=$1;    shift;
     local ver=$1;    shift;
     local krn=$1;    shift;
-    local arc=$1;    shift
+    local arc=$1;    shift;
 
     local imod=;
     local allmods=;
@@ -184,8 +184,12 @@ check_nvidia_dkms_modules ()
             if [ -z "$sta" ]; then sta=$krn; krn=; fi;
             IFS="$oIFS";
             ;;
-        no) true; ;;
-        *) rm -f ${dracut_conf:-/etc/dracut.conf.d/no-such-file}; ;;
+        no)
+            true;
+            ;;
+        *)
+            rm -f ${dracut_conf:-/etc/dracut.conf.d/no-such-file};
+            ;;
     esac;
 
     # regen=noop means nothing else to do
@@ -225,5 +229,5 @@ check_nvidia_dkms_modules ()
 
 case ${1:-} in
     *\ nvidia\ *|nvidia) check_nvidia_dkms_modules; ;;
-    *) exit 0;
+    *) exit 0; ;;
 esac;
