@@ -73,7 +73,7 @@ get_module_list ()
     local modpath=/var/lib/dkms/"$mod/$ver/$krn/$arc"/module;
 
     module_list=;
-    module_list=$(ls -1 "$modpath" | sed -re 's/\.ko$//');
+    module_list=$(ls -1 "$modpath" | sed -E 's/\.ko(\.xz)*$//');
 }
 
 initrd_is_up_to_date ()
@@ -92,12 +92,12 @@ initrd_is_up_to_date ()
 
     while read l;
     do
-        imod=${l##*/};
+        imod=$(echo "${l##*/}" | sed -E 's/\.ko(\.xz)*$//');
         for m in "$@";
         do
-            if [ "$imod" = "$m".ko ]; then found[$m]=1; fi;
+            if [ "$imod" = "$m" ]; then found[$m]=1; fi;
         done;
-    done < <(lsinitrd "$initrd" | grep \\.ko$);
+    done < <(lsinitrd "$initrd" | grep -E '\.ko(\.xz)*$');
 
     allmods=1;
     for m in "$@";
@@ -113,7 +113,7 @@ initrd_is_up_to_date ()
         do
             if [ ${found[$m]:-0} != 1 ];
             then
-                info "  Missing: $m.ko";
+                info "  Missing: $m";
             fi;
         done;
         update=1;
@@ -121,9 +121,19 @@ initrd_is_up_to_date ()
         update=0;
         for m in "$@";
         do
-            if [ "$modpath"/"$m".ko -nt "$initrd" ];
+            imod="$m".ko;
+            if ! [ -e "$modpath"/"$imod" ];
             then
-                info "Initrd module $m.ko is out of date";
+                imod="$imod".xz;
+            fi;
+            if ! [ -e "$modpath"/"$imod" ];
+            then
+                info "Module $m not found in $modpath";
+                continue;
+            fi;
+            if [ "$modpath"/"$imod" -nt "$initrd" ];
+            then
+                info "Initrd module $imod is out of date";
                 update=1;
             fi;
         done;
