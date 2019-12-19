@@ -24,29 +24,17 @@ module_list=;
 nvidia_module=;
 dracut_conf=/etc/dracut.conf.d/99-nvidia-dkms.conf;
 
-info ()
+log ()
 {
-    local pfx=;
+    local pfx=$1; shift;
 
-    if ! [ -t 1 ]; then pfx="<6>"; fi;
+    if [ -t 1 ]; then pfx=''; fi;
     echo "$pfx$@";
 }
 
-notice ()
-{
-    local pfx=;
-
-    if ! [ -t 1 ]; then pfx="<5>"; fi;
-    echo "$pfx$@";
-}
-
-warn ()
-{
-    local pfx=;
-
-    if ! [ -t 1 ]; then pfx="<4>"; fi;
-    echo "$pfx$@";
-}
+info   () { log "<6>" "$@"; }
+notice () { log "<5>" "$@"; }
+warn   () { log "<4>" "$@"; }
 
 get_initrd ()
 {
