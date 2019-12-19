@@ -32,6 +32,14 @@ info ()
     echo "$pfx$@";
 }
 
+notice ()
+{
+    local pfx=;
+
+    if ! [ -t 1 ]; then pfx="<5>"; fi;
+    echo "$pfx$@";
+}
+
 warn ()
 {
     local pfx=;
@@ -178,6 +186,7 @@ check_nvidia_dkms_modules ()
 
     case $regen in
         yes)
+            notice "Rebuilding dkms modules $mod/$ver";
             dkms build "$mod"/"$ver";
             IFS="$IFS:,";
             read mod ver krn arc sta xxx < <(dkms status $nvidia_module);
@@ -213,7 +222,7 @@ check_nvidia_dkms_modules ()
 
     if [ "$sta" = installed ];
     then
-        info "Rebuilding initrd to install $mod/$ver:" $module_list;
+        notice "Rebuilding initrd to install $mod/$ver:" $module_list;
         dracut -f "$initrd";
     else
         info "Installing $mod/$ver $module_list and rebuilding initrd";
