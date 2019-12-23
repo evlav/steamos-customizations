@@ -214,7 +214,7 @@ check_nvidia_dkms_modules ()
         notice "Rebuilding initrd to install $mod/$ver:" $module_list;
         dracut -f "$initrd";
     else
-        info "Installing $mod/$ver $module_list and rebuilding initrd";
+        info "Installing $mod/$ver "$module_list" and rebuilding initrd";
         dkms install "$mod"/"$ver";
         # XXX dkms should rebuild the initrd thanks to /etc/dkms/nvidia.conf,
         # however in practice it's broken at the moment, and until archlinux
