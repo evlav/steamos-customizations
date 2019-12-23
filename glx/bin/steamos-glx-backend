@@ -26,11 +26,6 @@ gpu_class=;
 gpu_class_list=;
 glx_alternative_path=;
 
-have_alternatives ()
-{
-    test -d /etc/alternatives;
-}
-
 have_glx_alternatives ()
 {
     update-alternatives --get-selections | grep -q '^glx\s';
@@ -138,7 +133,7 @@ get_gpu_class_list ()
 get_gpu_class_list;
 echo GPUs found: $gpu_class_list;
 
-if have_alternatives;
+if command -v update-alternatives >/dev/null 2>&1;
 then
     get_glx_alternative_path "$gpu_class_list";
     echo Chose GLX path: $glx_alternative_path;
