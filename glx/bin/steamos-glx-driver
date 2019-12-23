@@ -39,11 +39,12 @@ warn   () { log "<4>" "$@"; }
 get_initrd ()
 {
     local ver=$1;
+    local pkgbase=/usr/lib/modules/$(uname -r)/pkgbase;
     
     initrd=;
-    if [ -e /etc/arch-release ];
+    if [ -e "$pkgbase" ];
     then
-        initrd="/boot/initramfs-linux.img";
+        initrd="/boot/initramfs-$(<$pkgbase).img";
     else
 	initrd="/boot/initrd.img-$ver";
     fi;
