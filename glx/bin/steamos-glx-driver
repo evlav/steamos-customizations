@@ -216,6 +216,11 @@ check_nvidia_dkms_modules ()
     else
         info "Installing $mod/$ver $module_list and rebuilding initrd";
         dkms install "$mod"/"$ver";
+        # XXX dkms should rebuild the initrd thanks to /etc/dkms/nvidia.conf,
+        # however in practice it's broken at the moment, and until archlinux
+        # finishes to integrate dracut properly we're not sure what's the right
+        # fix. So for now we rebuild it manually.
+        dracut -f "$initrd";
     fi;
 
     # that would be better to ask systemd to go to the end of the current
