@@ -11,9 +11,6 @@ You everyday commands:
 
 Expected Make variables (for packagers):
 - `DESTDIR`: Staging installation directory.
-- `NVIDIA_MODULE_NAME`: the name of the nvidia module (eg. `nvidia` for
-  ArchLinux style distributions, `nvidia-current` for Debian style
-  distributions).
 
 
 

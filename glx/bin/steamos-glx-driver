@@ -214,17 +214,23 @@ check_nvidia_dkms_modules ()
         notice "Rebuilding initrd to install $mod/$ver:" $module_list;
         dracut -f "$initrd";
     else
-        info "Installing $mod/$ver "$module_list" and rebuilding initrd";
+        notice "Installing $mod/$ver:" $module_list;
         dkms install "$mod"/"$ver";
-        # XXX dkms should rebuild the initrd thanks to /etc/dkms/nvidia.conf,
-        # however in practice it's broken at the moment, and until archlinux
-        # finishes to integrate dracut properly we're not sure what's the right
-        # fix. So for now we rebuild it manually.
-        dracut -f "$initrd";
+        # DKMS can rebuild the initrd as part of 'dkms install',  if ever
+        # REMAKE_INITRD is set.  The only probem is that we don't know if
+        # this option was set (could be added in a conf file by the user).
+        # So the only way to know whether we need to rebuild the initrd,
+        # AFAICT, is to call initrd_is_up_to_date() a second time. Too bad
+        # it's such an expensive operation (lsinitrd under the hood)...
+        if ! initrd_is_up_to_date "$initrd" "$mod" "$ver" "$krn" "$arc" $module_list;
+        then
+            notice "Rebuilding initrd to install $mod/$ver:" $module_list;
+            dracut -f "$initrd";
+        fi;
     fi;
 
-    # that would be better to ask systemd to go to the end of the current
-    # target (ie. sysinit.target) and reboot, but couldn't find how...
+    # Reboot now. It would be better to ask systemd to go to the end of the
+    # current target (ie. sysinit.target) and reboot, but couldn't find how...
     warn "Rebooting in 5 seconds...";
     sleep 5s;
     reboot;
