@@ -19,23 +19,46 @@ set -eu;
 export LC_ALL=C;
 export LANG=C;
 
+initrd=;
 module_list=;
+nvidia_module=;
 dracut_conf=/etc/dracut.conf.d/99-nvidia-dkms.conf;
 
-info ()
+log ()
 {
-    local pfx=;
+    local pfx=$1; shift;
 
-    if ! [ -t 1 ]; then pfx="<6>"; fi;
+    if [ -t 1 ]; then pfx=''; fi;
     echo "$pfx$@";
 }
 
-warn()
-{
-    local pfx=;
+info   () { log "<6>" "$@"; }
+notice () { log "<5>" "$@"; echo "$@" > /dev/console; }
+warn   () { log "<4>" "$@"; echo "$@" > /dev/console; }
 
-    if ! [ -t 1 ]; then pfx="<4>"; fi;
-    echo "$pfx$@";
+get_initrd ()
+{
+    local ver=$1;
+    local pkgbase=/usr/lib/modules/$(uname -r)/pkgbase;
+    
+    initrd=;
+    if [ -e "$pkgbase" ];
+    then
+        initrd="/boot/initramfs-$(<$pkgbase).img";
+    else
+	initrd="/boot/initrd.img-$ver";
+    fi;
+}
+
+get_nvidia_module ()
+{
+    nvidia_module=;
+    if [ -e /etc/arch-release ];
+    then
+        nvidia_module="nvidia";
+    else
+	nvidia_module="nvidia-current";
+    fi;
 }
 
 get_module_list ()
@@ -47,7 +70,7 @@ get_module_list ()
     local modpath=/var/lib/dkms/"$mod/$ver/$krn/$arc"/module;
 
     module_list=;
-    module_list=$(ls -1 "$modpath" | sed -re 's/\.ko$//');
+    module_list=$(ls -1 "$modpath" | sed -E 's/\.ko(\.xz)*$//');
 }
 
 initrd_is_up_to_date ()
@@ -56,7 +79,7 @@ initrd_is_up_to_date ()
     local mod=$1;    shift;
     local ver=$1;    shift;
     local krn=$1;    shift;
-    local arc=$1;    shift
+    local arc=$1;    shift;
 
     local imod=;
     local allmods=;
@@ -66,12 +89,12 @@ initrd_is_up_to_date ()
 
     while read l;
     do
-        imod=${l##*/};
+        imod=$(echo "${l##*/}" | sed -E 's/\.ko(\.xz)*$//');
         for m in "$@";
         do
-            if [ "$imod" = "$m".ko ]; then found[$m]=1; fi;
+            if [ "$imod" = "$m" ]; then found[$m]=1; fi;
         done;
-    done < <(lsinitrd "$initrd" | grep \\.ko$);
+    done < <(lsinitrd "$initrd" | grep -E '\.ko(\.xz)*$');
 
     allmods=1;
     for m in "$@";
@@ -87,7 +110,7 @@ initrd_is_up_to_date ()
         do
             if [ ${found[$m]:-0} != 1 ];
             then
-                info "  Missing: $m.ko";
+                info "  Missing: $m";
             fi;
         done;
         update=1;
@@ -95,9 +118,19 @@ initrd_is_up_to_date ()
         update=0;
         for m in "$@";
         do
-            if [ "$modpath"/"$m".ko -nt "$initrd" ];
+            imod="$m".ko;
+            if ! [ -e "$modpath"/"$imod" ];
             then
-                info "Initrd module $m.ko is out of date";
+                imod="$imod".xz;
+            fi;
+            if ! [ -e "$modpath"/"$imod" ];
+            then
+                info "Module $m not found in $modpath";
+                continue;
+            fi;
+            if [ "$modpath"/"$imod" -nt "$initrd" ];
+            then
+                info "Initrd module $imod is out of date";
                 update=1;
             fi;
         done;
@@ -121,20 +154,20 @@ check_nvidia_dkms_modules ()
     local xxx=;
     local regen=noop;
     local kernel=${1:-$(uname -r)};
-    local initrd=/boot/initrd.img-"$kernel";
 
+    get_nvidia_module;
     local oIFS="$IFS";
     IFS="$IFS:,";
-    read mod ver krn arc sta xxx < <(dkms status nvidia-current);
+    read mod ver krn arc sta xxx < <(dkms status $nvidia_module);
     if [ -z "$sta" ]; then sta=$krn; krn=; fi;
 
     case $mod:$sta in
-        nvidia-current:installed)
-            info "nvidia-current module is built";
+        $nvidia_module:installed)
+            info "$nvidia_module module is built";
             regen=no;
             ;;
-        nvidia-current:*)
-            info "nvidia-current module needs to be built";
+        $nvidia_module:*)
+            info "$nvidia_module module needs to be built";
             regen=yes;
             ;;
     esac;
@@ -142,14 +175,19 @@ check_nvidia_dkms_modules ()
 
     case $regen in
         yes)
+            notice "Rebuilding dkms modules $mod/$ver";
             dkms build "$mod"/"$ver";
             IFS="$IFS:,";
-            read mod ver krn arc sta xxx < <(dkms status nvidia-current);
+            read mod ver krn arc sta xxx < <(dkms status $nvidia_module);
             if [ -z "$sta" ]; then sta=$krn; krn=; fi;
             IFS="$oIFS";
             ;;
-        no) true; ;;
-        *) rm -f ${dracut_conf:-/etc/dracut.conf.d/no-such-file}; ;;
+        no)
+            true;
+            ;;
+        *)
+            rm -f ${dracut_conf:-/etc/dracut.conf.d/no-such-file};
+            ;;
     esac;
 
     # regen=noop means nothing else to do
@@ -164,6 +202,7 @@ check_nvidia_dkms_modules ()
         echo "add_drivers+=\" $m \"" >> $dracut_conf;
     done;
 
+    get_initrd $ver;
     if initrd_is_up_to_date "$initrd" "$mod" "$ver" "$krn" "$arc" $module_list;
     then
         info "Initrd has up to date $mod/$ver:" $module_list;
@@ -172,15 +211,26 @@ check_nvidia_dkms_modules ()
 
     if [ "$sta" = installed ];
     then
-        info "Rebuilding initrd to install $mod/$ver:" $module_list;
+        notice "Rebuilding initrd to install $mod/$ver:" $module_list;
         dracut -f "$initrd";
     else
-        info "Installing $mod/$ver $module_list and rebuilding initrd";
+        notice "Installing $mod/$ver:" $module_list;
         dkms install "$mod"/"$ver";
+        # DKMS can rebuild the initrd as part of 'dkms install',  if ever
+        # REMAKE_INITRD is set.  The only probem is that we don't know if
+        # this option was set (could be added in a conf file by the user).
+        # So the only way to know whether we need to rebuild the initrd,
+        # AFAICT, is to call initrd_is_up_to_date() a second time. Too bad
+        # it's such an expensive operation (lsinitrd under the hood)...
+        if ! initrd_is_up_to_date "$initrd" "$mod" "$ver" "$krn" "$arc" $module_list;
+        then
+            notice "Rebuilding initrd to install $mod/$ver:" $module_list;
+            dracut -f "$initrd";
+        fi;
     fi;
 
-    # that would be better to ask systemd to go to the end of the current
-    # target (ie. sysinit.target) and reboot, but couldn't find how...
+    # Reboot now. It would be better to ask systemd to go to the end of the
+    # current target (ie. sysinit.target) and reboot, but couldn't find how...
     warn "Rebooting in 5 seconds...";
     sleep 5s;
     reboot;
@@ -188,5 +238,5 @@ check_nvidia_dkms_modules ()
 
 case ${1:-} in
     *\ nvidia\ *|nvidia) check_nvidia_dkms_modules; ;;
-    *) exit 0;
+    *) exit 0; ;;
 esac;

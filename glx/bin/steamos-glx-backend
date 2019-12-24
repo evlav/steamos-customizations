@@ -24,14 +24,14 @@ PCI_VENDOR_NVIDIA=10de;
 
 gpu_class=;
 gpu_class_list=;
-glx_alt_path=;
+glx_alternative_path=;
 
-have_glx_alts ()
+have_glx_alternatives ()
 {
     update-alternatives --get-selections | grep -q '^glx\s';
 }
 
-get_glx_alt_path ()
+get_glx_alternative_path ()
 {
     local classes=$1;
     local path=;
@@ -40,16 +40,16 @@ get_glx_alt_path ()
     local v=;
 
     local chosen_prio=0;
-    glx_alt_path=auto;
+    glx_alternative_path=auto;
 
-    if ! have_glx_alts;
+    if ! have_glx_alternatives;
     then
         echo No GLX alternatives installed;
-        glx_alt_path=none;
+        glx_alternative_path=none;
         return;
     fi;
 
-    # nvidia alts have the highest prio, so nothing to do here
+    # nvidia alternatives have the highest prio, so nothing to do here
     # NOTE: the bumblee vs vanilla nvidia priority is handled
     # internally by the nvidia glx alternatives package:
     case $classes in
@@ -73,7 +73,7 @@ get_glx_alt_path ()
                     if [ $prio -gt $chosen_prio ];
                     then
                         chosen_prio=$prio;
-                        glx_alt_path=$path;
+                        glx_alternative_path=$path;
                     fi;
                     ;;
             esac;
@@ -131,16 +131,19 @@ get_gpu_class_list ()
 }
 
 get_gpu_class_list;
-get_glx_alt_path "$gpu_class_list";
-
-echo Chose GLX path: $glx_alt_path;
 echo GPUs found: $gpu_class_list;
 
-case $glx_alt_path in
-    none) true; ;;
-    auto) update-alternatives --auto glx; ;;
-    /*)   update-alternatives --set glx $glx_alt_path;
-esac;
+if command -v update-alternatives >/dev/null 2>&1;
+then
+    get_glx_alternative_path "$gpu_class_list";
+    echo Chose GLX path: $glx_alternative_path;
+
+    case $glx_alternative_path in
+        none) true; ;;
+        auto) update-alternatives --auto glx; ;;
+        /*)   update-alternatives --set glx $glx_alternative_path;
+    esac;
+fi;
 
 steamos-glx-driver "$gpu_class_list";
 
