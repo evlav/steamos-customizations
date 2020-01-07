@@ -42,6 +42,9 @@ usage() {
     echo "must instruct GRUB lo load this memdisk using an even *earlier* config (the"
     echo "so-called bootstrap config), that you pass to grub-mkimage through --config=."
     echo
+    echo "If the environment \$STEAMOS_DEBUG is set, the early config that is generated"
+    echo "produces additional outputs and a delay."
+    echo
 
     exit $status
 }
@@ -69,13 +72,17 @@ VARUUID=$(findmnt -no uuid /var)
 
 # Generate the grub early config
 
-cat << EOF
+if [ -n "${STEAMOS_DEBUG:-}" ]; then
+    cat << EOF
 echo "---- Entering early config ----"
 echo "cmdpath: \$cmdpath"
 echo "root   : \$root"
 echo "prefix : \$prefix"
 echo "-------------------------------"
+EOF
+fi
 
+cat << EOF
 set cfg=
 
 if [ -z "\$cfg" -a -e \$cmdpath/grub-var.cfg ]; then
@@ -89,7 +96,7 @@ if [ -z "\$cfg" -a -e \$cmdpath/grub-var.cfg ]; then
     search --fs-uuid --no-floppy --set=altroot $VARUUID
 
     if [ -n "\$altroot" -a -d (\$altroot)/boot/grub ]; then
-        echo "var partition $VARUUID selected to boot"
+        ${STEMOS_DEBUG+:echo "var partition $VARUUID selected to boot"}
         set root=\$altroot
         set prefix=(\$altroot)/boot/grub
         set cfg=\$cmdpath/grub-var.cfg
@@ -110,7 +117,7 @@ if [ -z "\$cfg" -a -e \$cmdpath/grub-root.cfg ]; then
     search --fs-uuid --no-floppy --set=altroot $ROOTUUID
 
     if [ -n "\$altroot" -a -d (\$altroot)/boot/grub ]; then
-        echo "root partition $ROOTUUID selected to boot"
+        ${STEMOS_DEBUG+:echo "root partition $ROOTUUID selected to boot"}
         set root=\$altroot
         set prefix=(\$altroot)/boot/grub
         set cfg=\$cmdpath/grub-root.cfg
@@ -128,13 +135,20 @@ if [ -z "\$cfg" ]; then
     set cfg=\$prefix/grub.cfg
 
 fi
+EOF
 
+if [ -n "${STEAMOS_DEBUG:-}" ]; then
+    cat << EOF
 echo "---- Leaving early config ----"
 echo "root   : \$root"
 echo "prefix : \$prefix"
 echo "cfg    : \$cfg"
 echo "------------------------------"
 
-#sleep --verbose 10
+sleep --verbose 10
+EOF
+fi
+
+cat << EOF
 configfile \$cfg
 EOF
