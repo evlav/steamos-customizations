@@ -139,6 +139,7 @@ prepare_chroot_at() {
     mount --bind /proc $dir/proc
     mount --bind /run  $dir/run
     mount --bind /sys  $dir/sys
+    mount --bind /sys/firmware/efi/efivars $dir/sys/firmware/efi/efivars
     mount -t tmpfs -o size=128M tmpfs $dir/tmp
     mount "$EFI_DEVICE" $dir/efi
     mount "$ESP_DEVICE" $dir/esp
@@ -159,6 +160,7 @@ cleanup_chroot_at() {
     umount $dir/esp  || :
     umount $dir/efi  || :
     umount $dir/tmp  || :
+    umount $dir/sys/firmware/efi/efivars || :
     umount $dir/sys  || :
     umount $dir/run  || :
     umount $dir/proc || :
