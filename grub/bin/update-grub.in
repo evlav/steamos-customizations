@@ -1,0 +1,15 @@
+#!/bin/sh
+
+export GRUB_DISABLE_OS_PROBER=true
+export GRUB_DISABLE_LINUX_UUID=true
+export GRUB_DISABLE_LINUX_PARTUUID=false
+
+grubcfg=
+if mountpoint -q /boot; then
+    grubcfg=grub-var.cfg
+else
+    grubcfg=grub-root.cfg
+fi
+
+grub-mkconfig -o /efi/EFI/steamos/$grubcfg "$@"
+ln -sf /efi/EFI/steamos/$grubcfg /boot/grub/grub.cfg 2>/dev/null || :
