@@ -69,7 +69,6 @@ get_module_list ()
     local arc="${4:-$(uname -m)}";
     local modpath="/var/lib/dkms/$mod/$ver/$krn/$arc/module";
 
-    module_list=;
     module_list="$(ls -1 "$modpath" | sed -E 's/\.ko(\.xz)*$//')";
 }
 
