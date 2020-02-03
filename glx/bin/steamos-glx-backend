@@ -50,7 +50,7 @@ get_glx_alternative_path ()
     fi;
 
     # nvidia alternatives have the highest prio, so nothing to do here
-    # NOTE: the bumblee vs vanilla nvidia priority is handled
+    # NOTE: the bumblebee vs vanilla nvidia priority is handled
     # internally by the nvidia glx alternatives package:
     case $classes in
         *\ nvidia\ *) return; ;;
