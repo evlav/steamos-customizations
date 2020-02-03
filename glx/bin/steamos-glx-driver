@@ -236,7 +236,10 @@ check_nvidia_dkms_modules ()
     reboot;
 }
 
-case ${1:-} in
-    *\ nvidia\ *|nvidia) check_nvidia_dkms_modules; ;;
-    *) exit 0; ;;
-esac;
+for mod in "$@";
+do
+    if [[ "$mod" =~ ^nvidia ]];
+    then
+        check_nvidia_dkms_modules;
+    fi;
+done;

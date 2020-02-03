@@ -23,7 +23,7 @@ PCI_DISPLAY_CONTROLLER=0300;
 PCI_VENDOR_NVIDIA=10de;
 
 gpu_class=;
-gpu_class_list=;
+gpu_class_list=();
 glx_alternative_path=;
 
 have_glx_alternatives ()
@@ -33,7 +33,7 @@ have_glx_alternatives ()
 
 get_glx_alternative_path ()
 {
-    local classes=$1;
+    local classes=("$@");
     local path=;
     local prio=;
     local k=;
@@ -52,9 +52,13 @@ get_glx_alternative_path ()
     # nvidia alternatives have the highest prio, so nothing to do here
     # NOTE: the bumblebee vs vanilla nvidia priority is handled
     # internally by the nvidia glx alternatives package:
-    case $classes in
-        *\ nvidia\ *) return; ;;
-    esac;
+    for class in "${classes[@]}";
+    do
+        if [ "$class" = "nvidia" ];
+        then
+            return;
+        fi;
+    done;
 
     # pick the highest prio non-nvidia choice
     while read k v;
@@ -108,8 +112,6 @@ get_gpu_class_list ()
     local vendor=;
     local class=;
 
-    gpu_class_list=;
-
     while read k v;
     do
         case $k in
@@ -125,17 +127,17 @@ get_gpu_class_list ()
             echo Device $vendor:$class is in class "'$gpu_class'";
             vendor=;
             class=;
-            gpu_class_list=${gpu_class_list}" "${gpu_class}" ";
+            gpu_class_list+=("$gpu_class")
         fi
     done < <(lspci -vmmn);
 }
 
 get_gpu_class_list;
-echo GPUs found: $gpu_class_list;
+echo GPUs found: "${gpu_class_list[@]}";
 
 if command -v update-alternatives >/dev/null 2>&1;
 then
-    get_glx_alternative_path "$gpu_class_list";
+    get_glx_alternative_path "${gpu_class_list[@]}";
     echo Chose GLX path: $glx_alternative_path;
 
     case $glx_alternative_path in
@@ -145,5 +147,4 @@ then
     esac;
 fi;
 
-steamos-glx-driver "$gpu_class_list";
-
+steamos-glx-driver "${gpu_class_list[@]}";
