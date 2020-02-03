@@ -20,7 +20,7 @@ export LC_ALL=C;
 export LANG=C;
 
 initrd=;
-module_list=;
+module_list=();
 nvidia_module=;
 dracut_conf=/etc/dracut.conf.d/99-nvidia-dkms.conf;
 
@@ -69,7 +69,7 @@ get_module_list ()
     local arc="${4:-$(uname -m)}";
     local modpath="/var/lib/dkms/$mod/$ver/$krn/$arc/module";
 
-    module_list="$(ls -1 "$modpath" | sed -E 's/\.ko(\.xz)*$//')";
+    mapfile -t module_list < <(ls -1 "$modpath" | sed -E 's/\.ko(\.xz)*$//');
 }
 
 initrd_is_up_to_date ()
@@ -195,25 +195,25 @@ check_nvidia_dkms_modules ()
     # even if regen was no we might need to update the initrd
     get_module_list "$mod" "$ver" "$krn" "$arc";
     echo -n > "$dracut_conf";
-    for m in $module_list;
+    for m in "${module_list[@]}";
     do
         info "Adding $m to dracut config";
         echo "add_drivers+=\" $m \"" >> "$dracut_conf";
     done;
 
     get_initrd "$ver";
-    if initrd_is_up_to_date "$initrd" "$mod" "$ver" "$krn" "$arc" $module_list;
+    if initrd_is_up_to_date "$initrd" "$mod" "$ver" "$krn" "$arc" "${module_list[@]}";
     then
-        info "Initrd has up to date $mod/$ver:" $module_list;
+        info "Initrd has up to date $mod/$ver:" "${module_list[@]}";
         return 0;
     fi;
 
     if [ "$sta" = installed ];
     then
-        notice "Rebuilding initrd to install $mod/$ver:" $module_list;
+        notice "Rebuilding initrd to install $mod/$ver:" "${module_list[@]}";
         dracut -f "$initrd";
     else
-        notice "Installing $mod/$ver:" $module_list;
+        notice "Installing $mod/$ver:" "${module_list[@]}";
         dkms install "$mod/$ver";
         # DKMS can rebuild the initrd as part of 'dkms install',  if ever
         # REMAKE_INITRD is set.  The only probem is that we don't know if
@@ -221,9 +221,9 @@ check_nvidia_dkms_modules ()
         # So the only way to know whether we need to rebuild the initrd,
         # AFAICT, is to call initrd_is_up_to_date() a second time. Too bad
         # it's such an expensive operation (lsinitrd under the hood)...
-        if ! initrd_is_up_to_date "$initrd" "$mod" "$ver" "$krn" "$arc" $module_list;
+        if ! initrd_is_up_to_date "$initrd" "$mod" "$ver" "$krn" "$arc" "${module_list[@]}";
         then
-            notice "Rebuilding initrd to install $mod/$ver:" $module_list;
+            notice "Rebuilding initrd to install $mod/$ver:" "${module_list[@]}";
             dracut -f "$initrd";
         fi;
     fi;
