@@ -106,14 +106,14 @@ initrd_is_up_to_date ()
     local modpath="$1"; shift;
 
     get_missing_module_list "$initrd" "$@";
-    if [ "${#missing_module_list[@]}" -ne 0 ]
+    if [ "${#missing_module_list[@]}" -ne 0 ];
     then
         info "Module list in $initrd incomplete:" "${missing_module_list[@]}";
         return 1;
     fi;
 
     get_uptodate_module_list "$initrd" "$modpath" "$@";
-    if [ "${#uptodate_module_list[@]}" -ne 0 ]
+    if [ "${#uptodate_module_list[@]}" -ne 0 ];
     then
         info "Module list in $initrd is outdated:" "${uptodate_module_list[@]}";
         return 1;
