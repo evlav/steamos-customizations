@@ -152,7 +152,6 @@ check_nvidia_dkms_modules ()
     local sta=;
     local xxx=;
     local regen=noop;
-    local kernel="${1:-$(uname -r)}";
 
     get_nvidia_module;
     IFS="$IFS:," read mod ver krn arc sta xxx < <(dkms status "$nvidia_module");
