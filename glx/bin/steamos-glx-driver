@@ -21,6 +21,7 @@ export LANG=C;
 
 initrd=;
 module_list=();
+initrd_module_list=();
 nvidia_module=;
 dracut_conf=/etc/dracut.conf.d/99-nvidia-dkms.conf;
 
@@ -66,24 +67,29 @@ get_module_list ()
     mapfile -t module_list < <(ls -1 "$1" | sed -E 's/\.ko(\.xz)*$//');
 }
 
+get_initrd_module_list ()
+{
+    mapfile -t initrd_module_list < <(lsinitrd "$1" | sed -n -E '/\.ko(\.xz)*$/s/.*\/(.*)\.ko(\.xz)*$/\1/p');
+}
+
 initrd_is_up_to_date ()
 {
     local initrd="$1";  shift;
     local modpath="$1"; shift;
 
-    local imod=;
+    local mod=;
     local allmods=;
     local update=;
     declare -A found;
 
-    while read l;
+    get_initrd_module_list "$initrd";
+    for mod in "${initrd_module_list[@]}";
     do
-        imod="$(echo "${l##*/}" | sed -E 's/\.ko(\.xz)*$//')";
         for m in "$@";
         do
-            if [ "$imod" = "$m" ]; then found[$m]=1; fi;
+            if [ "$mod" = "$m" ]; then found[$m]=1; fi;
         done;
-    done < <(lsinitrd "$initrd" | grep -E '\.ko(\.xz)*$');
+    done;
 
     allmods=1;
     for m in "$@";
