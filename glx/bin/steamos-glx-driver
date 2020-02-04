@@ -178,12 +178,8 @@ check_nvidia_dkms_modules ()
     arc="${arc:-$(uname -m)}";
     modpath="/var/lib/dkms/$mod/$ver/$krn/$arc/module";
     get_module_list "$modpath";
-    echo -n > "$dracut_conf";
-    for m in "${module_list[@]}";
-    do
-        info "Adding ${m%.ko*} to dracut config";
-        echo "add_drivers+=\" ${m%.ko*} \"" >> "$dracut_conf";
-    done;
+    info "Adding ${module_list[*]} to dracut config";
+    echo "add_drivers+=\" ${module_list[*]%.ko*} \"" > "$dracut_conf";
 
     get_initrd "$ver";
     if initrd_is_up_to_date "$initrd" "$modpath" "${module_list[@]}";
