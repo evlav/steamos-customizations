@@ -23,6 +23,7 @@ initrd=;
 module_list=();
 initrd_module_list=();
 missing_module_list=();
+uptodate_module_list=();
 nvidia_module=;
 dracut_conf=/etc/dracut.conf.d/99-nvidia-dkms.conf;
 
@@ -83,37 +84,40 @@ get_missing_module_list() {
     );
 }
 
+get_uptodate_module_list() {
+    local initrd="$1"; shift;
+    local modpath="$1"; shift;
+
+    mapfile -t uptodate_module_list < <( \
+        local mod;
+        for mod in "$@";
+        do
+            if [ "$modpath/$mod" -nt "$initrd" ];
+            then
+                echo "$mod";
+            fi;
+        done;
+    );
+}
+
 initrd_is_up_to_date ()
 {
     local initrd="$1";  shift;
     local modpath="$1"; shift;
 
-    local update=;
-    declare -A found;
-
     get_missing_module_list "$initrd" "$@";
     if [ "${#missing_module_list[@]}" -ne 0 ]
     then
         info "Module list in $initrd incomplete:" "${missing_module_list[@]}";
-        update=1;
-    else
-        update=0;
-        for m in "$@";
-        do
-            if [ "$modpath/$m" -nt "$initrd" ];
-            then
-                info "Initrd module $m is out of date";
-                update=1;
-            fi;
-        done;
+        return 1;
     fi;
 
-    if [ "$update" = 0 ];
+    get_uptodate_module_list "$initrd" "$modpath" "$@";
+    if [ "${#uptodate_module_list[@]}" -ne 0 ]
     then
-        return 0;
+        info "Module list in $initrd is outdated:" "${uptodate_module_list[@]}";
+        return 1;
     fi;
-
-    return 1;
 }
 
 check_nvidia_dkms_modules ()
