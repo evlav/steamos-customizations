@@ -27,18 +27,6 @@ uptodate_module_list=();
 nvidia_module=;
 dracut_conf=/etc/dracut.conf.d/99-nvidia-dkms.conf;
 
-log ()
-{
-    local pfx="$1"; shift;
-
-    if [ -t 1 ]; then pfx=''; fi;
-    echo "$pfx$@";
-}
-
-info   () { log "<6>" "$@"; }
-notice () { log "<5>" "$@"; echo "$@" > /dev/console; }
-warn   () { log "<4>" "$@"; echo "$@" > /dev/console; }
-
 get_initrd ()
 {
     local ver="$1";
@@ -108,14 +96,14 @@ initrd_is_up_to_date ()
     get_missing_module_list "$initrd" "$@";
     if [ "${#missing_module_list[@]}" -ne 0 ];
     then
-        info "Module list in $initrd incomplete:" "${missing_module_list[@]}";
+        steamos-info "Module list in $initrd incomplete:" "${missing_module_list[@]}";
         return 1;
     fi;
 
     get_uptodate_module_list "$initrd" "$modpath" "$@";
     if [ "${#uptodate_module_list[@]}" -ne 0 ];
     then
-        info "Module list in $initrd is outdated:" "${uptodate_module_list[@]}";
+        steamos-info "Module list in $initrd is outdated:" "${uptodate_module_list[@]}";
         return 1;
     fi;
 }
@@ -163,7 +151,7 @@ check_nvidia_dkms_modules ()
     if ! read mod ver krn arc sta _ < <(get_status "$nvidia_module");
     then
         # the module is not even added, quit!
-        info "$nvidia_module module is not added";
+        steamos-info "The driver $nvidia_module is not added!";
         return 1;
     fi;
     if [ -z "$sta" ]; then sta="$krn"; krn=; fi;
@@ -171,12 +159,13 @@ check_nvidia_dkms_modules ()
     # the module is added or built but it is not installed though, install it!
     if [ "$sta" != "installed" ];
     then
-        info "$nvidia_module module needs to be installed";
+        steamos-notice "Installing the driver $nvidia_module...";
         if ! dkms install "$mod/$ver" ||
            ! read mod ver krn arc sta _ < <(get_status "$nvidia_module");
         then
             # the module is not installed, quit!
-            info "$nvidia_module module is not installed";
+            steamos-error "The driver $nvidia_module cannot be installed!";
+            sleep 5s;
             return 1;
         fi;
         if [ -z "$sta" ]; then sta="$krn"; krn=; fi;
@@ -187,21 +176,21 @@ check_nvidia_dkms_modules ()
     get_module_list "$modpath";
 
     # regenerate the dracut configuration
-    info "Adding modules ${module_list[*]} to dracut";
+    steamos-info "Adding modules ${module_list[*]} to dracut";
     echo "add_drivers+=\" ${module_list[*]%.ko*} \"" > "$dracut_conf";
 
     # the initrd is outdated, rebuild it!
     get_initrd "$ver";
-    if ! initrd_is_up_to_date "$initrd" "$modpath" "${module_list[@]}"
+    if ! initrd_is_up_to_date "$initrd" "$modpath" "${module_list[@]}";
     then
-        notice "Rebuilding initrd to install $mod/$ver:" "${module_list[@]}";
+        steamos-notice "Rebuilding the Initial RAM-disk...";
         update-dracut;
     fi;
 
     # the module nvidia is not loaded, reboot!
     if ! grep -q '^nvidia' /proc/modules;
     then
-        warn "Rebooting in 5 seconds...";
+        steamos-logger "Rebooting in 5 seconds...";
         sleep 5s;
         reboot;
     fi;
@@ -215,5 +204,8 @@ do
         then
             rm -f "${dracut_conf:-/etc/dracut.conf.d/no-such-file}";
         fi;
+
+        # clear the splash screen
+        steamos-notice;
     fi;
 done;
