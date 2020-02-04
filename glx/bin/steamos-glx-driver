@@ -211,7 +211,7 @@ check_nvidia_dkms_modules ()
     if [ "$sta" = installed ];
     then
         notice "Rebuilding initrd to install $mod/$ver:" "${module_list[@]}";
-        dracut -f "$initrd";
+        update-dracut;
     else
         notice "Installing $mod/$ver:" "${module_list[@]}";
         dkms install "$mod/$ver";
@@ -224,7 +224,7 @@ check_nvidia_dkms_modules ()
         if ! initrd_is_up_to_date "$initrd" "$mod" "$ver" "$krn" "$arc" "${module_list[@]}";
         then
             notice "Rebuilding initrd to install $mod/$ver:" "${module_list[@]}";
-            dracut -f "$initrd";
+            update-dracut;
         fi;
     fi;
 
