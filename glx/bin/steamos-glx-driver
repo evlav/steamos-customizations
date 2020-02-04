@@ -63,27 +63,17 @@ get_nvidia_module ()
 
 get_module_list ()
 {
-    local mod="$1";
-    local ver="$2";
-    local krn="${3:-$(uname -r)}";
-    local arc="${4:-$(uname -m)}";
-    local modpath="/var/lib/dkms/$mod/$ver/$krn/$arc/module";
-
-    mapfile -t module_list < <(ls -1 "$modpath" | sed -E 's/\.ko(\.xz)*$//');
+    mapfile -t module_list < <(ls -1 "$1" | sed -E 's/\.ko(\.xz)*$//');
 }
 
 initrd_is_up_to_date ()
 {
-    local initrd="$1"; shift;
-    local mod="$1";    shift;
-    local ver="$1";    shift;
-    local krn="$1";    shift;
-    local arc="$1";    shift;
+    local initrd="$1";  shift;
+    local modpath="$1"; shift;
 
     local imod=;
     local allmods=;
     local update=;
-    local modpath="/var/lib/dkms/$mod/$ver/$krn/$arc/module";
     declare -A found;
 
     while read l;
@@ -152,6 +142,7 @@ check_nvidia_dkms_modules ()
     local sta=;
     local xxx=;
     local regen=noop;
+    local modpath=;
 
     get_nvidia_module;
     IFS="$IFS:," read mod ver krn arc sta xxx < <(dkms status "$nvidia_module");
@@ -187,7 +178,10 @@ check_nvidia_dkms_modules ()
     if [ "$regen" = noop ]; then return 0; fi;
 
     # even if regen was no we might need to update the initrd
-    get_module_list "$mod" "$ver" "$krn" "$arc";
+    krn="${krn:-$(uname -r)}";
+    arc="${arc:-$(uname -m)}";
+    modpath="/var/lib/dkms/$mod/$ver/$krn/$arc/module";
+    get_module_list "$modpath";
     echo -n > "$dracut_conf";
     for m in "${module_list[@]}";
     do
@@ -196,7 +190,7 @@ check_nvidia_dkms_modules ()
     done;
 
     get_initrd "$ver";
-    if initrd_is_up_to_date "$initrd" "$mod" "$ver" "$krn" "$arc" "${module_list[@]}";
+    if initrd_is_up_to_date "$initrd" "$modpath" "${module_list[@]}";
     then
         info "Initrd has up to date $mod/$ver:" "${module_list[@]}";
         return 0;
@@ -215,7 +209,7 @@ check_nvidia_dkms_modules ()
         # So the only way to know whether we need to rebuild the initrd,
         # AFAICT, is to call initrd_is_up_to_date() a second time. Too bad
         # it's such an expensive operation (lsinitrd under the hood)...
-        if ! initrd_is_up_to_date "$initrd" "$mod" "$ver" "$krn" "$arc" "${module_list[@]}";
+        if ! initrd_is_up_to_date "$initrd" "$modpath" "${module_list[@]}";
         then
             notice "Rebuilding initrd to install $mod/$ver:" "${module_list[@]}";
             update-dracut;
