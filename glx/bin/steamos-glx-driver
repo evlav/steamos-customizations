@@ -22,6 +22,7 @@ export LANG=C;
 initrd=;
 module_list=();
 initrd_module_list=();
+missing_module_list=();
 nvidia_module=;
 dracut_conf=/etc/dracut.conf.d/99-nvidia-dkms.conf;
 
@@ -72,42 +73,28 @@ get_initrd_module_list ()
     mapfile -t initrd_module_list < <(lsinitrd "$1" | sed -n -E '/\.ko(\.xz)*$/s/.*\/(.*)$/\1/p');
 }
 
+get_missing_module_list() {
+    local initrd="$1"; shift;
+
+    get_initrd_module_list "$initrd";
+    mapfile -t missing_module_list < <( \
+        comm -13 <(printf "%s\n" "${initrd_module_list[@]}" | sort;) \
+                 <(printf "%s\n" "$@"                       | sort;) \
+    );
+}
+
 initrd_is_up_to_date ()
 {
     local initrd="$1";  shift;
     local modpath="$1"; shift;
 
-    local mod=;
-    local allmods=;
     local update=;
     declare -A found;
 
-    get_initrd_module_list "$initrd";
-    for mod in "${initrd_module_list[@]}";
-    do
-        for m in "$@";
-        do
-            if [ "$mod" = "$m" ]; then found[$m]=1; fi;
-        done;
-    done;
-
-    allmods=1;
-    for m in "$@";
-    do
-        if [ "${found[$m]:-0}" = 1 ]; then continue; fi;
-        allmods=0;
-    done;
-
-    if [ "$allmods" = 0 ];
+    get_missing_module_list "$initrd" "$@";
+    if [ "${#missing_module_list[@]}" -ne 0 ]
     then
-        info "Module list in $initrd incomplete:";
-        for m in "$@";
-        do
-            if [ "${found[$m]:-0}" != 1 ];
-            then
-                info "  Missing: $m";
-            fi;
-        done;
+        info "Module list in $initrd incomplete:" "${missing_module_list[@]}";
         update=1;
     else
         update=0;
