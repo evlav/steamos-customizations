@@ -155,9 +155,7 @@ check_nvidia_dkms_modules ()
     local kernel="${1:-$(uname -r)}";
 
     get_nvidia_module;
-    local oIFS="$IFS";
-    IFS="$IFS:,";
-    read mod ver krn arc sta xxx < <(dkms status "$nvidia_module");
+    IFS="$IFS:," read mod ver krn arc sta xxx < <(dkms status "$nvidia_module");
     if [ -z "$sta" ]; then sta="$krn"; krn=; fi;
 
     case "$mod:$sta" in
@@ -170,16 +168,13 @@ check_nvidia_dkms_modules ()
             regen=yes;
             ;;
     esac;
-    IFS="$oIFS";
 
     case "$regen" in
         yes)
             notice "Rebuilding dkms modules $mod/$ver";
             dkms build "$mod/$ver";
-            IFS="$IFS:,";
-            read mod ver krn arc sta xxx < <(dkms status "$nvidia_module");
+            IFS="$IFS:," read mod ver krn arc sta xxx < <(dkms status "$nvidia_module");
             if [ -z "$sta" ]; then sta="$krn"; krn=; fi;
-            IFS="$oIFS";
             ;;
         no)
             true;
