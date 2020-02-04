@@ -128,88 +128,73 @@ check_nvidia_dkms_modules ()
     local arc=;
     local sta=;
     local xxx=;
-    local regen=noop;
     local modpath=;
 
+    # get the module status
     get_nvidia_module;
     IFS="$IFS:," read mod ver krn arc sta xxx < <(dkms status "$nvidia_module");
     if [ -z "$sta" ]; then sta="$krn"; krn=; fi;
 
-    case "$mod:$sta" in
-        $nvidia_module:installed)
-            info "$nvidia_module module is built";
-            regen=no;
-            ;;
-        $nvidia_module:*)
-            info "$nvidia_module module needs to be built";
-            regen=yes;
-            ;;
-    esac;
-
-    case "$regen" in
-        yes)
-            notice "Rebuilding dkms modules $mod/$ver";
-            dkms build "$mod/$ver";
-            IFS="$IFS:," read mod ver krn arc sta xxx < <(dkms status "$nvidia_module");
-            if [ -z "$sta" ]; then sta="$krn"; krn=; fi;
-            ;;
-        no)
-            true;
-            ;;
-        *)
-            rm -f "${dracut_conf:-/etc/dracut.conf.d/no-such-file}";
-            ;;
-    esac;
-
-    # regen=noop means nothing else to do
-    if [ "$regen" = noop ]; then return 0; fi;
-
-    # even if regen was no we might need to update the initrd
-    krn="${krn:-$(uname -r)}";
-    arc="${arc:-$(uname -m)}";
-    modpath="/var/lib/dkms/$mod/$ver/$krn/$arc/module";
-    get_module_list "$modpath";
-    info "Adding ${module_list[*]} to dracut config";
-    echo "add_drivers+=\" ${module_list[*]%.ko*} \"" > "$dracut_conf";
-
-    get_initrd "$ver";
-    if initrd_is_up_to_date "$initrd" "$modpath" "${module_list[@]}";
+    # the module is not even added, quit!
+    if [ -z "$ver" ];
     then
-        info "Initrd has up to date $mod/$ver:" "${module_list[@]}";
-        return 0;
+        info "$nvidia_module module is not added";
+        return 1;
     fi;
 
-    if [ "$sta" = installed ];
+    # the module is added or built but it is not installed though, install it!
+    if [ "$sta" != "installed" ];
+    then
+        info "$nvidia_module module needs to be installed";
+        dkms install "$mod/$ver";
+        IFS="$IFS:," read mod ver krn arc sta xxx < <(dkms status "$nvidia_module");
+        if [ -z "$sta" ]; then sta="$krn"; krn=; fi;
+    fi;
+
+    # the impossible happened, give up!
+    if [ -z "$mod" ] || [ -z "$ver" ] || [ "$sta" != "installed" ];
+    then
+        info "$nvidia_module module is not installed";
+        return 1;
+    # try to recover anyway...
+    elif [ -z "$krn" ] || [ -z "$arc" ];
+    then
+        krn="${krn:-$(uname -r)}";
+        arc="${arc:-$(uname -m)}";
+    fi;
+
+    # the modules lives there
+    modpath="/var/lib/dkms/$mod/$ver/$krn/$arc/module";
+    get_module_list "$modpath";
+
+    # regenerate the dracut configuration
+    info "Adding modules ${module_list[*]} to dracut";
+    echo "add_drivers+=\" ${module_list[*]%.ko*} \"" > "$dracut_conf";
+
+    # the initrd is outdated, rebuild it!
+    get_initrd "$ver";
+    if ! initrd_is_up_to_date "$initrd" "$modpath" "${module_list[@]}"
     then
         notice "Rebuilding initrd to install $mod/$ver:" "${module_list[@]}";
         update-dracut;
-    else
-        notice "Installing $mod/$ver:" "${module_list[@]}";
-        dkms install "$mod/$ver";
-        # DKMS can rebuild the initrd as part of 'dkms install',  if ever
-        # REMAKE_INITRD is set.  The only probem is that we don't know if
-        # this option was set (could be added in a conf file by the user).
-        # So the only way to know whether we need to rebuild the initrd,
-        # AFAICT, is to call initrd_is_up_to_date() a second time. Too bad
-        # it's such an expensive operation (lsinitrd under the hood)...
-        if ! initrd_is_up_to_date "$initrd" "$modpath" "${module_list[@]}";
-        then
-            notice "Rebuilding initrd to install $mod/$ver:" "${module_list[@]}";
-            update-dracut;
-        fi;
     fi;
 
-    # Reboot now. It would be better to ask systemd to go to the end of the
-    # current target (ie. sysinit.target) and reboot, but couldn't find how...
-    warn "Rebooting in 5 seconds...";
-    sleep 5s;
-    reboot;
+    # the module nvidia is not loaded, reboot!
+    if ! grep -q '^nvidia' /proc/modules;
+    then
+        warn "Rebooting in 5 seconds...";
+        sleep 5s;
+        reboot;
+    fi;
 }
 
 for mod in "$@";
 do
     if [[ "$mod" =~ ^nvidia ]];
     then
-        check_nvidia_dkms_modules;
+        if ! check_nvidia_dkms_modules;
+        then
+            rm -f "${dracut_conf:-/etc/dracut.conf.d/no-such-file}";
+        fi;
     fi;
 done;
