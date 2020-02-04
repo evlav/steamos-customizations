@@ -64,12 +64,12 @@ get_nvidia_module ()
 
 get_module_list ()
 {
-    mapfile -t module_list < <(ls -1 "$1" | sed -E 's/\.ko(\.xz)*$//');
+    mapfile -t module_list < <(ls -1 "$1");
 }
 
 get_initrd_module_list ()
 {
-    mapfile -t initrd_module_list < <(lsinitrd "$1" | sed -n -E '/\.ko(\.xz)*$/s/.*\/(.*)\.ko(\.xz)*$/\1/p');
+    mapfile -t initrd_module_list < <(lsinitrd "$1" | sed -n -E '/\.ko(\.xz)*$/s/.*\/(.*)$/\1/p');
 }
 
 initrd_is_up_to_date ()
@@ -113,19 +113,9 @@ initrd_is_up_to_date ()
         update=0;
         for m in "$@";
         do
-            imod="$m".ko;
-            if ! [ -e "$modpath/$imod" ];
+            if [ "$modpath/$m" -nt "$initrd" ];
             then
-                imod="$imod.xz";
-            fi;
-            if ! [ -e "$modpath/$imod" ];
-            then
-                info "Module $m not found in $modpath";
-                continue;
-            fi;
-            if [ "$modpath/$imod" -nt "$initrd" ];
-            then
-                info "Initrd module $imod is out of date";
+                info "Initrd module $m is out of date";
                 update=1;
             fi;
         done;
@@ -191,8 +181,8 @@ check_nvidia_dkms_modules ()
     echo -n > "$dracut_conf";
     for m in "${module_list[@]}";
     do
-        info "Adding $m to dracut config";
-        echo "add_drivers+=\" $m \"" >> "$dracut_conf";
+        info "Adding ${m%.ko*} to dracut config";
+        echo "add_drivers+=\" ${m%.ko*} \"" >> "$dracut_conf";
     done;
 
     get_initrd "$ver";
