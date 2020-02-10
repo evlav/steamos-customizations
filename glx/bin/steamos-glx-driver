@@ -20,13 +20,16 @@ export LC_ALL=C;
 export LANG=C;
 
 initrd=;
-module_list=;
+module_list=();
+initrd_module_list=();
+missing_module_list=();
+uptodate_module_list=();
 nvidia_module=;
 dracut_conf=/etc/dracut.conf.d/99-nvidia-dkms.conf;
 
 log ()
 {
-    local pfx=$1; shift;
+    local pfx="$1"; shift;
 
     if [ -t 1 ]; then pfx=''; fi;
     echo "$pfx$@";
@@ -38,13 +41,13 @@ warn   () { log "<4>" "$@"; echo "$@" > /dev/console; }
 
 get_initrd ()
 {
-    local ver=$1;
-    local pkgbase=/usr/lib/modules/$(uname -r)/pkgbase;
+    local ver="$1";
+    local pkgbase="/usr/lib/modules/$(uname -r)/pkgbase";
     
     initrd=;
     if [ -e "$pkgbase" ];
     then
-        initrd="/boot/initramfs-$(<$pkgbase).img";
+        initrd="/boot/initramfs-$(<"$pkgbase").img";
     else
 	initrd="/boot/initrd.img-$ver";
     fi;
@@ -63,85 +66,58 @@ get_nvidia_module ()
 
 get_module_list ()
 {
-    local mod=$1;
-    local ver=$2;
-    local krn=${3:-$(uname -r)};
-    local arc=${4:-$(uname -m)};
-    local modpath=/var/lib/dkms/"$mod/$ver/$krn/$arc"/module;
+    mapfile -t module_list < <(ls -1 "$1");
+}
 
-    module_list=;
-    module_list=$(ls -1 "$modpath" | sed -E 's/\.ko(\.xz)*$//');
+get_initrd_module_list ()
+{
+    mapfile -t initrd_module_list < <(lsinitrd "$1" | sed -n -E '/\.ko(\.xz)*$/s/.*\/(.*)$/\1/p');
+}
+
+get_missing_module_list() {
+    local initrd="$1"; shift;
+
+    get_initrd_module_list "$initrd";
+    mapfile -t missing_module_list < <( \
+        comm -13 <(printf "%s\n" "${initrd_module_list[@]}" | sort;) \
+                 <(printf "%s\n" "$@"                       | sort;) \
+    );
+}
+
+get_uptodate_module_list() {
+    local initrd="$1"; shift;
+    local modpath="$1"; shift;
+
+    mapfile -t uptodate_module_list < <( \
+        local mod;
+        for mod in "$@";
+        do
+            if [ "$modpath/$mod" -nt "$initrd" ];
+            then
+                echo "$mod";
+            fi;
+        done;
+    );
 }
 
 initrd_is_up_to_date ()
 {
-    local initrd=$1; shift;
-    local mod=$1;    shift;
-    local ver=$1;    shift;
-    local krn=$1;    shift;
-    local arc=$1;    shift;
+    local initrd="$1";  shift;
+    local modpath="$1"; shift;
 
-    local imod=;
-    local allmods=;
-    local update=;
-    local modpath=/var/lib/dkms/"$mod/$ver/$krn/$arc"/module;
-    declare -A found;
-
-    while read l;
-    do
-        imod=$(echo "${l##*/}" | sed -E 's/\.ko(\.xz)*$//');
-        for m in "$@";
-        do
-            if [ "$imod" = "$m" ]; then found[$m]=1; fi;
-        done;
-    done < <(lsinitrd "$initrd" | grep -E '\.ko(\.xz)*$');
-
-    allmods=1;
-    for m in "$@";
-    do
-        if [ ${found[$m]:-0} = 1 ]; then continue; fi;
-        allmods=0;
-    done;
-
-    if [ $allmods = 0 ];
+    get_missing_module_list "$initrd" "$@";
+    if [ "${#missing_module_list[@]}" -ne 0 ]
     then
-        info "Module list in $initrd incomplete:";
-        for m in "$@";
-        do
-            if [ ${found[$m]:-0} != 1 ];
-            then
-                info "  Missing: $m";
-            fi;
-        done;
-        update=1;
-    else
-        update=0;
-        for m in "$@";
-        do
-            imod="$m".ko;
-            if ! [ -e "$modpath"/"$imod" ];
-            then
-                imod="$imod".xz;
-            fi;
-            if ! [ -e "$modpath"/"$imod" ];
-            then
-                info "Module $m not found in $modpath";
-                continue;
-            fi;
-            if [ "$modpath"/"$imod" -nt "$initrd" ];
-            then
-                info "Initrd module $imod is out of date";
-                update=1;
-            fi;
-        done;
+        info "Module list in $initrd incomplete:" "${missing_module_list[@]}";
+        return 1;
     fi;
 
-    if [ $update = 0 ];
+    get_uptodate_module_list "$initrd" "$modpath" "$@";
+    if [ "${#uptodate_module_list[@]}" -ne 0 ]
     then
-        return 0;
+        info "Module list in $initrd is outdated:" "${uptodate_module_list[@]}";
+        return 1;
     fi;
-
-    return 1;
 }
 
 check_nvidia_dkms_modules ()
@@ -153,15 +129,13 @@ check_nvidia_dkms_modules ()
     local sta=;
     local xxx=;
     local regen=noop;
-    local kernel=${1:-$(uname -r)};
+    local modpath=;
 
     get_nvidia_module;
-    local oIFS="$IFS";
-    IFS="$IFS:,";
-    read mod ver krn arc sta xxx < <(dkms status $nvidia_module);
-    if [ -z "$sta" ]; then sta=$krn; krn=; fi;
+    IFS="$IFS:," read mod ver krn arc sta xxx < <(dkms status "$nvidia_module");
+    if [ -z "$sta" ]; then sta="$krn"; krn=; fi;
 
-    case $mod:$sta in
+    case "$mod:$sta" in
         $nvidia_module:installed)
             info "$nvidia_module module is built";
             regen=no;
@@ -171,61 +145,57 @@ check_nvidia_dkms_modules ()
             regen=yes;
             ;;
     esac;
-    IFS="$oIFS";
 
-    case $regen in
+    case "$regen" in
         yes)
             notice "Rebuilding dkms modules $mod/$ver";
-            dkms build "$mod"/"$ver";
-            IFS="$IFS:,";
-            read mod ver krn arc sta xxx < <(dkms status $nvidia_module);
-            if [ -z "$sta" ]; then sta=$krn; krn=; fi;
-            IFS="$oIFS";
+            dkms build "$mod/$ver";
+            IFS="$IFS:," read mod ver krn arc sta xxx < <(dkms status "$nvidia_module");
+            if [ -z "$sta" ]; then sta="$krn"; krn=; fi;
             ;;
         no)
             true;
             ;;
         *)
-            rm -f ${dracut_conf:-/etc/dracut.conf.d/no-such-file};
+            rm -f "${dracut_conf:-/etc/dracut.conf.d/no-such-file}";
             ;;
     esac;
 
     # regen=noop means nothing else to do
-    if [ $regen = noop ]; then return 0; fi;
+    if [ "$regen" = noop ]; then return 0; fi;
 
     # even if regen was no we might need to update the initrd
-    get_module_list $mod $ver $krn $arc;
-    echo -n > $dracut_conf;
-    for m in $module_list;
-    do
-        info "Adding $m to dracut config";
-        echo "add_drivers+=\" $m \"" >> $dracut_conf;
-    done;
+    krn="${krn:-$(uname -r)}";
+    arc="${arc:-$(uname -m)}";
+    modpath="/var/lib/dkms/$mod/$ver/$krn/$arc/module";
+    get_module_list "$modpath";
+    info "Adding ${module_list[*]} to dracut config";
+    echo "add_drivers+=\" ${module_list[*]%.ko*} \"" > "$dracut_conf";
 
-    get_initrd $ver;
-    if initrd_is_up_to_date "$initrd" "$mod" "$ver" "$krn" "$arc" $module_list;
+    get_initrd "$ver";
+    if initrd_is_up_to_date "$initrd" "$modpath" "${module_list[@]}";
     then
-        info "Initrd has up to date $mod/$ver:" $module_list;
+        info "Initrd has up to date $mod/$ver:" "${module_list[@]}";
         return 0;
     fi;
 
     if [ "$sta" = installed ];
     then
-        notice "Rebuilding initrd to install $mod/$ver:" $module_list;
-        dracut -f "$initrd";
+        notice "Rebuilding initrd to install $mod/$ver:" "${module_list[@]}";
+        update-dracut;
     else
-        notice "Installing $mod/$ver:" $module_list;
-        dkms install "$mod"/"$ver";
+        notice "Installing $mod/$ver:" "${module_list[@]}";
+        dkms install "$mod/$ver";
         # DKMS can rebuild the initrd as part of 'dkms install',  if ever
         # REMAKE_INITRD is set.  The only probem is that we don't know if
         # this option was set (could be added in a conf file by the user).
         # So the only way to know whether we need to rebuild the initrd,
         # AFAICT, is to call initrd_is_up_to_date() a second time. Too bad
         # it's such an expensive operation (lsinitrd under the hood)...
-        if ! initrd_is_up_to_date "$initrd" "$mod" "$ver" "$krn" "$arc" $module_list;
+        if ! initrd_is_up_to_date "$initrd" "$modpath" "${module_list[@]}";
         then
-            notice "Rebuilding initrd to install $mod/$ver:" $module_list;
-            dracut -f "$initrd";
+            notice "Rebuilding initrd to install $mod/$ver:" "${module_list[@]}";
+            update-dracut;
         fi;
     fi;
 
@@ -236,7 +206,10 @@ check_nvidia_dkms_modules ()
     reboot;
 }
 
-case ${1:-} in
-    *\ nvidia\ *|nvidia) check_nvidia_dkms_modules; ;;
-    *) exit 0; ;;
-esac;
+for mod in "$@";
+do
+    if [[ "$mod" =~ ^nvidia ]];
+    then
+        check_nvidia_dkms_modules;
+    fi;
+done;

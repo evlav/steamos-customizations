@@ -23,7 +23,7 @@ PCI_DISPLAY_CONTROLLER=0300;
 PCI_VENDOR_NVIDIA=10de;
 
 gpu_class=;
-gpu_class_list=;
+gpu_class_list=();
 glx_alternative_path=;
 
 have_glx_alternatives ()
@@ -33,7 +33,7 @@ have_glx_alternatives ()
 
 get_glx_alternative_path ()
 {
-    local classes=$1;
+    local classes=("$@");
     local path=;
     local prio=;
     local k=;
@@ -44,36 +44,40 @@ get_glx_alternative_path ()
 
     if ! have_glx_alternatives;
     then
-        echo No GLX alternatives installed;
+        echo "No GLX alternatives installed";
         glx_alternative_path=none;
         return;
     fi;
 
     # nvidia alternatives have the highest prio, so nothing to do here
-    # NOTE: the bumblee vs vanilla nvidia priority is handled
+    # NOTE: the bumblebee vs vanilla nvidia priority is handled
     # internally by the nvidia glx alternatives package:
-    case $classes in
-        *\ nvidia\ *) return; ;;
-    esac;
+    for class in "${classes[@]}";
+    do
+        if [ "$class" = "nvidia" ];
+        then
+            return;
+        fi;
+    done;
 
     # pick the highest prio non-nvidia choice
     while read k v;
     do
-        case $k in
-            Alternative:) path=$v; ;;
-            Priority:)    prio=$v; ;;
+        case "$k" in
+            Alternative:) path="$v"; ;;
+            Priority:)    prio="$v"; ;;
         esac;
 
         if [ "$path" ] && [ "$prio" ];
         then
-            case $path in
+            case "$path" in
                 *nvidia*) true; ;;
                 *)
-                    echo GLX path $path at priority $prio;
-                    if [ $prio -gt $chosen_prio ];
+                    echo "GLX path $path at priority $prio";
+                    if [ "$prio" -gt "$chosen_prio" ];
                     then
-                        chosen_prio=$prio;
-                        glx_alternative_path=$path;
+                        chosen_prio="$prio";
+                        glx_alternative_path="$path";
                     fi;
                     ;;
             esac;
@@ -85,12 +89,12 @@ get_glx_alternative_path ()
 
 gpu_class_from_id ()
 {
-    local vend=$1;
-    local dev=$2; # Not used at present
+    local vend="$1";
+    local dev="$2"; # Not used at present
 
     gpu_class=;
 
-    if [ "$vend" = $PCI_VENDOR_NVIDIA ];
+    if [ "$vend" = "$PCI_VENDOR_NVIDIA" ];
     then
         gpu_class="nvidia";
     elif [ "$vend" ];
@@ -108,42 +112,39 @@ get_gpu_class_list ()
     local vendor=;
     local class=;
 
-    gpu_class_list=;
-
     while read k v;
     do
-        case $k in
+        case "$k" in
             Slot:)   class=; device=; vendor=; ;;
-            Class:)  class=$v;                 ;;
-            Vendor:) vendor=$v;                ;;
-            Device:) device=$v;                ;;
+            Class:)  class="$v";               ;;
+            Vendor:) vendor="$v";              ;;
+            Device:) device="$v";              ;;
         esac;
-        if [ "$class" = $PCI_DISPLAY_CONTROLLER ] &&
+        if [ "$class" = "$PCI_DISPLAY_CONTROLLER" ] &&
            [ "$vendor" ] && [ "$device" ];
         then
             gpu_class_from_id "$vendor" "$device";
-            echo Device $vendor:$class is in class "'$gpu_class'";
+            echo "Device $vendor:$class is in class '$gpu_class'";
             vendor=;
             class=;
-            gpu_class_list=${gpu_class_list}" "${gpu_class}" ";
+            gpu_class_list+=("$gpu_class")
         fi
     done < <(lspci -vmmn);
 }
 
 get_gpu_class_list;
-echo GPUs found: $gpu_class_list;
+echo "GPUs found:" "${gpu_class_list[@]}";
 
 if command -v update-alternatives >/dev/null 2>&1;
 then
-    get_glx_alternative_path "$gpu_class_list";
-    echo Chose GLX path: $glx_alternative_path;
+    get_glx_alternative_path "${gpu_class_list[@]}";
+    echo "Chose GLX path:" "$glx_alternative_path";
 
-    case $glx_alternative_path in
+    case "$glx_alternative_path" in
         none) true; ;;
         auto) update-alternatives --auto glx; ;;
-        /*)   update-alternatives --set glx $glx_alternative_path;
+        /*)   update-alternatives --set glx "$glx_alternative_path";
     esac;
 fi;
 
-steamos-glx-driver "$gpu_class_list";
-
+steamos-glx-driver "${gpu_class_list[@]}";
