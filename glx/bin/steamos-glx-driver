@@ -120,6 +120,35 @@ initrd_is_up_to_date ()
     fi;
 }
 
+get_status() {
+    local kver=;
+    local arch=;
+    local words=();
+    local status=();
+
+    kver="$(uname -r)";
+    arch="$(uname -m)";
+    while IFS="$IFS:," read -a words;
+    do
+        # module version status=added
+        if [ "${#words[@]}" -eq 3 ] && [ "${words[2]}" = "added" ];
+        then
+            status=("${words[@]}");
+        # module version kernel-version arch status=(built|installed)
+        elif [ "${words[2]}" = "$kver" ] && [ "${words[3]}" = "$arch" ];
+        then
+            status=("${words[@]}");
+        fi;
+    done < <(dkms status "$nvidia_module");
+
+    if [ "${#status[@]}" -eq 0 ];
+    then
+        return 1
+    fi;
+
+    echo "${status[@]:-}"
+}
+
 check_nvidia_dkms_modules ()
 {
     local mod=;
@@ -127,40 +156,30 @@ check_nvidia_dkms_modules ()
     local krn=;
     local arc=;
     local sta=;
-    local xxx=;
     local modpath=;
 
     # get the module status
     get_nvidia_module;
-    IFS="$IFS:," read mod ver krn arc sta xxx < <(dkms status "$nvidia_module");
-    if [ -z "$sta" ]; then sta="$krn"; krn=; fi;
-
-    # the module is not even added, quit!
-    if [ -z "$ver" ];
+    if ! read mod ver krn arc sta _ < <(get_status "$nvidia_module");
     then
+        # the module is not even added, quit!
         info "$nvidia_module module is not added";
         return 1;
     fi;
+    if [ -z "$sta" ]; then sta="$krn"; krn=; fi;
 
     # the module is added or built but it is not installed though, install it!
     if [ "$sta" != "installed" ];
     then
         info "$nvidia_module module needs to be installed";
-        dkms install "$mod/$ver";
-        IFS="$IFS:," read mod ver krn arc sta xxx < <(dkms status "$nvidia_module");
+        if ! dkms install "$mod/$ver" ||
+           ! read mod ver krn arc sta _ < <(get_status "$nvidia_module");
+        then
+            # the module is not installed, quit!
+            info "$nvidia_module module is not installed";
+            return 1;
+        fi;
         if [ -z "$sta" ]; then sta="$krn"; krn=; fi;
-    fi;
-
-    # the impossible happened, give up!
-    if [ -z "$mod" ] || [ -z "$ver" ] || [ "$sta" != "installed" ];
-    then
-        info "$nvidia_module module is not installed";
-        return 1;
-    # try to recover anyway...
-    elif [ -z "$krn" ] || [ -z "$arc" ];
-    then
-        krn="${krn:-$(uname -r)}";
-        arc="${arc:-$(uname -m)}";
     fi;
 
     # the modules lives there
