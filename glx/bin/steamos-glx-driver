@@ -26,6 +26,7 @@ missing_module_list=();
 uptodate_module_list=();
 nvidia_module=;
 dracut_conf=/etc/dracut.conf.d/99-nvidia-dkms.conf;
+reboot_file=/var/lib/.${0##*/}-has-rebooted;
 
 get_initrd ()
 {
@@ -186,14 +187,6 @@ check_nvidia_dkms_modules ()
         steamos-notice "Rebuilding the Initial RAM-disk...";
         update-dracut;
     fi;
-
-    # the module nvidia is not loaded, reboot!
-    if ! grep -q '^nvidia' /proc/modules;
-    then
-        steamos-logger "Rebooting in 5 seconds...";
-        sleep 5s;
-        reboot;
-    fi;
 }
 
 for mod in "$@";
@@ -203,6 +196,23 @@ do
         if ! check_nvidia_dkms_modules;
         then
             rm -f "${dracut_conf:-/etc/dracut.conf.d/no-such-file}";
+        fi;
+
+        # the module nvidia is not loaded, reboot!
+        if ! grep -q '^nvidia' /proc/modules;
+        then
+            if [[ -e "$reboot_file" ]];
+            then
+                steamos-critical "The system is broken :(. Hit Ctrl+Alt+F2 and login to debug things...";
+                exit 1;
+            else
+                touch "$reboot_file";
+                steamos-notice "Rebooting in 5 seconds...";
+                sleep 5s;
+                reboot;
+            fi;
+        else
+            rm -f "${reboot_file:-/var/lib/no-such-file}";
         fi;
 
         # clear the splash screen
