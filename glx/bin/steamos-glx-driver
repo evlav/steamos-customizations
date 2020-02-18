@@ -27,18 +27,6 @@ uptodate_module_list=();
 nvidia_module=;
 dracut_conf=/etc/dracut.conf.d/99-nvidia-dkms.conf;
 
-log ()
-{
-    local pfx="$1"; shift;
-
-    if [ -t 1 ]; then pfx=''; fi;
-    echo "$pfx$@";
-}
-
-info   () { log "<6>" "$@"; }
-notice () { log "<5>" "$@"; echo "$@" > /dev/console; }
-warn   () { log "<4>" "$@"; echo "$@" > /dev/console; }
-
 get_initrd ()
 {
     local ver="$1";
@@ -108,16 +96,45 @@ initrd_is_up_to_date ()
     get_missing_module_list "$initrd" "$@";
     if [ "${#missing_module_list[@]}" -ne 0 ];
     then
-        info "Module list in $initrd incomplete:" "${missing_module_list[@]}";
+        steamos-info "Module list in $initrd incomplete:" "${missing_module_list[@]}";
         return 1;
     fi;
 
     get_uptodate_module_list "$initrd" "$modpath" "$@";
     if [ "${#uptodate_module_list[@]}" -ne 0 ];
     then
-        info "Module list in $initrd is outdated:" "${uptodate_module_list[@]}";
+        steamos-info "Module list in $initrd is outdated:" "${uptodate_module_list[@]}";
         return 1;
     fi;
+}
+
+get_status() {
+    local kver=;
+    local arch=;
+    local words=();
+    local status=();
+
+    kver="$(uname -r)";
+    arch="$(uname -m)";
+    while IFS="$IFS:," read -a words;
+    do
+        # module version status=added
+        if [ "${#words[@]}" -eq 3 ] && [ "${words[2]}" = "added" ];
+        then
+            status=("${words[@]}");
+        # module version kernel-version arch status=(built|installed)
+        elif [ "${words[2]}" = "$kver" ] && [ "${words[3]}" = "$arch" ];
+        then
+            status=("${words[@]}");
+        fi;
+    done < <(dkms status "$nvidia_module");
+
+    if [ "${#status[@]}" -eq 0 ];
+    then
+        return 1
+    fi;
+
+    echo "${status[@]:-}"
 }
 
 check_nvidia_dkms_modules ()
@@ -127,89 +144,68 @@ check_nvidia_dkms_modules ()
     local krn=;
     local arc=;
     local sta=;
-    local xxx=;
-    local regen=noop;
     local modpath=;
 
+    # get the module status
     get_nvidia_module;
-    IFS="$IFS:," read mod ver krn arc sta xxx < <(dkms status "$nvidia_module");
+    if ! read mod ver krn arc sta _ < <(get_status "$nvidia_module");
+    then
+        # the module is not even added, quit!
+        steamos-info "The driver $nvidia_module is not added!";
+        return 1;
+    fi;
     if [ -z "$sta" ]; then sta="$krn"; krn=; fi;
 
-    case "$mod:$sta" in
-        $nvidia_module:installed)
-            info "$nvidia_module module is built";
-            regen=no;
-            ;;
-        $nvidia_module:*)
-            info "$nvidia_module module needs to be built";
-            regen=yes;
-            ;;
-    esac;
+    # the module is added or built but it is not installed though, install it!
+    if [ "$sta" != "installed" ];
+    then
+        steamos-notice "Installing the driver $nvidia_module...";
+        if ! dkms install "$mod/$ver" ||
+           ! read mod ver krn arc sta _ < <(get_status "$nvidia_module");
+        then
+            # the module is not installed, quit!
+            steamos-error "The driver $nvidia_module cannot be installed!";
+            sleep 5s;
+            return 1;
+        fi;
+        if [ -z "$sta" ]; then sta="$krn"; krn=; fi;
+    fi;
 
-    case "$regen" in
-        yes)
-            notice "Rebuilding dkms modules $mod/$ver";
-            dkms build "$mod/$ver";
-            IFS="$IFS:," read mod ver krn arc sta xxx < <(dkms status "$nvidia_module");
-            if [ -z "$sta" ]; then sta="$krn"; krn=; fi;
-            ;;
-        no)
-            true;
-            ;;
-        *)
-            rm -f "${dracut_conf:-/etc/dracut.conf.d/no-such-file}";
-            ;;
-    esac;
-
-    # regen=noop means nothing else to do
-    if [ "$regen" = noop ]; then return 0; fi;
-
-    # even if regen was no we might need to update the initrd
-    krn="${krn:-$(uname -r)}";
-    arc="${arc:-$(uname -m)}";
+    # the modules lives there
     modpath="/var/lib/dkms/$mod/$ver/$krn/$arc/module";
     get_module_list "$modpath";
-    info "Adding ${module_list[*]} to dracut config";
+
+    # regenerate the dracut configuration
+    steamos-info "Adding modules ${module_list[*]} to dracut";
     echo "add_drivers+=\" ${module_list[*]%.ko*} \"" > "$dracut_conf";
 
+    # the initrd is outdated, rebuild it!
     get_initrd "$ver";
-    if initrd_is_up_to_date "$initrd" "$modpath" "${module_list[@]}";
+    if ! initrd_is_up_to_date "$initrd" "$modpath" "${module_list[@]}";
     then
-        info "Initrd has up to date $mod/$ver:" "${module_list[@]}";
-        return 0;
-    fi;
-
-    if [ "$sta" = installed ];
-    then
-        notice "Rebuilding initrd to install $mod/$ver:" "${module_list[@]}";
+        steamos-notice "Rebuilding the Initial RAM-disk...";
         update-dracut;
-    else
-        notice "Installing $mod/$ver:" "${module_list[@]}";
-        dkms install "$mod/$ver";
-        # DKMS can rebuild the initrd as part of 'dkms install',  if ever
-        # REMAKE_INITRD is set.  The only probem is that we don't know if
-        # this option was set (could be added in a conf file by the user).
-        # So the only way to know whether we need to rebuild the initrd,
-        # AFAICT, is to call initrd_is_up_to_date() a second time. Too bad
-        # it's such an expensive operation (lsinitrd under the hood)...
-        if ! initrd_is_up_to_date "$initrd" "$modpath" "${module_list[@]}";
-        then
-            notice "Rebuilding initrd to install $mod/$ver:" "${module_list[@]}";
-            update-dracut;
-        fi;
     fi;
 
-    # Reboot now. It would be better to ask systemd to go to the end of the
-    # current target (ie. sysinit.target) and reboot, but couldn't find how...
-    warn "Rebooting in 5 seconds...";
-    sleep 5s;
-    reboot;
+    # the module nvidia is not loaded, reboot!
+    if ! grep -q '^nvidia' /proc/modules;
+    then
+        steamos-logger "Rebooting in 5 seconds...";
+        sleep 5s;
+        reboot;
+    fi;
 }
 
 for mod in "$@";
 do
     if [[ "$mod" =~ ^nvidia ]];
     then
-        check_nvidia_dkms_modules;
+        if ! check_nvidia_dkms_modules;
+        then
+            rm -f "${dracut_conf:-/etc/dracut.conf.d/no-such-file}";
+        fi;
+
+        # clear the splash screen
+        steamos-notice;
     fi;
 done;
