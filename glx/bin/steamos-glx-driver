@@ -172,6 +172,9 @@ check_nvidia_dkms_modules ()
         if [ -z "$sta" ]; then sta="$krn"; krn=; fi;
     fi;
 
+    # blacklist nouveau
+    sed '/^#blacklist nouveau/s,^#,,' -i /usr/lib/modprobe.d/nvidia-dkms.conf
+
     # the modules lives there
     modpath="/var/lib/dkms/$mod/$ver/$krn/$arc/module";
     get_module_list "$modpath";
@@ -195,7 +198,11 @@ do
     then
         if ! check_nvidia_dkms_modules;
         then
+            # remove the dracut configuration
             rm -f "${dracut_conf:-/etc/dracut.conf.d/no-such-file}";
+
+            # do not blacklist nouveau
+            sed '/^blacklist nouveau/s,^,#,' -i /usr/lib/modprobe.d/nvidia-dkms.conf
         fi;
 
         # the module nvidia is not loaded...
@@ -206,7 +213,10 @@ do
             then
                 rm -f "${reboot_file:-/var/lib/no-such-file}";
                 steamos-warning "The system falls back to the driver nouveau!";
-                modprobe nouveau;
+                if ! grep "^nouveau" /proc/modules
+                then
+                    modprobe nouveau;
+                fi
             # the system has not rebooted yet, reboot!
             else
                 touch "$reboot_file";
