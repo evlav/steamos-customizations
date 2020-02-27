@@ -1,6 +1,6 @@
 #!/bin/sh
   
-# Copyright © 2015 Collabora Ltd.
+# Copyright © 2015-2020 Collabora Ltd.
 #
 # SPDX-License-Identifier: MPL-2.0
 # This Source Code Form is subject to the terms of the Mozilla Public
@@ -20,4 +20,5 @@ test -d $HOMEDIR && exit 0
 echo "Creating homedir $HOMEDIR for UID $ID"
 mkdir -p $HOMEDIR
 find /etc/skel -maxdepth 1 -mindepth 1 -exec cp -vPax {} $HOMEDIR \;
+cp -vPax /usr/share/pixmaps/steamos.png $HOMEDIR/.face.icon
 chown -R $ID:$ID $HOMEDIR
