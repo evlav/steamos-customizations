@@ -1,6 +1,5 @@
 #!/bin/sh
 
-export GRUB_DISABLE_OS_PROBER=true
 export GRUB_DISABLE_LINUX_UUID=true
 export GRUB_DISABLE_LINUX_PARTUUID=false
 
