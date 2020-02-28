@@ -1,8 +1,5 @@
 #!/bin/sh
 
-export GRUB_DISABLE_LINUX_UUID=true
-export GRUB_DISABLE_LINUX_PARTUUID=false
-
 grubcfg=
 if mountpoint -q /boot; then
     grubcfg=grub-var.cfg
