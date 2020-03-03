@@ -9,16 +9,21 @@
 
 set -e
 
-ID=$1
+ID="$1"
 test -n "$ID" || exit 1
 
-HOMEDIR=$(getent passwd $ID | cut -d ':' -f 6)
+HOMEDIR=$(getent passwd "$ID" | cut -d ':' -f 6)
 test -n "$HOMEDIR" || exit 1
 
-test -d $HOMEDIR && exit 0
+test -d "$HOMEDIR" && exit 0
 
 echo "Creating homedir $HOMEDIR for UID $ID"
-mkdir -p $HOMEDIR
-find /etc/skel -maxdepth 1 -mindepth 1 -exec cp -vPax {} $HOMEDIR \;
-cp -vPax /usr/share/pixmaps/steamos.png $HOMEDIR/.face.icon
-chown -R $ID:$ID $HOMEDIR
+mkdir -p "$HOMEDIR"
+find /etc/skel -maxdepth 1 -mindepth 1 -exec cp -vPax {} "$HOMEDIR" \;
+cp -vPax /usr/share/pixmaps/steamos.png "$HOMEDIR/.face.icon"
+for i in /usr/share/applications/steam.desktop /usr/share/applications/steamos-install.desktop
+do
+	[ -e "$i" ] || continue
+	install -D -m644 "$i" "$HOMEDIR/Desktop/${i##*/}"
+done
+chown -R "$ID:$ID" "$HOMEDIR"
