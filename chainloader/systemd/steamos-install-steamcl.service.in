@@ -14,6 +14,7 @@ After=local-fs.target
 Before=shutdown.target sysinit.target
 Conflicts=shutdown.target
 ConditionFileIsExecutable=@sbindir@/steamcl-install
+ConditionPathExists=!/esp/efi/boot/bootx64.efi
 ConditionPathIsMountPoint=/esp
 
 [Service]
