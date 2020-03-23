@@ -21,9 +21,10 @@ echo "Creating homedir $HOMEDIR for UID $ID"
 mkdir -p "$HOMEDIR"
 find /etc/skel -maxdepth 1 -mindepth 1 -exec cp -vPax {} "$HOMEDIR" \;
 cp -vPax /usr/share/pixmaps/steamos.png "$HOMEDIR/.face.icon"
+install -d "$HOMEDIR/Desktop"
 for i in /usr/share/applications/steam.desktop /usr/share/applications/steamos-install.desktop
 do
 	[ -e "$i" ] || continue
-	install -D -m644 "$i" "$HOMEDIR/Desktop/${i##*/}"
+	ln -sf "$i" "$HOMEDIR/Desktop/${i##*/}"
 done
 chown -R "$ID:$ID" "$HOMEDIR"
