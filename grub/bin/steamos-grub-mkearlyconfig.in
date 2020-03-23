@@ -145,7 +145,8 @@ echo "prefix : \$prefix"
 echo "cfg    : \$cfg"
 echo "------------------------------"
 
-sleep --verbose 10
+echo -n "Hit any key to continue... "
+read _
 EOF
 fi
 
