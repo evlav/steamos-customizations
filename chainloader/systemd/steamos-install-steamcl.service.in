@@ -10,17 +10,16 @@
 [Unit]
 Description=SteamOS Chainloader Installation
 DefaultDependencies=no
-After=local-fs.target
+Wants=esp.mount
+After=local-fs.target esp.mount
 Before=shutdown.target sysinit.target
 Conflicts=shutdown.target
 ConditionFileIsExecutable=@sbindir@/steamcl-install
 ConditionPathExists=!/esp/efi/boot/bootx64.efi
-ConditionPathIsMountPoint=/esp
 
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStartPre=/bin/sh -c 'ls /esp >/dev/null'
 ExecStart=@sbindir@/steamcl-install
 
 [Install]
