@@ -10,7 +10,8 @@
 [Unit]
 Description=SteamOS GRUB2 Installation
 DefaultDependencies=no
-After=local-fs.target
+Wants=efi.mount
+After=local-fs.target efi.mount
 Before=shutdown.target sysinit.target
 Conflicts=shutdown.target
 ConditionPathExists=!/boot/grub/
