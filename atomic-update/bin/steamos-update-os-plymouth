@@ -36,7 +36,7 @@ do
     if [[ "${words[0]}" =~ "Slot" ]]
     then
         slot="${words[6]##*/}"
-        slot="${slot%-*.img.caibx}"
+        slot="${slot%*.img.caibx}"
     # Seeding... ##%
     elif [[ "${words[0]}" =~ "seeding" ]] && [[ "${slot:-}" == "rootfs" ]]
     then
