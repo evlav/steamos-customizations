@@ -9,8 +9,6 @@
 
 [Unit]
 Description=SteamOS Update Operating System Plymouth
-Wants=steamos-update-os.service rauc.service
-Before=steamos-update-os.service rauc.service
 After=plymouth-start.service
 Conflicts=plymouth-quit.service
 

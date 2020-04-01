@@ -9,8 +9,8 @@
 
 [Unit]
 Description=SteamOS Update Operating System
-Requires=network-online.target
-After=network-online.target
+Requires=network-online.target rauc.service
+After=network-online.target rauc.service
 
 [Service]
 Type=oneshot
