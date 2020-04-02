@@ -9,7 +9,6 @@
 
 [Unit]
 Description=SteamOS Update Mode
-Requires=multi-user.target
 Conflicts=rescue.service rescue.target
-After=rescue.service rescue.target multi-user.target
+After=rescue.service rescue.target
 AllowIsolate=yes
