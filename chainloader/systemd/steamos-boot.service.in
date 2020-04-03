@@ -23,4 +23,4 @@ RemainAfterExit=yes
 ExecStart=@bindir@/steamos-bootconf --mode booted --output-to input /efi/@bootconf_relpath@
 
 [Install]
-WantedBy=graphical.target steamos-os-update.target
+WantedBy=graphical.target
