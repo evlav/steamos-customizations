@@ -213,7 +213,7 @@ do
             then
                 rm -f "${reboot_file:-/var/lib/no-such-file}";
                 steamos-warning "The system falls back to the driver nouveau!";
-                if ! grep "^nouveau" /proc/modules
+                if ! grep -q "^nouveau" /proc/modules
                 then
                     modprobe nouveau;
                 fi
