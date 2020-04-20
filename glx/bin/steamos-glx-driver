@@ -4,8 +4,8 @@
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2019 Collabora Ltd.
-#  Copyright © 2019 Valve Corporation.
+#  Copyright © 2019-2020 Collabora Ltd.
+#  Copyright © 2019-2020 Valve Corporation.
 #
 #  This file is part of steamos-customizations.
 #
@@ -25,8 +25,6 @@ initrd_module_list=();
 missing_module_list=();
 uptodate_module_list=();
 nvidia_module=;
-dracut_conf=/etc/dracut.conf.d/99-nvidia-dkms.conf;
-reboot_file=/var/lib/.${0##*/}-has-rebooted;
 
 get_initrd ()
 {
@@ -63,7 +61,8 @@ get_initrd_module_list ()
     mapfile -t initrd_module_list < <(lsinitrd "$1" | sed -n -E '/\.ko(\.xz)*$/s/.*\/(.*)$/\1/p');
 }
 
-get_missing_module_list() {
+get_missing_module_list ()
+{
     local initrd="$1"; shift;
 
     get_initrd_module_list "$initrd";
@@ -73,7 +72,8 @@ get_missing_module_list() {
     );
 }
 
-get_uptodate_module_list() {
+get_uptodate_module_list ()
+{
     local initrd="$1"; shift;
     local modpath="$1"; shift;
 
@@ -109,7 +109,8 @@ initrd_is_up_to_date ()
     fi;
 }
 
-get_status() {
+get_status ()
+{
     local kver=;
     local arch=;
     local words=();
@@ -117,7 +118,7 @@ get_status() {
 
     kver="$(uname -r)";
     arch="$(uname -m)";
-    while IFS="$IFS:," read -a words;
+    while IFS="$IFS:," read -r -a words;
     do
         # module version status=added
         if [ "${#words[@]}" -eq 3 ] && [ "${words[2]}" = "added" ];
@@ -149,7 +150,7 @@ check_nvidia_dkms_modules ()
 
     # get the module status
     get_nvidia_module;
-    if ! read mod ver krn arc sta _ < <(get_status "$nvidia_module");
+    if ! read -r mod ver krn arc sta _ < <(get_status "$nvidia_module");
     then
         # the module is not even added, quit!
         steamos-info "The driver $nvidia_module is not added!";
@@ -162,7 +163,7 @@ check_nvidia_dkms_modules ()
     then
         steamos-notice "Installing the driver $nvidia_module...";
         if ! dkms install "$mod/$ver" ||
-           ! read mod ver krn arc sta _ < <(get_status "$nvidia_module");
+           ! read -r mod ver krn arc sta _ < <(get_status "$nvidia_module");
         then
             # the module is not installed, quit!
             steamos-error "The driver $nvidia_module cannot be installed!";
@@ -173,7 +174,7 @@ check_nvidia_dkms_modules ()
     fi;
 
     # blacklist nouveau
-    sed '/^#blacklist nouveau/s,^#,,' -i /usr/lib/modprobe.d/nvidia-dkms.conf
+    echo 'blacklist nouveau' > /etc/modprobe.d/nvidia-dkms.conf;
 
     # the modules lives there
     modpath="/var/lib/dkms/$mod/$ver/$krn/$arc/module";
@@ -181,7 +182,7 @@ check_nvidia_dkms_modules ()
 
     # regenerate the dracut configuration
     steamos-info "Adding modules ${module_list[*]} to dracut";
-    echo "add_drivers+=\" ${module_list[*]%.ko*} \"" > "$dracut_conf";
+    echo "add_drivers+=\" ${module_list[*]%.ko*} \"" > /etc/dracut.conf.d/99-nvidia-dkms.conf;
 
     # the initrd is outdated, rebuild it!
     get_initrd "$ver";
@@ -199,19 +200,19 @@ do
         if ! check_nvidia_dkms_modules;
         then
             # remove the dracut configuration
-            rm -f "${dracut_conf:-/etc/dracut.conf.d/no-such-file}";
+            rm -f /etc/dracut.conf.d/99-nvidia-dkms.conf;
 
             # do not blacklist nouveau
-            sed '/^blacklist nouveau/s,^,#,' -i /usr/lib/modprobe.d/nvidia-dkms.conf
+            rm -f /etc/modprobe.d/nvidia-dkms.conf;
         fi;
 
         # the module nvidia is not loaded...
         if ! grep -q '^nvidia' /proc/modules;
         then
             # the system has rebooted already, load nouveau instead!
-            if [[ -e "$reboot_file" ]];
+            if [[ -e /var/lib/.steamos-glx-driver-has-rebooted ]];
             then
-                rm -f "${reboot_file:-/var/lib/no-such-file}";
+                rm -f /var/lib/.steamos-glx-driver-has-rebooted;
                 steamos-warning "The system falls back to the driver nouveau!";
                 if ! grep -q "^nouveau" /proc/modules
                 then
@@ -219,13 +220,13 @@ do
                 fi
             # the system has not rebooted yet, reboot!
             else
-                touch "$reboot_file";
+                touch /var/lib/.steamos-glx-driver-has-rebooted;
                 steamos-notice "Rebooting in 5 seconds...";
                 reboot;
             fi;
             sleep 5s;
         else
-            rm -f "${reboot_file:-/var/lib/no-such-file}";
+            rm -f /var/lib/.steamos-glx-driver-has-rebooted;
         fi;
 
         # clear the splash screen
