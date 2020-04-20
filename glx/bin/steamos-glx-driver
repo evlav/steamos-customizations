@@ -63,7 +63,8 @@ get_initrd_module_list ()
     mapfile -t initrd_module_list < <(lsinitrd "$1" | sed -n -E '/\.ko(\.xz)*$/s/.*\/(.*)$/\1/p');
 }
 
-get_missing_module_list() {
+get_missing_module_list ()
+{
     local initrd="$1"; shift;
 
     get_initrd_module_list "$initrd";
@@ -73,7 +74,8 @@ get_missing_module_list() {
     );
 }
 
-get_uptodate_module_list() {
+get_uptodate_module_list ()
+{
     local initrd="$1"; shift;
     local modpath="$1"; shift;
 
@@ -109,7 +111,8 @@ initrd_is_up_to_date ()
     fi;
 }
 
-get_status() {
+get_status ()
+{
     local kver=;
     local arch=;
     local words=();
