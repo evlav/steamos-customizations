@@ -4,8 +4,8 @@
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2019 Collabora Ltd.
-#  Copyright © 2019 Valve Corporation.
+#  Copyright © 2019-2020 Collabora Ltd.
+#  Copyright © 2019-2020 Valve Corporation.
 #
 #  This file is part of steamos-customizations.
 #
@@ -173,7 +173,7 @@ check_nvidia_dkms_modules ()
     fi;
 
     # blacklist nouveau
-    sed '/^#blacklist nouveau/s,^#,,' -i /usr/lib/modprobe.d/nvidia-dkms.conf
+    echo 'blacklist nouveau' > /etc/modprobe.d/nvidia-dkms.conf;
 
     # the modules lives there
     modpath="/var/lib/dkms/$mod/$ver/$krn/$arc/module";
@@ -202,7 +202,7 @@ do
             rm -f "${dracut_conf:-/etc/dracut.conf.d/no-such-file}";
 
             # do not blacklist nouveau
-            sed '/^blacklist nouveau/s,^,#,' -i /usr/lib/modprobe.d/nvidia-dkms.conf
+            rm -f /etc/modprobe.d/nvidia-dkms.conf;
         fi;
 
         # the module nvidia is not loaded...
