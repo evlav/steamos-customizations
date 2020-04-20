@@ -118,7 +118,7 @@ get_status ()
 
     kver="$(uname -r)";
     arch="$(uname -m)";
-    while IFS="$IFS:," read -a words;
+    while IFS="$IFS:," read -r -a words;
     do
         # module version status=added
         if [ "${#words[@]}" -eq 3 ] && [ "${words[2]}" = "added" ];
@@ -150,7 +150,7 @@ check_nvidia_dkms_modules ()
 
     # get the module status
     get_nvidia_module;
-    if ! read mod ver krn arc sta _ < <(get_status "$nvidia_module");
+    if ! read -r mod ver krn arc sta _ < <(get_status "$nvidia_module");
     then
         # the module is not even added, quit!
         steamos-info "The driver $nvidia_module is not added!";
@@ -163,7 +163,7 @@ check_nvidia_dkms_modules ()
     then
         steamos-notice "Installing the driver $nvidia_module...";
         if ! dkms install "$mod/$ver" ||
-           ! read mod ver krn arc sta _ < <(get_status "$nvidia_module");
+           ! read -r mod ver krn arc sta _ < <(get_status "$nvidia_module");
         then
             # the module is not installed, quit!
             steamos-error "The driver $nvidia_module cannot be installed!";
