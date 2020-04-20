@@ -4,8 +4,8 @@
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2019 Collabora Ltd.
-#  Copyright © 2019 Valve Corporation.
+#  Copyright © 2019-2020 Collabora Ltd.
+#  Copyright © 2019-2020 Valve Corporation.
 #
 #  This file is part of steamos-customizations.
 #
@@ -161,9 +161,9 @@ cleanup_chroot_at() {
     umount $dir/efi  || :
     umount $dir/tmp  || :
     umount $dir/sys/firmware/efi/efivars || :
-    umount $dir/sys  || :
+    umount -R $dir/sys  || :
     umount $dir/run  || :
-    umount $dir/proc || :
+    umount -R $dir/proc || :
     umount $dir/dev  || :
     umount $dir      || :
 
