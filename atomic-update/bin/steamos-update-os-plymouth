@@ -22,7 +22,24 @@ progress() {
     then
         plymouth system-update --progress "$1"
     fi
+    echo "$1%"
 }
+
+while [[ "$#" -ne 0 ]]
+do
+    if [[ "$1" =~ ^(-h|--help)$ ]]
+    then
+        echo "Usage: ${0##*/} [-h|--help] [--debug]"
+        exit 0
+    elif [[ "$1" == "--debug" ]]
+    then
+        debug=true
+    else
+        echo "$1: Invalid argument" >&2
+        exit 1
+    fi
+    shift
+done
 
 while read -r -a words
 do
@@ -30,6 +47,12 @@ do
     if [[ "${#words[@]}" -eq 0 ]]
     then
         continue
+    fi
+
+    # Print the journal to stderr
+    if [[ "${debug:-}" ]]
+    then
+        echo "${words[@]}" >&2
     fi
 
     # Slot needs to be updated with /run/rauc/bundle/*.img.caibx
@@ -94,6 +117,11 @@ do
     then
         percentage="100"
         progress "$percentage" "${words[@]}"
+        if plymouth --ping 2>/dev/null
+        then
+            plymouth change-mode --boot-up
+            plymouth display-message --text="System upgrade completed!"
+        fi
     # Stopped Rauc Update Service.
     elif [[ "${words[*]}" == "Stopped Rauc Update Service." ]]
     then

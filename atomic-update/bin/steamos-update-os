@@ -27,7 +27,7 @@ EOF
 
 update_now() {
     if ! steamos-atomupd-client "$@"; then
-        steamos-error "SteamOS cannot be updated!"
+        echo "SteamOS cannot be updated!" >&2
         sleep 5s
     fi
 
@@ -36,13 +36,13 @@ update_now() {
         sleep 5s
         reboot
     else
-        steamos-info "Reboot to run the new version of SteamOS."
+        echo "Reboot to run the new version of SteamOS." >&2
     fi
 }
 
 update_after_reboot() {
     touch /run/steamos/update-other
-    steamos-info "Reboot to start the update of SteamOS."
+    echo "Reboot to start the update of SteamOS." >&2
 }
 
 if [[ $# -eq 0 ]]; then
