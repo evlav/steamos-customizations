@@ -1,7 +1,7 @@
 include ../common.mk
 
 BINARIES := $(wildcard bin/*)
-COMPLETIONS := completions/steamos-update-os
+COMPLETIONS := completions/steamos-update-os completions/steamos-update-os-plymouth
 RAUC_CONFIG_IN := rauc/system.conf.in
 RAUC_CONFIG :=  $(patsubst %.in,%,$(RAUC_CONFIG_IN))
 RAUC_HOOKS_IN := $(wildcard rauc/*.sh.in)
