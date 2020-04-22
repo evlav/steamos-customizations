@@ -1,6 +1,7 @@
 include ../common.mk
 
 BINARIES := $(wildcard bin/*)
+COMPLETIONS := completions/steamos-update-os
 RAUC_CONFIG_IN := rauc/system.conf.in
 RAUC_CONFIG :=  $(patsubst %.in,%,$(RAUC_CONFIG_IN))
 RAUC_HOOKS_IN := $(wildcard rauc/*.sh.in)
@@ -17,6 +18,8 @@ all: $(RAUC_CONFIG) $(RAUC_HOOKS) $(SERVICES) $(TMPFILES)
 install: all
 	install -d $(DESTDIR)$(sbindir)
 	install -m 0755 $(BINARIES) $(DESTDIR)$(sbindir)
+	install -d $(DESTDIR)$(completionsdir)
+	install -m 0644 $(COMPLETIONS) $(DESTDIR)$(completionsdir)
 	install -d $(DESTDIR)$(sysconfdir)/rauc
 	install -m 0644 $(RAUC_CONFIG) $(DESTDIR)$(sysconfdir)/rauc
 	install -d $(DESTDIR)$(libdir)/rauc
