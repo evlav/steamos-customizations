@@ -30,13 +30,7 @@ EOF
 }
 
 update_now() {
-    log "+====================+"
-    log "|  Updating OS Now   |"
-    log "+====================+"
-
-    if steamos-atomupd-client -d "$@"; then
-        log "Update succeeded (or no update were available)"
-    else
+    if ! steamos-atomupd-client "$@"; then
         log "Update failed"
     fi
 
