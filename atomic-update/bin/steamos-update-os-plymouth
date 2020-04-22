@@ -22,6 +22,7 @@ progress() {
     then
         plymouth system-update --progress "$1"
     fi
+    echo "$1%"
 }
 
 while read -r -a words
