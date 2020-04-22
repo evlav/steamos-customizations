@@ -94,6 +94,11 @@ do
     then
         percentage="100"
         progress "$percentage" "${words[@]}"
+        if plymouth --ping 2>/dev/null
+        then
+            plymouth change-mode --boot-up
+            plymouth display-message --text="System upgrade completed!"
+        fi
     # Stopped Rauc Update Service.
     elif [[ "${words[*]}" == "Stopped Rauc Update Service." ]]
     then
