@@ -4,8 +4,8 @@
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2019 Collabora Ltd.
-#  Copyright © 2019 Valve Corporation.
+#  Copyright © 2019-2020 Collabora Ltd.
+#  Copyright © 2019-2020 Valve Corporation.
 #
 #  This file is part of steamos-customizations.
 #
@@ -22,7 +22,10 @@ WHEN=${1:-}
 log() { echo >&2 "$@"; }
 
 usage() {
-    echo >&2 "Usage: $(basename $0) <now/after-reboot>"
+    cat <<EOF
+Usage: ${0##*/} now [ATOMUPD-OPTIONS]
+       ${0##*/} after-reboot
+EOF
     exit 1
 }
 
@@ -31,7 +34,7 @@ update_now() {
     log "|  Updating OS Now   |"
     log "+====================+"
 
-    if steamos-atomupd-client -d; then
+    if steamos-atomupd-client -d "$@"; then
         log "Update succeeded (or no update were available)"
     else
         log "Update failed"
@@ -53,9 +56,11 @@ update_after_reboot() {
 
 case "$WHEN" in
     (now)
-        update_now
+        shift
+        update_now "$@"
         ;;
     (after-reboot)
+        shift
         update_after_reboot
         ;;
     (*)
