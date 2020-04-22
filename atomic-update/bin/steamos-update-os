@@ -19,8 +19,6 @@ set -u
 
 WHEN=${1:-}
 
-log() { echo >&2 "$@"; }
-
 usage() {
     cat <<EOF
 Usage: ${0##*/} now [ATOMUPD-OPTIONS]
@@ -31,21 +29,22 @@ EOF
 
 update_now() {
     if ! steamos-atomupd-client "$@"; then
-        log "Update failed"
+        steamos-error "SteamOS cannot be updated!"
+        sleep 5s
     fi
 
     if grep -q 'systemd.unit=steamos-update-os.target' /proc/cmdline; then
-        log "Rebooting in 5 seconds"
+        steamos-logger "Rebooting in 5 seconds...";
         sleep 5s
         reboot
     else
-        log "You might want to reboot now"
+        steamos-info "Reboot to run the new version of SteamOS."
     fi
 }
 
 update_after_reboot() {
     touch /run/steamos/update-other
-    log "Please reboot to update"
+    steamos-info "Reboot to start the update of SteamOS."
 }
 
 case "$WHEN" in
