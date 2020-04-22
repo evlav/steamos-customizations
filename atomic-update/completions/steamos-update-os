@@ -1,0 +1,39 @@
+# -*- mode: sh; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
+# vim: et sts=4 sw=4
+
+#  SPDX-License-Identifier: LGPL-2.1+
+#
+#  Copyright © 2020 Collabora Ltd.
+#  Copyright © 2020 Valve Corporation.
+#
+#  This file is part of steamos-customizations.
+#
+#  steamos-customizations is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU Lesser General Public License as
+#  published by the Free Software Foundation; either version 2.1 of the License,
+#  or (at your option) any later version.
+
+_steamos-update-os()
+{
+    local cur prev words cword
+    _init_completion || return
+
+    local args
+    _count_args
+    if [[ "$args" -eq 1 ]]; then
+        COMPREPLY=($(compgen -W "now after-reboot -h --help" -- "$cur"))
+	return
+    fi
+
+    local arg
+    _get_first_arg
+    if [[ "$arg" != now ]]; then
+        return
+    fi
+
+    COMP_WORDS=(steamos-atomupd-client "${COMP_WORDS[@]:2}" "$cur")
+    COMP_LINE=${COMP_WORDS[*]}
+    COMP_POINT=${#COMP_LINE}
+    _command_offset 0
+} &&
+complete -F _steamos-update-os steamos-update-os

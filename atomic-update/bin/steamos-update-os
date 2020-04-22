@@ -4,8 +4,8 @@
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2019 Collabora Ltd.
-#  Copyright © 2019 Valve Corporation.
+#  Copyright © 2019-2020 Collabora Ltd.
+#  Copyright © 2019-2020 Valve Corporation.
 #
 #  This file is part of steamos-customizations.
 #
@@ -17,49 +17,53 @@
 set -e
 set -u
 
-WHEN=${1:-}
-
-log() { echo >&2 "$@"; }
-
 usage() {
-    echo >&2 "Usage: $(basename $0) <now/after-reboot>"
-    exit 1
+    cat <<EOF
+Usage: ${0##*/} now [ATOMUPD-OPTIONS]
+       ${0##*/} after-reboot
+       ${0##*/} -h|--help
+EOF
 }
 
 update_now() {
-    log "+====================+"
-    log "|  Updating OS Now   |"
-    log "+====================+"
-
-    if steamos-atomupd-client -d; then
-        log "Update succeeded (or no update were available)"
-    else
-        log "Update failed"
+    if ! steamos-atomupd-client "$@"; then
+        steamos-error "SteamOS cannot be updated!"
+        sleep 5s
     fi
 
     if grep -q 'systemd.unit=steamos-update-os.target' /proc/cmdline; then
-        log "Rebooting in 5 seconds"
+        steamos-logger "Rebooting in 5 seconds...";
         sleep 5s
         reboot
     else
-        log "You might want to reboot now"
+        steamos-info "Reboot to run the new version of SteamOS."
     fi
 }
 
 update_after_reboot() {
     touch /run/steamos/update-other
-    log "Please reboot to update"
+    steamos-info "Reboot to start the update of SteamOS."
 }
 
-case "$WHEN" in
+if [[ $# -eq 0 ]]; then
+    usage
+    exit 1
+fi
+
+case "$1" in
     (now)
-        update_now
+        shift
+        update_now "$@"
         ;;
     (after-reboot)
+        shift
         update_after_reboot
         ;;
+    (-h|--help)
+        usage
+        exit 0
     (*)
         usage
+        exit 1
         ;;
 esac
-
