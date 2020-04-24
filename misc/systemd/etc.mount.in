@@ -9,7 +9,6 @@
 
 [Unit]
 Description=Etc Overlay
-ConditionKernelCommandLine=roothash
 
 [Mount]
 Where=/etc
