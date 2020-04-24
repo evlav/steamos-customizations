@@ -1,9 +1,9 @@
 include ../common.mk
 
 BINARIES_IN := $(wildcard bin/*.in)
-BINARIES := $(patsubst %.in,%,$(BINARIES_IN)) bin/steamos-create-homedir-if-needed
+BINARIES := $(patsubst %.in,%,$(BINARIES_IN)) bin/steamos-setupverity bin/steamos-create-homedir-if-needed
 LIBRARIES := lib/steamos-partitions-lib
-COMPLETIONS := completions/steamos-chroot completions/steamos-partdefs
+COMPLETIONS := completions/steamos-chroot completions/steamos-partdefs completions/steamos-setupverity
 SDDM_CONFIG := sddm.conf.d/steamos.conf
 PROFILE_CONFIG := profile.d/steamos.sh
 SUDOERS_CONFIG := sudoers.d/no-fqdn
