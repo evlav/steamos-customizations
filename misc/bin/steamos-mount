@@ -1,0 +1,165 @@
+#!/bin/bash
+# -*- mode: sh; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
+# vim: et sts=4 sw=4
+
+#  SPDX-License-Identifier: LGPL-2.1+
+#
+#  Copyright © 2020 Collabora Ltd.
+#  Copyright © 2020 Valve Corporation.
+#
+#  This file is part of steamos-customizations.
+#
+#  steamos-customizations is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU Lesser General Public License as
+#  published by the Free Software Foundation; either version 2.1 of the License,
+#  or (at your option) any later version.
+
+set -e
+set -o pipefail
+set -u
+
+usage() {
+    cat <<EOF
+Usage: ${0##*/} [-o partset=A|B] DEVICE MOUNTPOINT
+
+Mount all the SteamOS filesystems on MOUNTPOINT using the DEVICE partitions.
+EOF
+}
+
+partset="${partset:-A}"
+while [[ "$#" -ne 0 ]]
+do
+    if [[ "$1" =~ ^(-h|--help)$ ]]
+    then
+        usage
+        exit
+    elif [[ "$1" =~ ^(-o)$ ]]
+    then
+        shift
+
+        IFS=, read -a opts <<<"$1"
+        for opt in "${opts[@]}"
+        do
+            if [[ "${opt%%=*}" = "$opt" ]]
+            then
+                opt+="=1"
+            fi
+            eval "$(echo "$opt")"
+        done
+    elif [[ ! "${dev:-}" ]]
+    then
+        dev="$1"
+    elif [[ ! "${mnt:-}" ]]
+    then
+        mnt="$1"
+    else
+        usage
+        echo "$1: Too many arguments" >&2
+        exit 1
+    fi
+    shift
+done
+
+if [[ ! "${dev:-}" ]] || [[ ! "${mnt:-}" ]]
+then
+    usage
+    exit 1
+fi
+
+# Get the devices
+declare -ra PARTITIONS=("esp" "efi-${partset:-A}" "verity-${partset:-A}" "rootfs-${partset:-A}" "var-${partset:-A}" "home")
+mapfile -t devs < <(sfdisk -o "device,name" -l "$dev" | sed -n '/Device/,/^$/{//d;p}')
+declare -A devices
+for dev in "${devs[@]}"
+do
+    read -r -a device < <(echo "$dev")
+    if [[ ${#device[@]} -lt 2 ]]
+    then
+        continue
+    fi
+
+    # check if the device is a SteamOS partition using the GPT partition label:
+    for part in "${PARTITIONS[@]}"
+    do
+        if [[ "$part" == "${device[1]}" ]]
+        then
+            devices[${device[1]}]="${device[0]}"
+            break
+        fi
+    done
+done
+
+for dev in "${!devices[@]}"
+do
+    case "$dev" in
+    esp)
+        esp="${devices[$dev]}"
+        ;;
+    efi-*)
+        efi="${devices[$dev]}"
+        ;;
+    verity-*)
+        verity="${devices[$dev]}"
+        ;;
+    rootfs-*)
+        rootfs="${devices[$dev]}"
+        ;;
+    var-*)
+        var="${devices[$dev]}"
+        ;;
+    home)
+        home="${devices[$dev]}"
+        ;;
+    esac
+done
+
+if [[ ! "${esp:-}" ]]
+then
+    # Get the first EFI System Partition
+    mapfile -t esps < <(sfdisk -o "device,uuid,type" -l "$dev" | sed -n '/Device/,/^$/{//d;/EFI System$/p}')
+    for dev in "${esps[@]}"
+    do
+        read -r -a device < <(echo "$dev")
+        if [[ ${#device[@]} -lt 2 ]]
+        then
+            continue
+        fi
+
+        esp="${device[0]}"
+        break
+    done
+fi
+
+if [[ ! "${esp:-}" ]]
+then
+    echo "esp: No such device" >&2
+    exit 1
+elif [[ ! "${efi:-}" ]]
+then
+    echo "efi: No such device" >&2
+    exit 1
+elif [[ ! "${verity:-}" ]]
+then
+    echo "verity: No such device" >&2
+    exit 1
+elif [[ ! "${rootfs:-}" ]]
+then
+    echo "rootfs: No such device" >&2
+    exit 1
+elif [[ ! "${var:-}" ]]
+then
+    echo "rootfs: No such device" >&2
+    exit 1
+elif [[ ! "${home:-}" ]]
+then
+    echo "home: No such device" >&2
+    exit 1
+fi
+
+mount "$rootfs" "$mnt"
+trap 'umount -R "$mnt"' 0
+mount "$home" "$mnt/home"
+mount "$var" "$mnt/var"
+mount "$efi" "$mnt/efi"
+mount "$esp" "$mnt/esp"
+trap - 0

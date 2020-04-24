@@ -1,9 +1,9 @@
 include ../common.mk
 
 BINARIES_IN := $(wildcard bin/*.in)
-BINARIES := $(patsubst %.in,%,$(BINARIES_IN)) bin/steamos-setupverity bin/steamos-create-homedir-if-needed
+BINARIES := $(patsubst %.in,%,$(BINARIES_IN)) bin/steamos-setupverity bin/steamos-mount bin/steamos-create-homedir-if-needed
 LIBRARIES := lib/steamos-partitions-lib
-COMPLETIONS := completions/steamos-chroot completions/steamos-partdefs completions/steamos-setupverity
+COMPLETIONS := completions/steamos-chroot completions/steamos-partdefs completions/steamos-setupverity completions/steamos-mount
 SDDM_CONFIG := sddm.conf.d/steamos.conf
 PROFILE_CONFIG := profile.d/steamos.sh
 SUDOERS_CONFIG := sudoers.d/no-fqdn
@@ -20,10 +20,12 @@ all: $(BINARIES) $(UNITS)
 install: all
 	install -d $(DESTDIR)$(sbindir)
 	install -m 0755 $(BINARIES) $(DESTDIR)$(sbindir)
+	ln -sfv steamos-mount $(DESTDIR)$(sbindir)/mount.steamos
 	install -d $(DESTDIR)$(libdir)
 	install -m 0644 $(LIBRARIES) $(DESTDIR)$(libdir)
 	install -d $(DESTDIR)$(completionsdir)
 	install -m 0644 $(COMPLETIONS) $(DESTDIR)$(completionsdir)
+	ln -sfv steamos-mount $(DESTDIR)$(completionsdir)/mount.steamos
 	install -d $(DESTDIR)$(libdir)/sddm/sddm.conf.d/
 	install -m 0644 $(SDDM_CONFIG) $(DESTDIR)$(libdir)/sddm/sddm.conf.d
 	install -d $(DESTDIR)$(sysconfdir)/profile.d
