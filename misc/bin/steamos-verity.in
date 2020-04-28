@@ -20,7 +20,7 @@ set -o pipefail
 
 usage() {
     cat <<EOF
-Usage: ${0##*/} enable|disable|status
+Usage: ${0##*/} enable|disable|status|verify
 
 Enable or disable the block level verification on the current running SteamOS.
 EOF
@@ -161,6 +161,15 @@ status() {
     echo "unknown (device-is-read-only: $device_is_readonly, filesystem-is-read-only: $filesystem_is_readonly, roothash: ${roothash:-none})"
 }
 
+verify() {
+    if [[ ! -e /efi/SteamOS/roothash ]]
+    then
+        return 1
+    fi
+
+    veritysetup verify "$@" "$(cat /efi/SteamOS/roothash)"
+}
+
 case "${1:-}" in
     disable)
         read_write @udev_symlinks_absdir@/self/rootfs
@@ -170,6 +179,9 @@ case "${1:-}" in
         ;;
     status)
         status @udev_symlinks_absdir@/self/rootfs
+        ;;
+    verify)
+        verify @udev_symlinks_absdir@/self/rootfs @udev_symlinks_absdir@/self/verity
         ;;
     *)
         usage

@@ -22,9 +22,9 @@ _steamos-verity()
     _count_args
     if [[ "$args" -eq 1 ]]; then
         if [[ -e /efi/SteamOS/roothash ]]; then
-            COMPREPLY=( $( compgen -W "disable status" -- "$cur" ) )
+            COMPREPLY=( $( compgen -W "disable status check" -- "$cur" ) )
         else
-            COMPREPLY=( $( compgen -W "enable status" -- "$cur" ) )
+            COMPREPLY=( $( compgen -W "enable status check" -- "$cur" ) )
         fi
     fi
 } &&
