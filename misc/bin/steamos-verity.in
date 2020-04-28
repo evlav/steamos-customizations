@@ -163,13 +163,13 @@ status() {
 
 case "${1:-}" in
     disable)
-        read_write /dev/disk/steamos/self/rootfs
+        read_write @udev_symlinks_absdir@/self/rootfs
         ;;
     enable)
-        read_only /dev/disk/steamos/self/rootfs /dev/disk/steamos/self/verity
+        read_only @udev_symlinks_absdir@/self/rootfs @udev_symlinks_absdir@/self/verity
         ;;
     status)
-        status /dev/disk/steamos/self/rootfs
+        status @udev_symlinks_absdir@/self/rootfs
         ;;
     *)
         usage
