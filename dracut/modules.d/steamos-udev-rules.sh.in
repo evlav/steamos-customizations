@@ -4,8 +4,8 @@
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2019 Collabora Ltd.
-#  Copyright © 2019 Valve Corporation.
+#  Copyright © 2019-2020 Collabora Ltd.
+#  Copyright © 2019-2020 Valve Corporation.
 #
 #  This file is part of steamos-customizations.
 #
@@ -71,7 +71,13 @@ load_definitions() {
 # Main
 
 EFI=$(getarg 'steamos.efi=')
-[ -z "$EFI" ] && die "No or empty steamos.efi= argument"
+if [ -z "$EFI" ]; then
+    if plymouth --ping; then
+        plymouth display-message --text="Fatal: Missing steamos.efi= argument!"
+        sleep 10
+    fi
+    die "No or empty steamos.efi= argument"
+fi
 
 info "Setting up SteamOS udev rules"
 
