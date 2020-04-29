@@ -4,8 +4,8 @@
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2019 Collabora Ltd.
-#  Copyright © 2019 Valve Corporation.
+#  Copyright © 2019,2020 Collabora Ltd.
+#  Copyright © 2019,2020 Valve Corporation.
 #
 #  This file is part of steamos-customizations.
 #
@@ -19,8 +19,6 @@ set -u
 
 OUTDIR=  # $1
 DEVICES= # --devices=
-
-STEAMOS_N_PARTITIONS=@steamos_n_partitions@
 
 [ -e @libdir@/steamos-partitions-lib ] && \
     . @libdir@/steamos-partitions-lib  || \
@@ -116,8 +114,6 @@ log "Creating partition definitions in $OUTDIR ..."
 [ -e "$OUTDIR" ] && fail "'$OUTDIR' already exists"
 mkdir -p "$OUTDIR"
 
-NPARTS=0
-
 while read device partuuid typeuuid partlabel; do
 
     # NOTE that 'type-uuid' and 'name' might not be set, and that break us.
@@ -186,9 +182,4 @@ while read device partuuid typeuuid partlabel; do
     echo "$linkname $partuuid"  >> "$OUTDIR/$group"
     echo "$partlabel $partuuid" >> "$OUTDIR/all"
 
-    NPARTS=$((NPARTS + 1))
-
 done < <(sfdisk -ql -o device,uuid,type-uuid,name "$DISK" | tail +2)
-
-[ $NPARTS -eq $STEAMOS_N_PARTITIONS ] || \
-    fail "Only $NPARTS were found, expected $STEAMOS_N_PARTITIONS"
