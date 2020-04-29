@@ -108,8 +108,10 @@ UDEV_SYMLINKS_RELDIR := disk/steamos
 define _enable-systemd-unit
 	wantedby=$$(sed -n -E 's/(WantedBy|RequiredBy)\s*=\s*//p' $(1)/$(2)); \
 	if [ "$$wantedby" ]; then \
-	  install -d "$(1)/$$wantedby.wants"; \
-	  cd "$(1)/$$wantedby.wants" && ln -srfv "../$(2)"; \
+	  for unit in $$wantedby; do \
+	    install -d "$(1)/$$unit.wants"; \
+	    cd "$(1)/$$unit.wants" && ln -srfv "../$(2)"; \
+	  done; \
 	fi;
 endef
 
