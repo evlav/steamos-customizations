@@ -19,8 +19,11 @@ ConditionPathExists=!/boot/grub/
 [Service]
 Type=oneshot
 RemainAfterExit=yes
+ExecStart=@sbindir@/steamos-notice "Installing the Bootloader..."
 ExecStart=@sbindir@/grub-install
+ExecStart=@sbindir@/steamos-notice "Configuring the Bootloader..."
 ExecStart=@sbindir@/update-grub
+ExecStartPost=@sbindir@/steamos-notice
 
 [Install]
 WantedBy=sysinit.target
