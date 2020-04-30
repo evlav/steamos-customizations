@@ -10,11 +10,27 @@ $(info "MAKEOVERRIDES: $(MAKEOVERRIDES)")
 $(info "TOPDIR: $(TOPDIR)")
 $(info "DESTDIR: $(DESTDIR)")
 
-.PHONY: all install clean
+SUBDIRS :=		\
+	atomic-update	\
+	chainloader	\
+	dracut		\
+	gpd-quirks	\
+	glx		\
+	grub		\
+	misc		\
+	offload		\
+	plymouth	\
+	settings-importer \
+	swap
 
-all: all-atomic-update all-chainloader all-dracut all-gpd-quirks all-glx all-grub all-misc all-offload all-plymouth all-settings-importer all-swap
+ALL_TARGETS     := $(patsubst %,all-%,$(SUBDIRS))
+INSTALL_TARGETS := $(patsubst %,install-%,$(SUBDIRS))
 
-install: install-atomic-update install-chainloader install-dracut install-gpd-quirks install-glx install-grub install-misc install-offload install-plymouth install-settings-importer install-swap
+.PHONY: all
+all: $(ALL_TARGETS)
+
+.PHONY: install
+install: $(INSTALL_TARGETS)
 	# Make sure that all variables were substituted
 	@if [ "$(DESTDIR)" ]; then \
 	  if grep -rq '@[[:alnum:]_]*@' "$(DESTDIR)"; then \
@@ -24,10 +40,11 @@ install: install-atomic-update install-chainloader install-dracut install-gpd-qu
 	  fi; \
 	fi
 
+.PHONY: all-%
 all-%:
 	$(MAKE) -C $* all
 
-
+.PHONY: install-%
 install-%:
 	$(MAKE) -C $* install
 
