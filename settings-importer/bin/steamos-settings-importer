@@ -74,7 +74,11 @@ EndSection
 EOF
 
         # Make sure the layout is applied to all ttys
-        setupcon
+        # XXX No setupcon on ArchLinux, I guess we need something else,
+        # like loadkeys?
+        if command -v setupcon >/dev/null 2>&1; then
+            setupcon
+        fi
     fi
 
     rm $SETTINGS_DIR/settings.conf
