@@ -1,0 +1,88 @@
+#!/bin/sh
+# -*- mode: sh; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
+# vim: et sts=4 sw=4
+
+#  SPDX-License-Identifier: LGPL-2.1+
+#
+#  Copyright © 2020 Collabora Ltd.
+#  Copyright © 2020 Valve Corporation.
+#
+#  This file is part of steamos-customizations.
+#
+#  steamos-customizations is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU Lesser General Public License as
+#  published by the Free Software Foundation; either version 2.1 of the License,
+#  or (at your option) any later version.
+
+SETTINGS_DIR=/esp/settings
+
+if ! [ -d $SETTINGS_DIR ]; then
+    return 0
+fi
+
+# Import user settings
+if [ -f $SETTINGS_DIR/settings.conf ]; then
+
+    . $SETTINGS_DIR/settings.conf
+
+    echo "Setting locale $LOCALE..."
+    localectl set-locale $LOCALE
+
+    echo "Setting timezone $TZ..."
+    timedatectl set-timezone $TZ
+
+    KBDLAYOUT=`echo $KEYBOARD | cut -d ',' -f 1`
+    case "$KBDLAYOUT" in
+        "jp" )
+            KBDMODEL="jp106"
+            ;;
+        * )
+            KBDMODEL="pc105"
+            ;;
+    esac
+
+    KBDVARIANT=`echo $KEYBOARD | cut -d ',' -f 2`
+    if [ "x$KBDVARIANT" = "x" ]; then
+        KBDARGS="$KBDLAYOUT $KBDMODEL"
+    else
+        KBDARGS="$KBDLAYOUT $KBDMODEL $KBDVARIANT"
+    fi
+
+    echo "Setting keyboard $KEYBOARD (layout $KBDLAYOUT, variant $KBDVARIANT)..."
+    localectl set-x11-keymap $KBDARGS
+
+    # Make sure the layout is applied to all ttys
+    setupcon
+
+    # Make sure X will start with the right keyboard layout
+    mkdir -p /etc/X11/xorg.conf.d
+    cat > /etc/X11/xorg.conf.d/00-keyboard.conf << EOF
+# Read and parsed by systemd-localed. It's probably wise not to edit this file
+# manually too freely.
+Section "InputClass"
+        Identifier "system-keyboard"
+        MatchIsKeyboard "on"
+        Option "XkbLayout" "$KBDLAYOUT"
+        Option "XkbModel" "$KBDMODEL"
+        Option "XkbVariant" "$KBDVARIANT"
+EndSection
+EOF
+
+    rm $SETTINGS_DIR/settings.conf
+fi
+
+# Import network configuration
+if [ -d $SETTINGS_DIR/network-connections ]; then
+    mkdir -p /etc/NetworkManager/system-connections
+    cp $SETTINGS_DIR/network-connections/* /etc/NetworkManager/system-connections/
+    chmod 600 /etc/NetworkManager/system-connections/*
+
+    rm -rf $SETTINGS_DIR/network-connections
+fi
+
+# Mark setup as complete to prevent initial setup from running
+mkdir -p /var/lib/calamares-steamos
+touch /var/lib/calamares-steamos/setup_complete
+rm -f /etc/sddm.conf.d/calamares-setup.conf \
+      /root/.config/kwinrulesrc \
+      /root/.xsessions/setup-steamos.desktop
