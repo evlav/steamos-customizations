@@ -1,0 +1,68 @@
+#!/bin/sh
+
+if [ -f /efi/settings.conf ]; then
+
+    # Import user settings
+    . /efi/settings.conf
+
+    echo "Setting locale $LOCALE..."
+    localectl set-locale $LOCALE
+
+    echo "Setting timezone $TZ..."
+    timedatectl set-timezone $TZ
+
+    KBDLAYOUT=`echo $KEYBOARD | cut -d ',' -f 1`
+    case "$KBDLAYOUT" in
+        "jp" )
+            KBDMODEL="jp106"
+            ;;
+        * )
+            KBDMODEL="pc105"
+            ;;
+    esac
+
+    KBDVARIANT=`echo $KEYBOARD | cut -d ',' -f 2`
+    if [ "x$KBDVARIANT" = "x" ]; then
+        KBDARGS="$KBDLAYOUT $KBDMODEL"
+    else
+        KBDARGS="$KBDLAYOUT $KBDMODEL $KBDVARIANT"
+    fi
+
+    echo "Setting keyboard $KEYBOARD (layout $KBDLAYOUT, variant $KBDVARIANT)..."
+    localectl set-x11-keymap $KBDARGS
+
+    # Make sure the layout is applied to all ttys
+    setupcon
+
+    # Make sure X will start with the right keyboard layout
+    mkdir -p /etc/X11/xorg.conf.d
+    cat > /etc/X11/xorg.conf.d/00-keyboard.conf << EOF
+# Read and parsed by systemd-localed. It's probably wise not to edit this file
+# manually too freely.
+Section "InputClass"
+        Identifier "system-keyboard"
+        MatchIsKeyboard "on"
+        Option "XkbLayout" "$KBDLAYOUT"
+        Option "XkbModel" "$KBDMODEL"
+        Option "XkbVariant" "$KBDVARIANT"
+EndSection
+EOF
+
+    # Import network configuration
+    if [ -d /efi/network-connections ]; then
+        mkdir -p /etc/NetworkManager/system-connections
+        cp /efi/network-connections/* /etc/NetworkManager/system-connections/
+        chmod 600 /etc/NetworkManager/system-connections/*
+
+        rm -rf /efi/network-connections
+    fi
+
+    rm /efi/settings.conf
+
+    # Mark setup as complete to prevent initial setup from running
+    mkdir -p /var/lib/calamares-steamos
+    touch /var/lib/calamares-steamos/setup_complete
+    rm -f /etc/sddm.conf.d/calamares-setup.conf \
+          /root/.config/kwinrulesrc \
+          /root/.xsessions/setup-steamos.desktop
+fi

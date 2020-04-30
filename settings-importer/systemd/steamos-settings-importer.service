@@ -1,0 +1,12 @@
+[Unit]
+Description=Settings Importer
+After=local-fs.target
+Before=getty@tty1.service getty@tty2.service getty@tty3.service getty@tty4.service getty@tty5.service getty@tty6.service getty@tty7.service NetworkManager.service sddm.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/settings-importer
+
+[Install]
+WantedBy=getty@tty1.service getty@tty2.service getty@tty3.service getty@tty4.service getty@tty5.service getty@tty6.service getty@tty7.service NetworkManager.service sddm.service
+Wants=local-fs.target

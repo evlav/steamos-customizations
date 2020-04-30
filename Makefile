@@ -12,9 +12,9 @@ $(info "DESTDIR: $(DESTDIR)")
 
 .PHONY: all install clean
 
-all: all-atomic-update all-chainloader all-dracut all-gpd-quirks all-glx all-grub all-misc all-offload all-plymouth all-swap
+all: all-atomic-update all-chainloader all-dracut all-gpd-quirks all-glx all-grub all-misc all-offload all-plymouth all-settings-importer all-swap
 
-install: install-atomic-update install-chainloader install-dracut install-gpd-quirks install-glx install-grub install-misc install-offload install-plymouth install-swap
+install: install-atomic-update install-chainloader install-dracut install-gpd-quirks install-glx install-grub install-misc install-offload install-plymouth install-settings-importer install-swap
 	# Make sure that all variables were substituted
 	@if [ "$(DESTDIR)" ]; then \
 	  if grep -rq '@[[:alnum:]_]*@' "$(DESTDIR)"; then \
