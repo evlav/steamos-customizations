@@ -16,6 +16,7 @@ ConditionPathIsDirectory=/esp/settings
 
 [Service]
 Type=oneshot
+RemainAfterExit=yes
 ExecStart=@sbindir@/steamos-settings-importer
 
 [Install]
