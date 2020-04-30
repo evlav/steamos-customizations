@@ -14,10 +14,16 @@
 #  published by the Free Software Foundation; either version 2.1 of the License,
 #  or (at your option) any later version.
 
-if [ -f /efi/settings.conf ]; then
+SETTINGS_DIR=/esp/settings
+
+if ! [ -d $SETTINGS_DIR ]; then
+    return 0
+fi
+
+if [ -f $SETTINGS_DIR/settings.conf ]; then
 
     # Import user settings
-    . /efi/settings.conf
+    . $SETTINGS_DIR/settings.conf
 
     echo "Setting locale $LOCALE..."
     localectl set-locale $LOCALE
@@ -63,15 +69,15 @@ EndSection
 EOF
 
     # Import network configuration
-    if [ -d /efi/network-connections ]; then
+    if [ -d $SETTINGS_DIR/network-connections ]; then
         mkdir -p /etc/NetworkManager/system-connections
-        cp /efi/network-connections/* /etc/NetworkManager/system-connections/
+        cp $SETTINGS_DIR/network-connections/* /etc/NetworkManager/system-connections/
         chmod 600 /etc/NetworkManager/system-connections/*
 
-        rm -rf /efi/network-connections
+        rm -rf $SETTINGS_DIR/network-connections
     fi
 
-    rm /efi/settings.conf
+    rm $SETTINGS_DIR/settings.conf
 
     # Mark setup as complete to prevent initial setup from running
     mkdir -p /var/lib/calamares-steamos
