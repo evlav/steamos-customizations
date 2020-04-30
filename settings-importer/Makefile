@@ -2,8 +2,11 @@ include ../common.mk
 
 BINARIES := bin/steamos-settings-importer
 
-SERVICES := $(wildcard systemd/*.service)
+SERVICES_IN := $(wildcard systemd/*.service.in)
+SERVICES := $(patsubst %.in,%,$(SERVICES_IN))
 UNITS := $(SERVICES)
+
+all: $(SERVICES)
 
 install: all
 	install -d $(DESTDIR)$(sbindir)
