@@ -1,3 +1,4 @@
 rauc/*.conf
 rauc/*.sh
 systemd/*.service
+tmpfiles.d/*.conf

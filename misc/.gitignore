@@ -2,5 +2,6 @@ bin/steamos-chroot
 bin/steamos-clone
 bin/steamos-factory-reset
 bin/steamos-partdefs
+bin/steamos-verity
 systemd/*.service
 systemd/*.mount
