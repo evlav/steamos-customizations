@@ -20,6 +20,9 @@ if ! [ -d $SETTINGS_DIR ]; then
     return 0
 fi
 
+# Make sure to consume the settings dir, whatever happens
+trap "rm -fr $SETTINGS_DIR" EXIT
+
 # Import user settings
 if [ -f $SETTINGS_DIR/settings.conf ]; then
 
