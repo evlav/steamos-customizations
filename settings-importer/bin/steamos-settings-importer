@@ -39,7 +39,7 @@ if [ -f $SETTINGS_DIR/settings.conf ]; then
     fi
 
     if [ "$KEYBOARD" ]; then
-        KBDLAYOUT=$(echo $KEYBOARD | cut -d ',' -f 1)
+        KBDLAYOUT=$(echo $KEYBOARD | cut -d ':' -f 1)
         case "$KBDLAYOUT" in
             "jp" )
                 KBDMODEL="jp106"
@@ -49,7 +49,7 @@ if [ -f $SETTINGS_DIR/settings.conf ]; then
                 ;;
         esac
 
-        KBDVARIANT=$(echo $KEYBOARD | cut -d ',' -f 2)
+        KBDVARIANT=$(echo $KEYBOARD | cut -d ':' -f 2)
         if [ "$KBDVARIANT" ]; then
             KBDARGS="$KBDLAYOUT $KBDMODEL $KBDVARIANT"
         else
