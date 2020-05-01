@@ -85,8 +85,7 @@ fi
 # Import network configuration
 if [ -d $SETTINGS_DIR/network-connections ]; then
     mkdir -p /etc/NetworkManager/system-connections
-    cp $SETTINGS_DIR/network-connections/* /etc/NetworkManager/system-connections/
-    chmod 600 /etc/NetworkManager/system-connections/*
+    install -m 0600 $SETTINGS_DIR/network-connections/* /etc/NetworkManager/system-connections/
 fi
 
 # Mark setup as complete to prevent initial setup from running
