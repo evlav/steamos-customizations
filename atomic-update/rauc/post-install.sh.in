@@ -4,8 +4,8 @@
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2019 Collabora Ltd.
-#  Copyright © 2019 Valve Corporation.
+#  Copyright © 2019-2020 Collabora Ltd.
+#  Copyright © 2019-2020 Valve Corporation.
 #
 #  This file is part of steamos-customizations.
 #
@@ -191,6 +191,10 @@ steamos-chroot --partset other -- \
     steamos-grub-mkimage; \
     update-grub;" || \
     err "Failed to install bootloaders"
+
+log "Reconfiguring the bootloader"
+
+update-grub || warn "Failed to reconfigure the bootloader"
 
 #
 # Notify that we should reboot to other
