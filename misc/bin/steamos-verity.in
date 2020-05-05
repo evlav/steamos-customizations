@@ -99,7 +99,6 @@ read_only() {
     then
         umount /boot
     fi
-    update-dracut --add-drivers dm-verity
     sync /
     mount -o remount,ro /
     tune2fs -O read-only "${rootfs[0]}"
