@@ -16,7 +16,7 @@
 
 # Create udev rules for steamos partitions
 
-STEAMOS_PARTDEFS_RELDIR=@partdefs_reldir@
+STEAMOS_PARTSETS_RELDIR=@partsets_reldir@
 UDEV_SYMLINKS_RELDIR=@udev_symlinks_reldir@
 UDEV_RULES_DIR=/run/udev/rules.d
 
@@ -83,7 +83,7 @@ info "Setting up SteamOS udev rules"
 
 mkdir /efi
 mount -o ro "$EFI" /efi
-load_definitions "/efi/$STEAMOS_PARTDEFS_RELDIR"
+load_definitions "/efi/$STEAMOS_PARTSETS_RELDIR"
 umount /efi
 rmdir /efi
 

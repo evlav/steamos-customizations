@@ -13,7 +13,7 @@
 #  published by the Free Software Foundation; either version 2.1 of the License,
 #  or (at your option) any later version.
 
-_steamos-partdefs()
+_steamos-partsets()
 {
     local cur prev words cword
     _init_completion || return
@@ -36,4 +36,4 @@ _steamos-partdefs()
         _filedir -d
     fi
 } &&
-complete -F _steamos-partdefs steamos-partdefs
+complete -F _steamos-partsets steamos-partsets
