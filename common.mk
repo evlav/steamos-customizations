@@ -68,11 +68,11 @@ ETC_OVERLAY_ABSDIR := /var/lib/overlays/etc
 # Directory for the offloading scheme bind mounts
 OFFLOAD_ABSDIR := /home/.steamos/offload
 
-# Directory where partition symlinks are created
-UDEV_SYMLINKS_ABSDIR := /dev/disk/by-partset
-
 # Directory where partition symlinks are created (relative to /dev)
-UDEV_SYMLINKS_RELDIR := disk/by-partset
+UDEV_SYMLINKS_RELDIR := disk/by-partsets
+
+# Directory where partition symlinks are created
+UDEV_SYMLINKS_ABSDIR := /dev/$(UDEV_SYMLINKS_RELDIR)
 
 %: %.in
 	@echo "Substituting @variables@ in $<"
@@ -91,8 +91,8 @@ UDEV_SYMLINKS_RELDIR := disk/by-partset
 	  -e 's;@factory_reset_stampfile@;$(FACTORY_RESET_STAMPFILE);g' \
 	  -e 's;@etc_overlay_absdir@;$(ETC_OVERLAY_ABSDIR);g' \
 	  -e 's;@offload_absdir@;$(OFFLOAD_ABSDIR);g' \
-	  -e 's;@udev_symlinks_absdir@;$(UDEV_SYMLINKS_ABSDIR);g' \
 	  -e 's;@udev_symlinks_reldir@;$(UDEV_SYMLINKS_RELDIR);g' \
+	  -e 's;@udev_symlinks_absdir@;$(UDEV_SYMLINKS_ABSDIR);g' \
 	  $< > $@
 	@if grep -q '@[[:alnum:]_]*@' $@; then \
 	  echo >&2 "Substitution error!!!"; \
