@@ -69,10 +69,10 @@ ETC_OVERLAY_ABSDIR := /var/lib/overlays/etc
 OFFLOAD_ABSDIR := /home/.steamos/offload
 
 # Directory where partition symlinks are created
-UDEV_SYMLINKS_ABSDIR := /dev/disk/by-partset
+UDEV_SYMLINKS_ABSDIR := /dev/disk/by-partsets
 
 # Directory where partition symlinks are created (relative to /dev)
-UDEV_SYMLINKS_RELDIR := disk/by-partset
+UDEV_SYMLINKS_RELDIR := disk/by-partsets
 
 %: %.in
 	@echo "Substituting @variables@ in $<"
