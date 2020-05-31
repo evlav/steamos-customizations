@@ -53,8 +53,8 @@ GRUB_VAR_CONFIG_RELPATH  := EFI/steamos/grub-var.cfg
 # Bootconf file (relative to the efi mountpoint)
 BOOTCONF_RELPATH := SteamOS/bootconf
 
-# Partition sets dir (relative to the efi mountpoint)
-PARTSETS_RELDIR := SteamOS/partsets
+# Partition definitions dir (relative to the efi mountpoint)
+PARTDEFS_RELDIR := SteamOS/partitions
 
 # Roothash file (relative to the efi mountpoint)
 ROOTHASH_RELPATH := SteamOS/roothash
@@ -87,7 +87,7 @@ UDEV_SYMLINKS_ABSDIR := /dev/$(UDEV_SYMLINKS_RELDIR)
 	  -e 's;@grub_var_config_relpath@;$(GRUB_VAR_CONFIG_RELPATH);g' \
 	  -e 's;@bootconf_relpath@;$(BOOTCONF_RELPATH);g' \
 	  -e 's;@roothash_relpath@;$(ROOTHASH_RELPATH);g' \
-	  -e 's;@partsets_reldir@;$(PARTSETS_RELDIR);g' \
+	  -e 's;@partdefs_reldir@;$(PARTDEFS_RELDIR);g' \
 	  -e 's;@factory_reset_stampfile@;$(FACTORY_RESET_STAMPFILE);g' \
 	  -e 's;@etc_overlay_absdir@;$(ETC_OVERLAY_ABSDIR);g' \
 	  -e 's;@offload_absdir@;$(OFFLOAD_ABSDIR);g' \

@@ -26,7 +26,7 @@ GROW_LAST=1      # --grow-last=
 FACTORY_RESET=0  # --factory-reset=
 
 BOOTCONF_RELPATH=@bootconf_relpath@
-PARTSETS_RELDIR=@partsets_reldir@
+PARTDEFS_RELDIR=@partdefs_reldir@
 GRUB_BINARY_RELPATH=@grub_binary_relpath@
 GRUB_ROOTCFG_RELPATH=@grub_root_config_relpath@
 GRUB_VARCFG_RELPATH=@grub_var_config_relpath@
@@ -329,7 +329,7 @@ setup_efi() {
     local efidev=
     local mntpoint=
     local bootconf=
-    local partsets=
+    local partdefs=
     local grub_binary=
     local grub_rootcfg=
     local grub_varcfg=
@@ -356,11 +356,11 @@ setup_efi() {
 
     # replace the partition definitions, only if it exists already
 
-    partsets=$mntpoint/$PARTSETS_RELDIR
-    if [ -e $partsets ]; then
-        rm -fr $partsets
+    partdefs=$mntpoint/$PARTDEFS_RELDIR
+    if [ -e $partdefs ]; then
+        rm -fr $partdefs
         steamos-chroot --disk $disk --partset $self -- \
-            steamos-partsets /efi/$PARTSETS_RELDIR
+            steamos-partdefs /efi/$PARTDEFS_RELDIR
     fi
 
     # re-install the grub bootloader, only if it exists already
