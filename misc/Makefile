@@ -3,7 +3,7 @@ include ../common.mk
 BINARIES_IN := $(wildcard bin/*.in)
 BINARIES := $(patsubst %.in,%,$(BINARIES_IN)) bin/steamos-mount bin/steamos-create-homedir-if-needed
 LIBRARIES := lib/steamos-partitions-lib
-COMPLETIONS := completions/steamos-chroot completions/steamos-partsets completions/steamos-verity completions/steamos-mount
+COMPLETIONS := completions/steamos-chroot completions/steamos-partdefs completions/steamos-verity completions/steamos-mount
 SDDM_CONFIG := sddm.conf.d/steamos.conf
 PROFILE_CONFIG := profile.d/steamos.sh
 SUDOERS_CONFIG := sudoers.d/no-fqdn

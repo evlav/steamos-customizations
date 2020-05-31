@@ -360,7 +360,7 @@ setup_efi() {
     if [ -e $partsets ]; then
         rm -fr $partsets
         steamos-chroot --disk $disk --partset $self -- \
-            steamos-partsets /efi/$PARTSETS_RELDIR
+            steamos-partdefs /efi/$PARTSETS_RELDIR
     fi
 
     # re-install the grub bootloader, only if it exists already
