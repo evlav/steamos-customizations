@@ -183,6 +183,9 @@ check_nvidia_dkms_modules ()
     # regenerate the dracut configuration
     steamos-info "Adding modules ${module_list[*]} to dracut";
     echo "add_drivers+=\" ${module_list[*]%.ko*} \"" > /etc/dracut.conf.d/99-nvidia-dkms.conf;
+    # FIXME removes this line
+    # dracut ignores the blacklisting of nouveau in file /etc/modprobe.d.
+    echo "omit_drivers+=\" nouveau \"" >> /etc/dracut.conf.d/99-nvidia-dkms.conf;
 
     # the initrd is outdated, rebuild it!
     get_initrd "$ver";
