@@ -20,13 +20,13 @@ set -u
 
 usage() {
     cat <<EOF
-Usage: ${0##*/} [-o partset=A|B] DEVICE MOUNTPOINT
+Usage: ${0##*/} [-o partset=self|other|A|B] DEVICE MOUNTPOINT
 
 Mount all the SteamOS filesystems on MOUNTPOINT using the DEVICE partitions.
 EOF
 }
 
-partset="${partset:-A}"
+partset="${partset:-other}"
 while [[ "$#" -ne 0 ]]
 do
     if [[ "$1" =~ ^(-h|--help)$ ]]
@@ -66,8 +66,24 @@ then
     exit 1
 fi
 
+# Get the list of partitions
+case "${partset:-other}" in
+A|B)
+    PARTITIONS=("efi-$partset" "verity-$partset" "rootfs-$partset" "var-$partset")
+    ;;
+*)
+    if [[ ! -d "/dev/disk/by-partsets/$partset" ]]
+    then
+        echo "$partset: No such partset" >&2
+        exit 1
+    fi
+
+    read -r -a PARTITIONS <(ls -1 "@udev_symlinks_absdir@/$partset" 2>/dev/null)
+    ;;
+esac
+PARTITIONS+=("esp" "home")
+
 # Get the devices
-declare -ra PARTITIONS=("esp" "efi-${partset:-A}" "verity-${partset:-A}" "rootfs-${partset:-A}" "var-${partset:-A}" "home")
 mapfile -t devs < <(sfdisk -o "device,name" -l "$dev" | sed -n '/Device/,/^$/{//d;p}')
 declare -A devices
 for dev in "${devs[@]}"
