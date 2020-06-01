@@ -19,7 +19,7 @@ _steamos-mount()
     _init_completion || return
 
     if [[ "$cur" == -* ]]; then
-	COMPREPLY=($(compgen -W "-o -h --help" -- "$cur"))
+        COMPREPLY=($(compgen -W "-u -o -h --help" -- "$cur"))
         return
     fi
 
