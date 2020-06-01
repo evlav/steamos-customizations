@@ -30,6 +30,6 @@ cp -vPax /usr/share/pixmaps/steamos.png "$HOMEDIR/.face.icon"
 for i in steam.desktop steamos-install.desktop
 do
     [ -e "/usr/share/applications/$i" ] || continue
-    install -D -m644 "/usr/share/applications/$i" "$HOMEDIR/Desktop/$i"
+    install -D -m755 "/usr/share/applications/$i" "$HOMEDIR/Desktop/$i"
 done
 chown -R "$ID:$ID" "$HOMEDIR"
