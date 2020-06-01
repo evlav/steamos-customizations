@@ -216,4 +216,12 @@ then
 else
     echo "Warning: $mnt/var/lib/overlays/etc: No such directory" >&2
 fi
+
+# Mount boot
+if [[ -d "$mnt/var/boot/" ]]
+then
+    mount --bind "$mnt/var/boot" "$mnt/boot"
+else
+    echo "Warning: $mnt/var/boot: No such directory" >&2
+fi
 trap - 0
