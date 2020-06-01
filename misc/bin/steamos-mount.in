@@ -190,10 +190,19 @@ then
     exit 1
 fi
 
+# Mount partset
 mount "$rootfs" "$mnt"
 trap 'umount -R "$mnt"' 0
 mount "$home" "$mnt/home"
 mount "$var" "$mnt/var"
 mount "$efi" "$mnt/efi"
 mount "$esp" "$mnt/esp"
+
+# Mount overlay
+if [[ -d "$mnt/var/lib/overlays/etc/" ]]
+then
+    mount -t overlay -o "lowerdir=$mnt/etc,upperdir=$mnt/var/lib/overlays/etc/upper,workdir=$mnt/var/lib/overlays/etc/work" none "$mnt/etc"
+else
+    echo "Warning: $mnt/var/lib/overlays/etc: No such directory" >&2
+fi
 trap - 0
