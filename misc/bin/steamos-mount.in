@@ -198,6 +198,17 @@ mount "$var" "$mnt/var"
 mount "$efi" "$mnt/efi"
 mount "$esp" "$mnt/esp"
 
+# Mount offload
+if [[ -d "$mnt/home/.steamos/offload/" ]]
+then
+    for i in /opt /root /srv /usr/lib/debug /usr/local /var/cache/pacman /var/lib/docker /var/lib/flatpak /var/log /var/tmp
+    do
+        mount --bind "$mnt/home/.steamos/offload/$i" "$mnt/$i"
+    done
+else
+    echo "Warning: $mnt/.steamos/offload: No such directory" >&2
+fi
+
 # Mount overlay
 if [[ -d "$mnt/var/lib/overlays/etc/" ]]
 then
