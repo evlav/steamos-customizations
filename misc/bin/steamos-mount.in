@@ -96,7 +96,7 @@ A|B)
         exit 1
     fi
 
-    read -r -a PARTITIONS <(ls -1 "@udev_symlinks_absdir@/$partset" 2>/dev/null)
+    mapfile -t PARTITIONS < <(blkid -s PARTLABEL -o value "@udev_symlinks_absdir@/$partset"/*)
     ;;
 esac
 PARTITIONS+=("esp" "home")
