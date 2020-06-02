@@ -93,4 +93,4 @@ mkdir -p /var/lib/calamares-steamos
 touch /var/lib/calamares-steamos/setup_complete
 rm -f /etc/sddm.conf.d/calamares-setup.conf \
       /root/.config/kwinrulesrc \
-      /root/.xsessions/setup-steamos.desktop
+      /root/.xsessions/steamos-setup.desktop
