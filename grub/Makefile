@@ -2,7 +2,7 @@ include ../common.mk
 
 BINARIES_IN := $(wildcard bin/*.in)
 BINARIES := $(patsubst %.in,%,$(BINARIES_IN))
-COMPLETIONS := completions/steamos-grub-mkearlyconfig completions/update-grub
+COMPLETIONS := completions/steamos-grub-mkearlyconfig completions/steamos-grub-mkimage completions/update-grub
 SERVICES_IN := $(wildcard systemd/*.service.in)
 SERVICES := $(patsubst %.in,%,$(SERVICES_IN))
 MOUNTS := $(wildcard systemd/*.mount)
