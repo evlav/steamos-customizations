@@ -4,8 +4,8 @@
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2019 Collabora Ltd.
-#  Copyright © 2019 Valve Corporation.
+#  Copyright © 2019-2020 Collabora Ltd.
+#  Copyright © 2019-2020 Valve Corporation.
 #
 #  This file is part of steamos-customizations.
 #
@@ -34,7 +34,7 @@ reset_device_ext4() {
     device=$(readlink -f "$device")
     if ! [ -b "$device" ]; then
         echo "'$device' is not a block device"
-	return
+        return
     fi
 
     if ismounted "$device"; then

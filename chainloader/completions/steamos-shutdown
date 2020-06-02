@@ -22,7 +22,7 @@ _steamos-shutdown()
     _count_args
     if [[ "$args" -eq 1 ]]; then
         COMPREPLY=($(compgen -W "halt poweroff reboot" -- "$cur"))
-	return
+        return
     fi
 } &&
 complete -F _steamos-shutdown steamos-shutdown

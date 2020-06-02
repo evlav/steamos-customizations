@@ -36,7 +36,7 @@ get_initrd ()
     then
         initrd="/boot/initramfs-$(<"$pkgbase").img";
     else
-	initrd="/boot/initrd.img-$ver";
+        initrd="/boot/initrd.img-$ver";
     fi;
 }
 
@@ -47,7 +47,7 @@ get_nvidia_module ()
     then
         nvidia_module="nvidia";
     else
-	nvidia_module="nvidia-current";
+        nvidia_module="nvidia-current";
     fi;
 }
 

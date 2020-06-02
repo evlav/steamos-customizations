@@ -22,7 +22,7 @@ _steamos-update-os()
     _count_args
     if [[ "$args" -eq 1 ]]; then
         COMPREPLY=($(compgen -W "now after-reboot -h --help" -- "$cur"))
-	return
+        return
     fi
 
     local arg
