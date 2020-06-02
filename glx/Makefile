@@ -1,7 +1,7 @@
 include ../common.mk
 
 BINARIES := $(wildcard bin/*)
-COMPLETIONS := completions/steamos-glx-drivers
+COMPLETIONS := completions/steamos-glx-backend completions/steamos-glx-drivers
 SERVICES_IN := $(wildcard systemd/*.service.in)
 SERVICES := $(patsubst %.in,%,$(SERVICES_IN))
 
