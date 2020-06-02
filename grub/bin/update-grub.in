@@ -24,5 +24,12 @@ else
     grubcfg=grub-root.cfg
 fi
 
+if device=$(realpath @udev_symlinks_absdir@/self/efi) &&
+   uuid=$(grub-probe --target=fs_uuid --device "$device"); then
+    GRUB_OS_PROBER_SKIP_LIST="${GRUB_OS_PROBER_SKIP_LIST:+$GRUB_OS_PROBER_SKIP_LIST }$uuid@/@grub_root_config_relpath@"
+    GRUB_OS_PROBER_SKIP_LIST="${GRUB_OS_PROBER_SKIP_LIST:+$GRUB_OS_PROBER_SKIP_LIST }$uuid@/@grub_var_config_relpath@"
+    export GRUB_OS_PROBER_SKIP_LIST
+fi
+
 grub-mkconfig -o /efi/EFI/steamos/$grubcfg "$@"
 ln -sf /efi/EFI/steamos/$grubcfg /boot/grub/grub.cfg 2>/dev/null || :
