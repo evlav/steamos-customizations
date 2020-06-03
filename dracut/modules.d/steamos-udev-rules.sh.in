@@ -88,3 +88,4 @@ umount /efi
 rmdir /efi
 
 udevadm control --reload-rules && udevadm trigger
+ln -sf "${UDEV_SYMLINKS_RELDIR##*/}" "/dev/${UDEV_SYMLINKS_RELDIR%/*}/steamos"
