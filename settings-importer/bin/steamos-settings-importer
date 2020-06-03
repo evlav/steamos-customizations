@@ -49,8 +49,8 @@ if [ -f $SETTINGS_DIR/settings.conf ]; then
                 ;;
         esac
 
-        KBDVARIANT=$(echo $KEYBOARD | cut -d ':' -f 2)
-        if [ "$KBDVARIANT" ]; then
+        if grep -q ':' <<< "$KEYBOARD"; then
+            KBDVARIANT=$(echo $KEYBOARD | cut -d ':' -f 2)
             KBDARGS="$KBDLAYOUT $KBDMODEL $KBDVARIANT"
         else
             KBDARGS="$KBDLAYOUT $KBDMODEL"
