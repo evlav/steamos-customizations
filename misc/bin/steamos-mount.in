@@ -90,7 +90,7 @@ A|B)
     PARTITIONS=("efi-$partset" "verity-$partset" "rootfs-$partset" "var-$partset")
     ;;
 *)
-    if [[ ! -d "/dev/disk/by-partsets/$partset" ]]
+    if [[ ! -d "@udev_symlinks_absdir@/$partset" ]]
     then
         echo "$partset: No such partset" >&2
         exit 1
