@@ -29,12 +29,12 @@ if [ -f $SETTINGS_DIR/settings.conf ]; then
     . $SETTINGS_DIR/settings.conf
 
     if [ "$LOCALE" ]; then
-        echo "Setting locale $LOCALE..."
+        echo "Setting locale: $LOCALE"
         localectl set-locale $LOCALE
     fi
 
     if [ "$TZ" ]; then
-        echo "Setting timezone $TZ..."
+        echo "Setting timezone: $TZ"
         timedatectl set-timezone $TZ
     fi
 
@@ -53,7 +53,7 @@ if [ -f $SETTINGS_DIR/settings.conf ]; then
             KBDVARIANT=$(echo $KEYBOARD | cut -d ':' -f 2)
         fi
 
-        echo "Setting keyboard $KEYBOARD (layout=$KBDLAYOUT, model=$KBDMODEL, variant=$KBDVARIANT)..."
+        echo "Setting keyboard: layout=$KBDLAYOUT, model=$KBDMODEL, variant=$KBDVARIANT (from '$KEYBOARD')"
         localectl set-x11-keymap $KBDLAYOUT $KBDMODEL $KBDVARIANT
 
         # Make sure X will start with the right keyboard layout
@@ -81,8 +81,9 @@ fi
 
 # Import network configuration
 if [ -d $SETTINGS_DIR/network-connections ]; then
+    echo "Installing network configuration"
     mkdir -p /etc/NetworkManager/system-connections
-    install -m 0600 $SETTINGS_DIR/network-connections/* /etc/NetworkManager/system-connections/
+    install -v -m 0600 $SETTINGS_DIR/network-connections/* /etc/NetworkManager/system-connections/
 fi
 
 # Mark setup as complete to prevent initial setup from running
