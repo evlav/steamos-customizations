@@ -40,24 +40,21 @@ if [ -f $SETTINGS_DIR/settings.conf ]; then
 
     if [ "$KEYBOARD" ]; then
         KBDLAYOUT=$(echo $KEYBOARD | cut -d ':' -f 1)
+
+        KBDMODEL="pc105"
         case "$KBDLAYOUT" in
             "jp" )
                 KBDMODEL="jp106"
                 ;;
-            * )
-                KBDMODEL="pc105"
-                ;;
         esac
 
+        KBDVARIANT=""
         if grep -q ':' <<< "$KEYBOARD"; then
             KBDVARIANT=$(echo $KEYBOARD | cut -d ':' -f 2)
-            KBDARGS="$KBDLAYOUT $KBDMODEL $KBDVARIANT"
-        else
-            KBDARGS="$KBDLAYOUT $KBDMODEL"
         fi
 
-        echo "Setting keyboard $KEYBOARD (layout $KBDLAYOUT, variant $KBDVARIANT)..."
-        localectl set-x11-keymap $KBDARGS
+        echo "Setting keyboard $KEYBOARD (layout=$KBDLAYOUT, model=$KBDMODEL, variant=$KBDVARIANT)..."
+        localectl set-x11-keymap $KBDLAYOUT $KBDMODEL $KBDVARIANT
 
         # Make sure X will start with the right keyboard layout
         mkdir -p /etc/X11/xorg.conf.d
