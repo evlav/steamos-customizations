@@ -117,7 +117,7 @@ cd $WORKDIR
 
 MEMDISK=grub-memdisk.tar
 
-steamos-grub-mkearlyconfig > grub.cfg
+@libdir@/steamos/steamos-grub-mkearlyconfig > grub.cfg
 tar -cf - grub.cfg > $MEMDISK
 
 EARLY_CONFIG_MODULES=" \

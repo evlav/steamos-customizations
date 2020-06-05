@@ -15,6 +15,6 @@
 #  or (at your option) any later version.
 
 exec @libdir@/grub/grub-install \
-  --grub-mkimage steamos-grub-mkimage \
+  --grub-mkimage @libdir@/steamos/steamos-grub-mkimage \
   --no-nvram \
   "$@"
