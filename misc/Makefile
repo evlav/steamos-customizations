@@ -1,8 +1,8 @@
 include ../common.mk
 
 BINARIES_IN := $(wildcard bin/*.in)
-BINARIES := $(patsubst %.in,%,$(BINARIES_IN)) bin/steamos-create-homedir-if-needed
-LIBRARIES := lib/steamos-partitions-lib
+BINARIES := $(patsubst %.in,%,$(BINARIES_IN))
+LIBRARIES := $(wildcard lib/*)
 COMPLETIONS := completions/steamos-clone completions/steamos-chroot completions/steamos-create-homedir-if-needed completions/steamos-factory-reset completions/steamos-partdefs completions/steamos-verity completions/steamos-mount
 SDDM_CONFIG := sddm.conf.d/steamos.conf
 PROFILE_CONFIG := profile.d/steamos.sh
@@ -21,8 +21,8 @@ install: all
 	install -d $(DESTDIR)$(sbindir)
 	install -m 0755 $(BINARIES) $(DESTDIR)$(sbindir)
 	ln -sfv steamos-mount $(DESTDIR)$(sbindir)/mount.steamos
-	install -d $(DESTDIR)$(libdir)
-	install -m 0644 $(LIBRARIES) $(DESTDIR)$(libdir)
+	install -d $(DESTDIR)$(libdir)/steamos
+	install -m 0644 $(LIBRARIES) $(DESTDIR)$(libdir)/steamos
 	install -d $(DESTDIR)$(completionsdir)
 	install -m 0644 $(COMPLETIONS) $(DESTDIR)$(completionsdir)
 	ln -sfv steamos-mount $(DESTDIR)$(completionsdir)/mount.steamos
