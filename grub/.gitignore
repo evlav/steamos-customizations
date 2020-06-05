@@ -1,4 +1,4 @@
-bin/steamos-grub-mkearlyconfig
-bin/steamos-grub-mkimage
+lib/steamos-grub-mkearlyconfig
+lib/steamos-grub-mkimage
 bin/update-grub
 systemd/*.service

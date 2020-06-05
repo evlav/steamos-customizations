@@ -368,7 +368,7 @@ setup_efi() {
     grub_binary=$mntpoint/$GRUB_BINARY_RELPATH
     if [ -e $grub_binary ]; then
         steamos-chroot --disk $disk --partset $self -- \
-            steamos-grub-mkimage
+            grub-mkimage
     fi
 
     # update the grub config for the root partition, only if it exists already

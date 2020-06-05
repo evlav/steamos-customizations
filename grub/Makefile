@@ -2,17 +2,21 @@ include ../common.mk
 
 BINARIES_IN := $(wildcard bin/*.in)
 BINARIES := $(patsubst %.in,%,$(BINARIES_IN))
+LIBRARIES_IN := $(wildcard lib/*.in)
+LIBRARIES := $(patsubst %.in,%,$(LIBRARIES_IN))
 COMPLETIONS := completions/steamos-grub-mkearlyconfig completions/steamos-grub-mkimage completions/update-grub
 SERVICES_IN := $(wildcard systemd/*.service.in)
 SERVICES := $(patsubst %.in,%,$(SERVICES_IN))
 MOUNTS := $(wildcard systemd/*.mount)
 UNITS := $(SERVICES) $(MOUNTS)
 
-all: $(BINARIES) $(SERVICES)
+all: $(BINARIES) $(LIBRARIES) $(SERVICES)
 
 install: all
 	install -d $(DESTDIR)$(sbindir)
 	install -m 0755 $(BINARIES) $(DESTDIR)$(sbindir)
+	install -d $(DESTDIR)$(libdir)/steamos
+	install -m 0755 $(LIBRARIES) $(DESTDIR)$(libdir)/steamos
 	install -d $(DESTDIR)$(completionsdir)
 	install -m 0644 $(COMPLETIONS) $(DESTDIR)$(completionsdir)
 	install -d $(DESTDIR)$(systemdunitsdir)

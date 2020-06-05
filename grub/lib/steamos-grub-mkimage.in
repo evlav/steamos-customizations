@@ -4,8 +4,8 @@
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2019 Collabora Ltd.
-#  Copyright © 2019 Valve Corporation.
+#  Copyright © 2019-2020 Collabora Ltd.
+#  Copyright © 2019-2020 Valve Corporation.
 #
 #  This file is part of steamos-customizations.
 #
@@ -117,7 +117,7 @@ cd $WORKDIR
 
 MEMDISK=grub-memdisk.tar
 
-steamos-grub-mkearlyconfig > grub.cfg
+@libdir@/steamos/steamos-grub-mkearlyconfig > grub.cfg
 tar -cf - grub.cfg > $MEMDISK
 
 EARLY_CONFIG_MODULES=" \
@@ -145,10 +145,11 @@ MODULES=" \
 
 mkdir -p "$(dirname $OUTPUT)"
 
-grub-mkimage \
+exec /usr/lib/grub/grub-mkimage \
   --config="$BOOTSTRAP_CONFIG" \
   --memdisk="$MEMDISK" \
   --prefix="$PREFIX" \
   --format="$FORMAT" \
   --output="$OUTPUT" \
-  $MODULES
+  $MODULES \
+  "$@"
