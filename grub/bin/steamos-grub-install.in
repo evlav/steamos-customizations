@@ -1,0 +1,6 @@
+#!/bin/sh
+
+exec /usr/lib/grub/grub-install \
+  --grub-mkimage steamos-grub-mkimage \
+  --no-nvram \
+  "$@"
