@@ -21,9 +21,9 @@ FORCE=0 # --force
 
 FACTORY_RESET_STAMPFILE=@factory_reset_stampfile@
 
-[ -e @libdir@/steamos-partitions-lib ] && \
-    . @libdir@/steamos-partitions-lib  || \
-    { echo "Failed to source '@libdir@/steamos-partitions-lib'"; exit 1; }
+[ -e @libdir@/steamos/steamos-partitions-lib ] && \
+    . @libdir@/steamos/steamos-partitions-lib  || \
+    { echo "Failed to source '@libdir@/steamos/steamos-partitions-lib'"; exit 1; }
 
 usage() {
     local status=${1-2}

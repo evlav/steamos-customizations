@@ -22,9 +22,9 @@ PARTSET=    # --partset=
 
 SYMLINKS_DIR=@udev_symlinks_absdir@
 
-[ -e @libdir@/steamos-partitions-lib ] && \
-    . @libdir@/steamos-partitions-lib  || \
-    { echo "Failed to source '@libdir@/steamos-partitions-lib'"; exit 1; }
+[ -e @libdir@/steamos/steamos-partitions-lib ] && \
+    . @libdir@/steamos/steamos-partitions-lib  || \
+    { echo "Failed to source '@libdir@/steamos/steamos-partitions-lib'"; exit 1; }
 
 # Helpers
 
