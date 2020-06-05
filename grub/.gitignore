@@ -1,3 +1,4 @@
+lib/steamos-grub-install
 lib/steamos-grub-mkearlyconfig
 lib/steamos-grub-mkimage
 bin/update-grub
