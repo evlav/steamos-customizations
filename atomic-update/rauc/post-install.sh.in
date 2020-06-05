@@ -188,7 +188,7 @@ log "Installing the bootloaders"
 steamos-chroot --partset other -- \
     bash -c "set -eux; \
     steamcl-install; \
-    @libdir@/steamos/steamos-grub-mkimage; \
+    grub-mkimage; \
     update-grub;" || \
     err "Failed to install bootloaders"
 
