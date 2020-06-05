@@ -145,7 +145,7 @@ MODULES=" \
 
 mkdir -p "$(dirname $OUTPUT)"
 
-/usr/lib/grub/grub-mkimage \
+exec /usr/lib/grub/grub-mkimage \
   --config="$BOOTSTRAP_CONFIG" \
   --memdisk="$MEMDISK" \
   --prefix="$PREFIX" \
