@@ -151,4 +151,5 @@ exec /usr/lib/grub/grub-mkimage \
   --prefix="$PREFIX" \
   --format="$FORMAT" \
   --output="$OUTPUT" \
-  $MODULES
+  $MODULES \
+  "$@"
