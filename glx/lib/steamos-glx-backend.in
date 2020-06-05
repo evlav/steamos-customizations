@@ -147,4 +147,4 @@ then
     esac;
 fi;
 
-steamos-glx-driver "${gpu_class_list[@]}";
+@libdir@/steamos/steamos-glx-driver "${gpu_class_list[@]}";
