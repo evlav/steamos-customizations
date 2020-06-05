@@ -1,1 +1,3 @@
+lib/steamos-glx-backend
+lib/steamos-glx-driver
 systemd/*.service
