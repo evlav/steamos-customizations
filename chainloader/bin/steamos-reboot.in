@@ -1,0 +1,87 @@
+#!/bin/bash
+# -*- mode: sh; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
+# vim: et sts=4 sw=4
+
+#  SPDX-License-Identifier: LGPL-2.1+
+#
+#  Copyright © 2020 Collabora Ltd.
+#  Copyright © 2020 Valve Corporation.
+#
+#  This file is part of steamos-customizations.
+#
+#  steamos-customizations is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU Lesser General Public License as
+#  published by the Free Software Foundation; either version 2.1 of the License,
+#  or (at your option) any later version.
+
+set -e
+set -o pipefail
+set -u
+
+usage() {
+    cat <<EOF
+${0##*/} [OPTIONS...] [ARG]
+
+Reboot SteamOS.
+
+Options:
+     --bootnext XXXX
+                 Set BootNext to XXXX (Boothex or Label)
+                 to boot on XXXX at next boot
+                 See efibootmgr --bootnext usage
+     --reboot-other
+                 Set mode reboot-other to boot on other at next boot
+     --update-other
+                 Set mode update-other to update other at next boot
+EOF
+    "${0##*/steamos-}" --help | sed -n '/^Options:/,//{//d;p}'
+}
+
+opts=()
+while [[ "$#" -ne 0 ]]
+do
+    if [[ "$1" =~ ^(-h|--help)$ ]]
+    then
+        usage
+        exit 0
+    elif [[ "$1" =~ ^--(reboot|update)-other$ ]]
+    then
+        touch "/run/steamos/${1:2}"
+    elif [[ "$1" =~ ^--next$ ]]
+    then
+        shift
+        if [[ ! "${1:-}" ]]
+        then
+            usage
+            echo "Error: Too few argument" >&2
+            exit 1
+        fi
+            
+        if [[ "$1" =~ ^Boot[0-9A-Fa-F]{4,4}$ ]]
+        then
+            next="$1"
+        else
+            mapfile -t entries < <(efibootmgr | sed -n '/^Boot[0-9A-Fa-f]\{4,4\}./p')
+            for entry in "${entries[@]}"
+            do
+                if [[ "$1" == "${entry:10}" ]]
+                then
+                    next="${entry:0:8}"
+                    break
+                fi
+            done
+        fi
+
+        if [[ "${next:-}" ]]
+        then
+            efibootmgr -n "${next:4}"
+        else
+            echo "Warning: $1: No Such BootEntry" >&2
+        fi
+    else
+        opts+=("$1")
+    fi
+    shift
+done
+
+exec "${0##*/steamos-}" "${opts[@]}"
