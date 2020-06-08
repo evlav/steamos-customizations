@@ -13,14 +13,12 @@ After=umount.target
 Before=systemd-halt.service
 DefaultDependencies=no
 RefuseManualStart=yes
-ConditionFileIsExecutable=@bindir@/steamos-bootconf
-ConditionFileIsExecutable=@sbindir@/steamos-shutdown
 
 [Service]
 Type=oneshot
 RemainAfterExit=yes
 StandardOutput=journal+console
-ExecStart=@sbindir@/steamos-shutdown halt
+ExecStart=@libdir@/steamos/steamos-shutdown halt
 
 [Install]
 WantedBy=halt.target
