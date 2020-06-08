@@ -13,8 +13,6 @@ After=umount.target
 Before=systemd-poweroff.service
 DefaultDependencies=no
 RefuseManualStart=yes
-ConditionFileIsExecutable=@bindir@/steamos-bootconf
-ConditionFileIsExecutable=@libdir@/steamos/steamos-shutdown
 
 [Service]
 Type=oneshot

@@ -12,7 +12,6 @@ Description=SteamOS Boot Registration
 After=graphical.target
 Requisite=graphical.target
 RefuseManualStart=yes
-ConditionFileIsExecutable=@bindir@/steamos-bootconf
 ConditionPathExists=/efi/SteamOS
 RequiresMountsFor=/efi/SteamOS
 Before=shutdown.target
