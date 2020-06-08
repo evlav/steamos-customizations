@@ -14,13 +14,13 @@ Before=systemd-poweroff.service
 DefaultDependencies=no
 RefuseManualStart=yes
 ConditionFileIsExecutable=@bindir@/steamos-bootconf
-ConditionFileIsExecutable=@sbindir@/steamos-shutdown
+ConditionFileIsExecutable=@libdir@/steamos/steamos-shutdown
 
 [Service]
 Type=oneshot
 RemainAfterExit=yes
 StandardOutput=journal+console
-ExecStart=@sbindir@/steamos-shutdown poweroff
+ExecStart=@libdir@/steamos/steamos-shutdown poweroff
 
 [Install]
 WantedBy=poweroff.target

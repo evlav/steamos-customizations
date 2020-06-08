@@ -14,13 +14,13 @@ Before=systemd-reboot.service
 DefaultDependencies=no
 RefuseManualStart=yes
 ConditionFileIsExecutable=@bindir@/steamos-bootconf
-ConditionFileIsExecutable=@sbindir@/steamos-shutdown
+ConditionFileIsExecutable=@libdir@/steamos/steamos-shutdown
 
 [Service]
 Type=oneshot
 RemainAfterExit=yes
 StandardOutput=journal+console
-ExecStart=@sbindir@/steamos-shutdown reboot
+ExecStart=@libdir@/steamos/steamos-shutdown reboot
 
 [Install]
 WantedBy=reboot.target

@@ -1,4 +1,3 @@
 bin/steamos-reboot
-bin/steamos-shutdown
+lib/steamos-shutdown
 systemd/*.service
-
