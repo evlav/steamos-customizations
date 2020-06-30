@@ -16,3 +16,5 @@ d @offload_absdir@/usr/local/man
 d @offload_absdir@/usr/local/sbin
 d @offload_absdir@/usr/local/share
 d @offload_absdir@/usr/local/src
+d @offload_absdir@/srv/ftp 0555 root ftp
+d @offload_absdir@/srv/http 0755
