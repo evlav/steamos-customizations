@@ -27,8 +27,6 @@ echo "Creating homedir $HOMEDIR for UID $ID"
 mkdir -p "$HOMEDIR"
 find /etc/skel -maxdepth 1 -mindepth 1 -exec cp -vPax {} "$HOMEDIR" \;
 cp -vPax /usr/share/pixmaps/steamos.png "$HOMEDIR/.face.icon"
-# XXX: Symlinks are prefered over copies, however a `steam.desktop` symlink
-# used to break the Steam launcher. This was solved with Steam 1.0.0.63.
 for i in steam.desktop steamos-install.desktop
 do
     [ -e "/usr/share/applications/$i" ] || continue
