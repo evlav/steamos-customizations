@@ -27,10 +27,11 @@ echo "Creating homedir $HOMEDIR for UID $ID"
 mkdir -p "$HOMEDIR"
 find /etc/skel -maxdepth 1 -mindepth 1 -exec cp -vPax {} "$HOMEDIR" \;
 cp -vPax /usr/share/pixmaps/steamos.png "$HOMEDIR/.face.icon"
-for i in steam.desktop steamos-install.desktop
+install -d "$HOMEDIR/Desktop"
+for i in /usr/share/applications/steam.desktop /usr/share/applications/steamos-install.desktop
 do
-    [ -e "/usr/share/applications/$i" ] || continue
-    install -D -m755 "/usr/share/applications/$i" "$HOMEDIR/Desktop/$i"
+    [ -e "$i" ] || continue
+    ln -sf "$i" "$HOMEDIR/Desktop/${i##*/}"
 done
 mkdir -p "$HOMEDIR/.config/systemd/user/default.target.wants"
 ln -sf /usr/lib/systemd/user/gamemoded.service "$HOMEDIR/.config/systemd/user/default.target.wants/gamemoded.service"
