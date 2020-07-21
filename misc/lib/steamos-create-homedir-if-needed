@@ -35,4 +35,5 @@ do
 done
 mkdir -p "$HOMEDIR/.config/systemd/user/default.target.wants"
 ln -sf /usr/lib/systemd/user/gamemoded.service "$HOMEDIR/.config/systemd/user/default.target.wants/gamemoded.service"
+ln -sf /usr/lib/systemd/user/steamos-update-os-notifier.service "$HOMEDIR/.config/systemd/user/default.target.wants/steamos-update-os-notifier.service"
 chown -R "$ID:$ID" "$HOMEDIR"

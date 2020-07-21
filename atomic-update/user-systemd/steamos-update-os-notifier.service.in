@@ -1,0 +1,21 @@
+#  SPDX-License-Identifier: LGPL-2.1+
+#
+#  This file is part of steamos-customizations.
+#
+#  steamos-customizations is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU Lesser General Public License as published
+#  by the Free Software Foundation; either version 2.1 of the License, or
+#  (at your option) any later version.
+
+[Unit]
+Description=SteamOS Update Operating System Notifier for the new systemtray specification
+Requires=network-online.target
+After=network-online.target
+
+[Service]
+ExecStart=@sbindir@/kupdate-notifier /usr/lib/steamos/steamos-update-os-notifier.action 3600 \
+ --tooltip-title "SteamOS Update Operating System Notifier" \
+ --tooltip-subtitle "SteamOS Update Operating System Notifier for the new systemtray specification"
+
+[Install]
+WantedBy=default.target

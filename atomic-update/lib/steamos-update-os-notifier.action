@@ -1,0 +1,41 @@
+#!/bin/bash
+# -*- mode: sh; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
+# vim: et sts=4 sw=4
+
+#  SPDX-License-Identifier: LGPL-2.1+
+#
+#  Copyright © 2020 Collabora Ltd.
+#  Copyright © 2020 Valve Corporation.
+#
+#  This file is part of steamos-customizations.
+#
+#  steamos-customizations is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU Lesser General Public License as
+#  published by the Free Software Foundation; either version 2.1 of the License,
+#  or (at your option) any later version.
+
+set -e
+set -o pipefail
+
+case "$1" in
+check-for-update)
+    if buildid=$(steamos-atomupd-client --query-only | \
+                 jq -cerM '.minor.candidates[-1].image.buildid')
+    then
+        echo "SteamOS $buildid is available!" >&2
+        echo "SteamOS $buildid is available!"
+        exit 0
+    fi
+
+    echo "SteamOS is up-to-date!" >&2
+    echo "SteamOS is up-to-date!"
+    exit 1
+    ;;
+reboot-and-update)
+    echo "SteamOS is ready to update at next reboot!" >&2
+    touch /run/steamos/update-other
+    ;;
+*)
+    echo "$1: Invalid argument" >&2
+    exit 127
+esac
