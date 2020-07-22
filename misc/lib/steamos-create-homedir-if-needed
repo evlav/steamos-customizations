@@ -33,7 +33,8 @@ do
     [ -e "$i" ] || continue
     ln -sf "$i" "$HOMEDIR/Desktop/${i##*/}"
 done
+mkdir -p "$HOMEDIR/.config/autostart"
+ln -sf /usr/share/applications/steamos-update-os-notifier.desktop "$HOMEDIR/.config/autostart/steamos-update-os-notifier.desktop"
 mkdir -p "$HOMEDIR/.config/systemd/user/default.target.wants"
 ln -sf /usr/lib/systemd/user/gamemoded.service "$HOMEDIR/.config/systemd/user/default.target.wants/gamemoded.service"
-ln -sf /usr/lib/systemd/user/steamos-update-os-notifier.service "$HOMEDIR/.config/systemd/user/default.target.wants/steamos-update-os-notifier.service"
 chown -R "$ID:$ID" "$HOMEDIR"

@@ -8,7 +8,6 @@ datadir    := $(prefix)/share
 libdir     := $(prefix)/lib
 sbindir    := $(prefix)/sbin
 systemdunitsdir := $(libdir)/systemd/system
-usersystemdunitsdir := $(libdir)/systemd/user
 completionsdir := $(shell pkg-config --define-variable=prefix=$(prefix) --variable=completionsdir bash-completion 2>/dev/null \
 			  || echo /usr/share/bash-completion/completions/)
 

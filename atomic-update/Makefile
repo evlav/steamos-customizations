@@ -10,13 +10,12 @@ RAUC_HOOKS := $(patsubst %.in,%,$(RAUC_HOOKS_IN))
 STEAMOS_ATOMUPD_CONFIG := steamos-atomupd/client.conf
 SERVICES_IN := $(wildcard systemd/*.service.in)
 SERVICES := $(patsubst %.in,%,$(SERVICES_IN))
-USER_SERVICES_IN := $(wildcard user-systemd/*.service.in)
-USER_SERVICES := $(patsubst %.in,%,$(SERVICES_IN))
 TMPFILES_IN := $(wildcard tmpfiles.d/*.conf.in)
 TMPFILES := $(patsubst %.in,%,$(TMPFILES_IN))
+APPLICATIONS := $(wildcard applications/*.desktop)
 TARGETS := $(wildcard systemd/*.target)
 
-all: $(RAUC_CONFIG) $(RAUC_HOOKS) $(SERVICES) $(USER_SERVICES) $(TMPFILES)
+all: $(RAUC_CONFIG) $(RAUC_HOOKS) $(SERVICES) $(TMPFILES)
 
 install: all
 	install -d $(DESTDIR)$(sbindir)
@@ -34,8 +33,8 @@ install: all
 	install -d $(DESTDIR)$(systemdunitsdir)
 	install -m 644 $(SERVICES) $(DESTDIR)$(systemdunitsdir)
 	$(call enable-systemd-units,$(DESTDIR)$(systemdunitsdir),$(notdir $(SERVICES)))
-	install -d $(DESTDIR)$(usersystemdunitsdir)
-	install -m 644 $(USER_SERVICES) $(DESTDIR)$(usersystemdunitsdir)
 	install -m 644 $(TARGETS) $(DESTDIR)$(systemdunitsdir)
 	install -d $(DESTDIR)$(libdir)/tmpfiles.d
 	install -m 0644 $(TMPFILES) $(DESTDIR)$(libdir)/tmpfiles.d
+	install -d $(DESTDIR)$(datadir)/applications
+	install -m 0644 $(APPLICATIONS) $(DESTDIR)$(datadir)/applications/
