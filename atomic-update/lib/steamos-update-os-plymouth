@@ -104,7 +104,7 @@ do
         fi
     # installing: ...: failed: ...
     elif [[ "${words[0]}" == "installing" ]] &&
-         [[ "${words[*]:2}" == "failed:" ]]
+         [[ "${words[*]:2}" =~ "failed: " ]]
     then
         if plymouth --ping 2>/dev/null
         then
