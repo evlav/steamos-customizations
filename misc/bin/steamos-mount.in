@@ -20,7 +20,7 @@ set -u
 
 usage() {
     cat <<EOF
-Usage: ${0##*/} [-o partset=self|other|A|B] DEVICE MOUNTPOINT
+Usage: ${0##*/} [-o partset=self|other|A|B,nooffload,nooverlay,noboot] DEVICE MOUNTPOINT
        ${0##*/} -u MOUNTPOINT
 
 Mount all the SteamOS filesystems on MOUNTPOINT using the DEVICE partitions.
@@ -199,29 +199,23 @@ mount "$efi" "$mnt/efi"
 mount "$esp" "$mnt/esp"
 
 # Mount offload
-if [[ -d "$mnt/home/.steamos/offload/" ]]
+if [[ ! "${nooffload:-}" ]]
 then
     for i in /opt /root /srv /usr/lib/debug /usr/local /var/cache/pacman /var/lib/docker /var/lib/flatpak /var/log /var/tmp
     do
         mount --bind "$mnt/home/.steamos/offload/$i" "$mnt/$i"
     done
-else
-    echo "Warning: $mnt/.steamos/offload: No such directory" >&2
 fi
 
 # Mount overlay
-if [[ -d "$mnt/var/lib/overlays/etc/" ]]
+if [[ ! "${nooverlay:-}" ]]
 then
     mount -t overlay -o "lowerdir=$mnt/etc,upperdir=$mnt/var/lib/overlays/etc/upper,workdir=$mnt/var/lib/overlays/etc/work" none "$mnt/etc"
-else
-    echo "Warning: $mnt/var/lib/overlays/etc: No such directory" >&2
 fi
 
 # Mount boot
-if [[ -d "$mnt/var/boot/" ]]
+if [[ ! "${noboot:-}" ]]
 then
     mount --bind "$mnt/var/boot" "$mnt/boot"
-else
-    echo "Warning: $mnt/var/boot: No such directory" >&2
 fi
 trap - 0
