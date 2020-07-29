@@ -14,6 +14,12 @@
 #  published by the Free Software Foundation; either version 2.1 of the License,
 #  or (at your option) any later version.
 
+set -e
+
+if grep -q roothash /proc/cmdline && ! mountpoint -q /boot; then
+    set -- --boot-directory /var/boot "$@"
+fi
+
 exec @libdir@/grub/grub-install \
   --grub-mkimage @libdir@/steamos/steamos-grub-mkimage \
   --no-nvram \
