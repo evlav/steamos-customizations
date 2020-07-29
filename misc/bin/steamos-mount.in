@@ -65,13 +65,13 @@ do
     shift
 done
 
-# Unmount all partitions
 if [[ ! "${mnt:-}" ]]
 then
     usage
     exit 1
 fi
 
+# Unmount all partitions
 if [[ "${unmount:-}" ]]
 then
     exec umount -R "$mnt"
