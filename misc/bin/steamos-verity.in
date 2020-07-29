@@ -75,7 +75,7 @@ read_write() {
     if grep -q '^/dev/mapper/root / ' /proc/mounts
     then
         echo "Warning: The rootfs is still read-only!" >&2
-        echo "         Reboot and re-run the command again to complete setup." >&2
+        echo "         Reboot to complete setup." >&2
         return
     fi
 

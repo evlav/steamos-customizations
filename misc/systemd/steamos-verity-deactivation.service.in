@@ -1,0 +1,12 @@
+[Unit]
+Description=SteamOS Verity Deactivation 
+ConditionKernelCommandLine=!roothash
+ConditionPathExists=/efi/EFI/steamos/grub-var.cfg
+Wants=efi.mount
+After=efi.mount
+
+[Service]
+ExecStart=@sbindir@/steamos-verity disable
+
+[Install]
+WantedBy=multi-user.target
