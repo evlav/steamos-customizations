@@ -29,8 +29,8 @@ submenu 'Other EFI Loaders' "\$menuentry_id_option" 'efi' {
 	for efi in (*,gpt*)/EFI/steamos/steamcl.efi; do
 		regexp --set=1:efi_root '^\\((.*)\\)/' "\${efi}"
 		if [ -e "\${efi}" ]; then
-			menuentry "\${efi}" "\$menuentry_id_option" "\${efi_root}" {
-				root="\${3}"
+			menuentry --class=efi "\${efi}" \$menuentry_id_option "\${efi_root}" {
+				root="\${2}"
 				chainloader "\${1}"
 			}
 		fi

@@ -15,11 +15,11 @@
 #  or (at your option) any later version.
 
 cat <<EOF
-menuentry "System halt" "\$menuentry_id_option" 'system-halt' {
+menuentry "System halt" \$menuentry_id_option 'system-halt' {
 	halt
 }
 
-menuentry "System restart" "\$menuentry_id_option" 'system-reboot' {
+menuentry "System restart" \$menuentry_id_option 'system-reboot' {
 	reboot
 }
 EOF
