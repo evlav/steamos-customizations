@@ -185,12 +185,7 @@ umount /mnt
 
 log "Installing the bootloaders"
 
-steamos-chroot --partset other -- \
-    bash -c "set -eux; \
-    steamcl-install; \
-    grub-mkimage; \
-    update-grub;" || \
-    err "Failed to install bootloaders"
+steamos-chroot --partset other -- steamos-bootloaders-install || err "Failed to install bootloaders"
 
 log "Reconfiguring the bootloader"
 

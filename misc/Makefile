@@ -3,7 +3,7 @@ include ../common.mk
 BINARIES_IN := $(wildcard bin/*.in)
 BINARIES := $(patsubst %.in,%,$(BINARIES_IN))
 LIBRARIES := $(wildcard lib/*)
-COMPLETIONS := completions/steamos-clone completions/steamos-chroot completions/steamos-create-homedir-if-needed completions/steamos-factory-reset completions/steamos-partdefs completions/steamos-verity completions/steamos-mount
+COMPLETIONS := completions/steamos-bootloaders-install completions/steamos-clone completions/steamos-chroot completions/steamos-create-homedir-if-needed completions/steamos-factory-reset completions/steamos-partdefs completions/steamos-verity completions/steamos-mount
 SDDM_CONFIG := sddm.conf.d/steamos.conf
 PROFILE_CONFIG := profile.d/steamos.sh
 SUDOERS_CONFIG := sudoers.d/no-fqdn
