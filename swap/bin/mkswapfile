@@ -28,6 +28,6 @@ usage() { echo >&2 "Usage: $(basename $0) FILE SIZE"; exit 1; }
 
 [ -e "$SWAPFILE" ] && fail "File '$SWAPFILE' already exists"
 
-fallocate -l "$SWAPSIZE" "$SWAPFILE"
+dd if=/dev/zero of="$SWAPFILE" bs=1M count="$SWAPSIZE" 
 chmod 600 "$SWAPFILE"
 mkswap "$SWAPFILE"
