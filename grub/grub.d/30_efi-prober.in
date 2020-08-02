@@ -16,10 +16,6 @@
 
 set -e
 
-if [ ! -e /sys/firmware/efi ]; then
-  exit 0
-fi
-
 if [ "x${GRUB_DISABLE_EFI_PROBER}" = "xtrue" ]; then
   exit 0
 fi
