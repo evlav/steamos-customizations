@@ -31,6 +31,13 @@ check-for-update)
     echo "SteamOS is up-to-date!"
     exit 1
     ;;
+online-updates)
+    echo "SteamOS is being updated...!" >&2
+    /usr/lib/steamos/steamos-update-os-progress >&2 &
+    trap 'kill $!' 0
+    steamos-atomupd-client
+    echo "SteamOS is updated!" >&2
+    ;;
 reboot-and-update)
     echo "SteamOS is ready to update at next reboot!" >&2
     touch /run/steamos/update-other
