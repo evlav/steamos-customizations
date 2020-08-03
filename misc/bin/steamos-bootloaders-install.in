@@ -17,5 +17,5 @@
 set -e
 
 steamcl-install
-grub-install
+grub-install --efi-directory /efi
 update-grub
