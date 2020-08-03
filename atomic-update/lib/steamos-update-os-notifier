@@ -14,6 +14,6 @@
 #  published by the Free Software Foundation; either version 2.1 of the License,
 #  or (at your option) any later version.
 
-exec kupdate-notifier /usr/lib/steamos/steamos-update-os-notifier.action 3600 --online-updates \
+exec kupdate-notifier /usr/lib/steamos/steamos-update-os-notifier.action 3600 --online-updates --offline-updates \
                       --tooltip-title "SteamOS Update Operating System Notifier" \
                       --tooltip-subtitle "SteamOS Update Operating System Notifier for the new systemtray specification"

@@ -18,7 +18,7 @@ set -e
 set -o pipefail
 
 case "$1" in
-check-for-update)
+has-updates)
     if buildid=$(steamos-atomupd-client --query-only | \
                  jq -cerM '.minor.candidates[-1].image.buildid')
     then
@@ -38,7 +38,7 @@ online-updates)
     steamos-atomupd-client
     echo "SteamOS is updated!" >&2
     ;;
-reboot-and-update)
+offline-updates)
     echo "SteamOS is ready to update at next reboot!" >&2
     touch /run/steamos/update-other
     ;;
