@@ -185,11 +185,7 @@ umount /mnt
 
 log "Installing the bootloaders"
 
-mount -t steamos -o partset=other,noboot /dev/ /mnt
-trap 'umount -Rf /mnt' 0
-arch-chroot /mnt steamos-bootloaders-install || err "Failed to install bootloaders"
-umount -Rf /mnt
-trap - 0
+steamos-chroot --partset other -- steamos-bootloaders-install || err "Failed to install bootloaders"
 
 log "Reconfiguring the bootloader"
 
