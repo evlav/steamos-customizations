@@ -52,10 +52,14 @@ isremovable() {
 if isremovable @udev_symlinks_absdir@/self/rootfs; then
     GRUB_DISABLE_OS_PROBER=true
     export GRUB_DISABLE_OS_PROBER
-elif uuid=$(grub-probe --target=fs_uuid /efi); then
-    GRUB_OS_PROBER_SKIP_LIST="${GRUB_OS_PROBER_SKIP_LIST:+$GRUB_OS_PROBER_SKIP_LIST }$uuid@/@grub_root_config_relpath@"
-    GRUB_OS_PROBER_SKIP_LIST="${GRUB_OS_PROBER_SKIP_LIST:+$GRUB_OS_PROBER_SKIP_LIST }$uuid@/@grub_var_config_relpath@"
-    export GRUB_OS_PROBER_SKIP_LIST
+else
+    GRUB_DISABLE_EFI_PROBER=true
+    export GRUB_DISABLE_EFI_PROBER
+    if uuid=$(grub-probe --target=fs_uuid /efi); then
+        GRUB_OS_PROBER_SKIP_LIST="${GRUB_OS_PROBER_SKIP_LIST:+$GRUB_OS_PROBER_SKIP_LIST }$uuid@/@grub_root_config_relpath@"
+        GRUB_OS_PROBER_SKIP_LIST="${GRUB_OS_PROBER_SKIP_LIST:+$GRUB_OS_PROBER_SKIP_LIST }$uuid@/@grub_var_config_relpath@"
+        export GRUB_OS_PROBER_SKIP_LIST
+    fi
 fi
 
 grub-mkconfig -o /efi/EFI/steamos/$grubcfg "$@"
