@@ -16,7 +16,7 @@
 
 set -e
 
-if grep -q roothash /proc/cmdline && ! mountpoint -q /boot; then
+if ! mountpoint -q /boot; then
     set -- --boot-directory /var/boot "$@"
 fi
 
