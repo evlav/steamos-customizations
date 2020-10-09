@@ -22,5 +22,6 @@ fi
 
 exec @libdir@/grub/grub-install \
   --grub-mkimage @libdir@/steamos/steamos-grub-mkimage \
+  --efi-directory /efi \
   --no-nvram \
   "$@"
