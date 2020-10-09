@@ -53,10 +53,9 @@ RAUC_RUNTIME_DIR=/run/rauc
 
 ACTIVE_TIMERS=$RAUC_RUNTIME_DIR/active-timers
 
-systemctl list-units --full --no-legend --type=timer --state=active \
-    | cut -d' ' -f1 \
-    > "$ACTIVE_TIMERS"
-
-while read timer; do
-    systemctl stop "$timer"
-done < "$ACTIVE_TIMERS"
+systemctl list-units --full --no-legend --type=timer --state=active | \
+while read -r service _; do
+    [[ -n "$service" ]] || continue
+    systemctl stop "$service" >/dev/null
+    echo "$service"
+done > "$ACTIVE_TIMERS"

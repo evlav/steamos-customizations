@@ -43,8 +43,9 @@ RAUC_RUNTIME_DIR=/run/rauc
 ACTIVE_TIMERS=$RAUC_RUNTIME_DIR/active-timers
 
 if [ -e "$ACTIVE_TIMERS" ]; then
-    while read timer; do
-        systemctl start "$timer"
+    while read -r service; do
+        [[ "$service" ]] || continue
+        systemctl start "$service"
     done < "$ACTIVE_TIMERS"
 fi
 
