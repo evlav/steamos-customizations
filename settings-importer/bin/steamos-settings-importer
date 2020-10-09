@@ -88,7 +88,7 @@ fi
 
 # Mark setup as complete to prevent initial setup from running
 mkdir -p /var/lib/calamares-steamos
-touch /var/lib/calamares-steamos/setup_complete
-rm -f /etc/sddm.conf.d/calamares-setup.conf \
+touch /var/lib/calamares-steamos/initial_setup_complete
+rm -f /etc/sddm.conf.d/calamares-initial-setup.conf \
       /root/.config/kwinrulesrc \
-      /root/.xsessions/steamos-setup.desktop
+      /root/.xsessions/steamos-initial-setup.desktop
