@@ -17,5 +17,9 @@
 set -e
 
 steamcl-install
-grub-install
+if mountpoint -q /boot; then
+    grub-install
+else
+    grub-mkimage
+fi
 update-grub

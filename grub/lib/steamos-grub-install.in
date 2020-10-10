@@ -16,10 +16,6 @@
 
 set -e
 
-if ! mountpoint -q /boot; then
-    set -- --boot-directory /var/boot "$@"
-fi
-
 exec @libdir@/grub/grub-install \
   --grub-mkimage @libdir@/steamos/steamos-grub-mkimage \
   --efi-directory /efi \
