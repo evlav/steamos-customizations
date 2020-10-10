@@ -24,26 +24,6 @@ set -u
 log () { echo >&2 "$@"; }
 fail() { echo >&2 "Error:" "$@"; exit 1; }
 
-roothash_is_valid() {
-
-    # Test whether a roothash is valid (should be a 64 chars hexa string)
-
-    local roothash=$1
-    local pattern='^[a-fA-F0-9]{64}$'
-
-    [[ "$roothash" =~ $pattern ]]
-}
-
-#
-# Validate the roothash
-#
-
-ROOTHASH_FILE="$RAUC_UPDATE_SOURCE/roothash"
-[ -e "$ROOTHASH_FILE" ] || fail "'$ROOTHASH_FILE' not found in the bundle"
-
-ROOTHASH=$(cat "$ROOTHASH_FILE")
-roothash_is_valid "$ROOTHASH" || fail "Invalid roothash '$ROOTHASH'"
-
 #
 # Disable all systemd timers
 #

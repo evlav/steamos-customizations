@@ -18,6 +18,13 @@ _steamos-bootloaders-install()
     local cur prev words cword
     _init_completion || return
 
-    _filedir
+    case "$prev" in
+        --roothash)
+            _filedir
+            return
+            ;;
+    esac
+
+    COMPREPLY=( $(compgen -W "--roothash" -- "$cur") )
 } &&
 complete -F _steamos-bootloaders-install steamos-bootloaders-install

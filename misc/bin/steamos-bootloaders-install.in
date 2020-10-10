@@ -15,11 +15,44 @@
 #  or (at your option) any later version.
 
 set -e
+set -o pipefail
+set -u
+
+usage() {
+    cat <<EOF
+Usage: ${0##*/} [--roothash=HASH]
+
+Install and configure the bootloaders on your device.
+EOF
+}
+
+while [[ "$#" -ne 0 ]]
+do
+    if [[ "$1" =~ ^(-h|--help)$ ]]
+    then
+        usage
+        exit
+    elif [[ "$1" =~ ^(--roothash)$ ]]
+    then
+        shift
+        roothash="$1"
+    else
+        usage
+        echo "$1: Too many arguments" >&2
+        exit 1
+    fi
+    shift
+done
 
 steamcl-install
 if mountpoint -q /boot; then
     grub-install
 else
     grub-mkimage
+fi
+if [[ "${roothash:-}" ]]
+then
+    mkdir -p /efi/SteamOS
+    echo "$roothash" >/efi/SteamOS/roothash
 fi
 update-grub

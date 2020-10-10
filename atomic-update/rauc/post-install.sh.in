@@ -186,7 +186,13 @@ umount /mnt
 
 log "Installing the bootloaders"
 
-steamos-chroot --partset other -- steamos-bootloaders-install || \
+ROOTHASH_FILE="$RAUC_UPDATE_SOURCE/roothash"
+[ -e "$ROOTHASH_FILE" ] || fail "'$ROOTHASH_FILE' not found in the bundle"
+
+ROOTHASH="$(cat "$ROOTHASH")"
+[ "$ROOTHASH" ] || fail "'$ROOTHASH' is empty in the bundle"
+
+steamos-chroot --partset other -- steamos-bootloaders-install --roothash "$ROOTHASH" || \
     err "Failed to install bootloaders"
 
 log "Reconfiguring the bootloader"
