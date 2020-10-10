@@ -186,11 +186,13 @@ umount /mnt
 
 log "Installing the bootloaders"
 
-steamos-chroot --partset other -- steamos-bootloaders-install || err "Failed to install bootloaders"
+steamos-chroot --partset other -- steamos-bootloaders-install || \
+    err "Failed to install bootloaders"
 
 log "Reconfiguring the bootloader"
 
-update-grub || warn "Failed to reconfigure the bootloader"
+update-grub || \
+    warn "Failed to reconfigure the bootloader"
 
 #
 # Notify that we should reboot to other
