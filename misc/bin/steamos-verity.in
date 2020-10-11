@@ -29,9 +29,9 @@ EOF
 blockinfo() {
     eval "$(blkid "$1" | sed 's,^\(.*\): ,export DEVNAME="\1" ,')"
     echo "$DEVNAME"
-    echo "$UUID"
-    echo "$PARTLABEL"
-    echo "$PARTUUID"
+    echo "${UUID:-}"
+    echo "${PARTLABEL:-}"
+    echo "${PARTUUID:-}"
     echo "${TYPE:-}"
     echo "${LABEL:-}"
     echo "${BLOCK_SIZE:-}"
