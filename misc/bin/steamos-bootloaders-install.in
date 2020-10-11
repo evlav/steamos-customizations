@@ -20,9 +20,9 @@ set -u
 
 usage() {
     cat <<EOF
-Usage: ${0##*/} [--roothash=HASH]
+Usage: ${0##*/} [--roothash=HASH] [--bootloaders-only]
 
-Install and configure the bootloaders on your device.
+Install the boot artifacts on your device.
 EOF
 }
 
@@ -36,6 +36,9 @@ do
     then
         shift
         roothash="$1"
+    elif [[ "$1" =~ ^(--bootloaders-only)$ ]]
+    then
+        bootloaders_only="1"
     else
         usage
         echo "$1: Too many arguments" >&2
@@ -50,6 +53,24 @@ if mountpoint -q /boot; then
 else
     echo "Warning: Skipping installation artifacts to /boot!" >&2
     grub-mkimage
+fi
+if [[ ! "${bootloaders_only:-}" ]]
+then
+    mapfile -t moduledirs < <(ls -1d /usr/lib/modules.real/* 2>/dev/null)
+    for moduledir in ${moduledirs[@]}
+    do
+        if ! read -r pkgbase > /dev/null 2>&1 < "$moduledir/pkgbase"; then
+            # if the kernel has no pkgbase, we skip it
+            continue
+        fi
+
+        kver="${moduledir##*/}"
+        install -Dm644 "/usr/share/factory/var/lib/modules/$kver/vmlinuz" "/boot/vmlinuz-$pkgbase"
+        mkdir -p "/var/lib/modules/$kver"
+        cp -a "/usr/share/factory/var/lib/modules/$kver" "/var/lib/modules/"
+        dracut --force --hostonly "/boot/initramfs-$pkgbase.img" "$kver"
+        dracut --force --no-hostonly "/boot/initramfs-$pkgbase-fallback.img" "$kver"
+    done
 fi
 if [[ "${roothash:-}" ]]
 then

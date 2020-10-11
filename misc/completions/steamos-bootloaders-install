@@ -25,6 +25,6 @@ _steamos-bootloaders-install()
             ;;
     esac
 
-    COMPREPLY=( $(compgen -W "--roothash" -- "$cur") )
+    COMPREPLY=( $(compgen -W "--roothash --bootloaders-only" -- "$cur") )
 } &&
 complete -F _steamos-bootloaders-install steamos-bootloaders-install
