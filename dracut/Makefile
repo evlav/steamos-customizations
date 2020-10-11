@@ -3,12 +3,13 @@ include ../common.mk
 BINARIES_IN := $(wildcard bin/*.in)
 BINARIES := $(patsubst %.in,%,$(BINARIES_IN))
 COMPLETIONS := completions/update-dracut
-CONFIG := $(wildcard dracut.conf.d/*)
+CONFIG_IN := $(wildcard dracut.conf.d/*.in)
+CONFIG := $(patsubst %.in,%,$(CONFIG_IN))
 MODULES_IN := $(wildcard modules.d/*.sh.in)
 MODULES := $(patsubst %.in,%,$(MODULES_IN))
 README := modules.d/README
 
-all: $(BINARIES) $(MODULES)
+all: $(BINARIES) $(CONFIG) $(MODULES)
 
 install: all
 	install -d $(DESTDIR)$(sbindir)

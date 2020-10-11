@@ -1,0 +1,21 @@
+# This file is part of steamos-customizations.
+
+# Don't use the host command-line, as we might run into trouble
+# (e.g. when generating a new initrd from the live system before installing to disk)
+hostonly_cmdline=no
+
+# Make sure dm-verity is part of the initrd, as we might build initrd for a
+# verity system from a system without verity.
+add_drivers+=" dm-verity "
+
+# Copy the list of the partitions to be friendly with other distributions that
+# may to boot the initial ramdisk (i.e. by using GRUB/os-prober).
+# Note: these partitions are are mounted by the following modules:
+#  - steamos-factory-reset.sh (/var, /home)
+#  - steamos-var.sh (/var)
+#  - steamos-etc-overlay.sh (/var)
+# The list of partition can be overriden if the argument steamos.efi= is set.
+install_items+=" /efi/@partdefs_reldir@/all "
+install_items+=" /efi/@partdefs_reldir@/self "
+install_items+=" /efi/@partdefs_reldir@/other "
+install_items+=" /efi/@partdefs_reldir@/shared "

@@ -70,26 +70,17 @@ load_definitions() {
 
 # Main
 
-EFI=$(getarg 'steamos.efi=')
-if [ -z "$EFI" ]; then
-    if plymouth --ping; then
-        plymouth display-message --text="Fatal: Missing steamos.efi= argument!"
-        sleep 10
-    fi
-    warn "The SteamOS pseudo EFI partition is unset"
-    warn "Please set the kernel argument steamos.efi=<DEV>"
-    warn "*** Dropping you to a shell; the system will continue"
-    warn "*** when you leave the shell."
-    emergency_shell
-fi
-
 info "Setting up SteamOS udev rules"
 
-mkdir /efi
-mount -o ro "$EFI" /efi
+EFI=$(getarg 'steamos.efi=')
+if [ -n "$EFI" ]; then
+    [ -d /efi ] || mkdir /efi
+    mount -o ro "$EFI" /efi
+fi
 load_definitions "/efi/$STEAMOS_PARTDEFS_RELDIR"
-umount /efi
-rmdir /efi
+if [ -n "$EFI" ]; then
+    umount /efi
+fi
 
 udevadm control --reload-rules && udevadm trigger
 ln -sf "${UDEV_SYMLINKS_RELDIR##*/}" "/dev/${UDEV_SYMLINKS_RELDIR%/*}/steamos"
