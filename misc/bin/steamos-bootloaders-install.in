@@ -48,11 +48,27 @@ steamcl-install
 if mountpoint -q /boot; then
     grub-install
 else
+    echo "Warning: Skipping installation artifacts to /boot!" >&2
     grub-mkimage
 fi
 if [[ "${roothash:-}" ]]
 then
     mkdir -p /efi/SteamOS
     echo "$roothash" >/efi/SteamOS/roothash
+fi
+mapfile -t linux < <(ls -1 /boot/vmlinuz-* 2>/dev/null)
+if [[ "${#linux[*]}" -eq 0 ]]
+then
+    echo "Warning: /boot: No such vmlinuz!" >&2
+fi
+mapfile -t initramfs < <(ls -1 /boot/initramfs-*.img 2>/dev/null)
+if [[ "${#initramfs[*]}" -eq 0 ]]
+then
+    echo "Warning: /boot: No such initramfs!" >&2
+fi
+mapfile -t modules < <(ls -d1 /usr/lib/modules/* 2>/dev/null)
+if [[ "${#modules[*]}" -eq 0 ]]
+then
+    echo "Warning: /usr/lib/modules: No such modules!" >&2
 fi
 update-grub
