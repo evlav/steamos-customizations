@@ -76,7 +76,11 @@ if [ -z "$EFI" ]; then
         plymouth display-message --text="Fatal: Missing steamos.efi= argument!"
         sleep 10
     fi
-    die "No or empty steamos.efi= argument"
+    warn "The SteamOS pseudo EFI partition is unset"
+    warn "Please set the kernel argument steamos.efi=<DEV>"
+    warn "*** Dropping you to a shell; the system will continue"
+    warn "*** when you leave the shell."
+    emergency_shell
 fi
 
 info "Setting up SteamOS udev rules"
