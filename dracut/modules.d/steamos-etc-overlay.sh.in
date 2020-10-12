@@ -72,11 +72,19 @@ mount_etc_overlay() {
     local upperdir="${sysroot}${overlaydir}/upper"
     local workdir="${sysroot}${overlaydir}/work"
 
+    info "Mounting $lowerdir"
     mount -v \
         -t overlay \
         -o lowerdir=$lowerdir,upperdir=$upperdir,workdir=$workdir \
         overlay \
-        $lowerdir
+        $lowerdir 2>&1 | vinfo
+
+    if ! ismounted "$lowerdir"; then
+        warn "Mounting $lowerdir failed! Compile the kernel with CONFIG_OVERLAY_FS!"
+        warn "*** Dropping you to a shell; the system will continue"
+        warn "*** when you leave the shell."
+        emergency_shell
+    fi
 }
 
 prepare_etc_overlay

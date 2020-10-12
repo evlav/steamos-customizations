@@ -22,7 +22,15 @@ mount_var() {
 
     # Mount the /var mountpoint
 
-    mount "/dev/${UDEV_SYMLINKS_RELDIR}/self/var" "$NEWROOT/var"
+    info "Mounting /dev/${UDEV_SYMLINKS_RELDIR}/self/var"
+    mount "/dev/${UDEV_SYMLINKS_RELDIR}/self/var" "$NEWROOT/var" 2>&1 | vinfo
+
+    if ! ismounted "$NEWROOT/var"; then
+        warn "Mounting /var failed!"
+        warn "*** Dropping you to a shell; the system will continue"
+        warn "*** when you leave the shell."
+        emergency_shell
+    fi
 }
 
 mount_var

@@ -74,8 +74,15 @@ info "Setting up SteamOS udev rules"
 
 EFI=$(getarg 'steamos.efi=')
 if [ -n "$EFI" ]; then
+    info "Mounting $EFI with -o ro"
     [ -d /efi ] || mkdir /efi
-    mount -o ro "$EFI" /efi
+    mount -o ro "$EFI" /efi 2>&1 | vinfo
+    if ! ismounted "/efi"; then
+        warn "Mounting /efi failed!"
+        warn "*** Dropping you to a shell; the system will continue"
+        warn "*** when you leave the shell."
+        emergency_shell
+    fi
 fi
 load_definitions "/efi/$STEAMOS_PARTDEFS_RELDIR"
 if [ -n "$EFI" ]; then
