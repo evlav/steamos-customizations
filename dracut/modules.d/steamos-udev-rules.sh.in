@@ -89,5 +89,5 @@ if [ -n "$EFI" ]; then
     umount /efi
 fi
 
-udevadm control --reload-rules && udevadm trigger
+udevadm control --reload-rules && udevadm trigger --settle
 ln -sf "${UDEV_SYMLINKS_RELDIR##*/}" "/dev/${UDEV_SYMLINKS_RELDIR%/*}/steamos"
