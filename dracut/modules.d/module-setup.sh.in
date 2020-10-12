@@ -43,7 +43,7 @@ depends() {
 
 # called by dracut
 installkernel() {
-    hostonly='' instmods ext4 overlay
+    hostonly='' instmods ext4 overlay dm-verity
     # The ESP (hence vfat) requires various modules to be mounted, see:
     # - https://wiki.gentoo.org/wiki/EFI_System_Partition
     # - https://wiki.gentoo.org/wiki/FAT
