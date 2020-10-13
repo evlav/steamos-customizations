@@ -13,7 +13,7 @@
 #  published by the Free Software Foundation; either version 2.1 of the License,
 #  or (at your option) any later version.
 
-_steamos-bootloaders-install()
+_steamos-boot-install()
 {
     local cur prev words cword
     _init_completion || return
@@ -25,6 +25,6 @@ _steamos-bootloaders-install()
             ;;
     esac
 
-    COMPREPLY=( $(compgen -W "--roothash --bootloaders-only" -- "$cur") )
+    COMPREPLY=( $(compgen -W "--roothash --no-bootloaders" "--no-kernel" -- "$cur") )
 } &&
-complete -F _steamos-bootloaders-install steamos-bootloaders-install
+complete -F _steamos-boot-install steamos-boot-install steamos-bootloaders-install
