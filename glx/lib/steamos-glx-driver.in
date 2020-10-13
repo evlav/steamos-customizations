@@ -174,7 +174,13 @@ check_nvidia_dkms_modules ()
     fi;
 
     # blacklist nouveau
-    echo 'blacklist nouveau' > /etc/modprobe.d/nvidia-dkms.conf;
+    cat <<EOF > /etc/modprobe.d/nvidia-dkms.conf;
+#
+# Automatically generated file; DO NOT EDIT.
+# ${0##*/} modprobe.conf
+#
+blacklist nouveau
+EOF
 
     # the modules lives there
     modpath="/var/lib/dkms/$mod/$ver/$krn/$arc/module";
@@ -183,6 +189,10 @@ check_nvidia_dkms_modules ()
     # regenerate the dracut configuration
     steamos-info "Adding modules ${module_list[*]} to dracut";
     cat <<EOF > /etc/dracut.conf.d/99-nvidia-dkms.conf;
+#
+# Automatically generated file; DO NOT EDIT.
+# ${0##*/} dracut.conf
+#
 add_drivers+=" ${module_list[*]%.ko*} "
 install_items+=" /etc/modprobe.d/nvidia-dkms.conf "
 EOF
