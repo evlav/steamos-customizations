@@ -182,7 +182,10 @@ check_nvidia_dkms_modules ()
 
     # regenerate the dracut configuration
     steamos-info "Adding modules ${module_list[*]} to dracut";
-    echo "add_drivers+=\" ${module_list[*]%.ko*} \"" > /etc/dracut.conf.d/99-nvidia-dkms.conf;
+    cat <<EOF > /etc/dracut.conf.d/99-nvidia-dkms.conf;
+add_drivers+=" ${module_list[*]%.ko*} "
+install_items+=" /etc/modprobe.d/nvidia-dkms.conf "
+EOF
 
     # the initrd is outdated, rebuild it!
     get_initrd "$ver";
