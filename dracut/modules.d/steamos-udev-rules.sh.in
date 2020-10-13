@@ -96,4 +96,3 @@ if [ -n "$EFI" ]; then
 fi
 
 udevadm control --reload-rules && udevadm trigger --settle
-ln -sf "${UDEV_SYMLINKS_RELDIR##*/}" "/dev/${UDEV_SYMLINKS_RELDIR%/*}/steamos"
