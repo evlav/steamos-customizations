@@ -68,7 +68,3 @@ warn "A factory reset was required, let's execute"
 reset_device_ext4 "$VAR_A_DEVICE" 2>&1 | vinfo
 reset_device_ext4 "$VAR_B_DEVICE" 2>&1 | vinfo
 reset_device_ext4 "$HOME_DEVICE"  2>&1 | vinfo
-
-# vinfo might return 1, which cause the hook to be restarted
-# <https://github.com/dracutdevs/dracut/pull/576>
-true
