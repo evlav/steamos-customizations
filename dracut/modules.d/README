@@ -1,9 +1,12 @@
 This is the dracut module for SteamOS.
 
 This adds the following parameters:
-steamos.efi=
+rd.steamos.efi=
         The efi partition that was booted. Similar to root=, the value can fed
         "as is" to mount.
+
+steamos.efi=
+        Deprecated! Use rd.steamos.efi instead.
 
 Here's a brief description of the hooks:
 steamos-udev-rules.sh		(pre-mount)

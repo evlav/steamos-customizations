@@ -72,7 +72,13 @@ load_definitions() {
 
 info "Setting up SteamOS udev rules"
 
-EFI=$(getarg 'steamos.efi=')
+EFI=$(getarg 'rd.steamos.efi=')
+if [ -z "$EFI" ]; then
+    EFI=$(getarg 'steamos.efi=')
+    if [ -n "$EFI" ]; then
+        warn "SteamOS command line option 'steamos.efi' is deprecated, use 'rd.steamos.efi' instead."
+    fi
+fi
 if [ -n "$EFI" ]; then
     info "Mounting $EFI with -o ro"
     [ -d /efi ] || mkdir /efi

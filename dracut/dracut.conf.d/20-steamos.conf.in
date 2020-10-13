@@ -6,7 +6,7 @@
 #  - steamos-factory-reset.sh (/var, /home)
 #  - steamos-var.sh (/var)
 #  - steamos-etc-overlay.sh (/var)
-# The list of partition can be overriden if the argument steamos.efi= is set.
+# The list of partition can be overriden if the argument rd.steamos.efi= is set.
 install_items+=" /efi/@partdefs_reldir@/all "
 install_items+=" /efi/@partdefs_reldir@/self "
 install_items+=" /efi/@partdefs_reldir@/other "
