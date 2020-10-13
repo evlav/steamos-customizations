@@ -1,9 +1,5 @@
 # This file is part of steamos-customizations.
 
-# Don't use the host command-line, as we might run into trouble
-# (e.g. when generating a new initrd from the live system before installing to disk)
-hostonly_cmdline=no
-
 # Copy the list of the partitions to be friendly with other distributions that
 # may to boot the initial ramdisk (i.e. by using GRUB/os-prober).
 # Note: these partitions are are mounted by the following modules:
