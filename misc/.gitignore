@@ -5,7 +5,7 @@ bin/steamos-clone
 bin/steamos-create-homedir-if-needed
 bin/steamos-factory-reset
 bin/steamos-mount
-bin/steamos-partdefs
+bin/steamos-partsets
 bin/steamos-verity
 systemd/*.mount
 systemd/*.service
