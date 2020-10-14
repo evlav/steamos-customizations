@@ -189,7 +189,7 @@ log "Installing the bootloaders"
 ROOTHASH_FILE="$RAUC_UPDATE_SOURCE/roothash"
 [ -e "$ROOTHASH_FILE" ] || fail "'$ROOTHASH_FILE' not found in the bundle"
 
-ROOTHASH="$(cat "$ROOTHASH")"
+ROOTHASH="$(cat "$ROOTHASH_FILE")"
 [ "$ROOTHASH" ] || fail "'$ROOTHASH' is empty in the bundle"
 
 steamos-chroot --partset other -- steamos-bootloaders-install --roothash "$ROOTHASH" || \
