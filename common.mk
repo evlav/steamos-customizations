@@ -54,7 +54,7 @@ GRUB_VAR_CONFIG_RELPATH  := EFI/steamos/grub-var.cfg
 BOOTCONF_RELPATH := SteamOS/bootconf
 
 # Partition definitions dir (relative to the efi mountpoint)
-PARTDEFS_RELDIR := SteamOS/partitions
+PARTDEFS_RELDIR := SteamOS/partsets
 
 # Roothash file (relative to the efi mountpoint)
 ROOTHASH_RELPATH := SteamOS/roothash
