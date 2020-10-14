@@ -110,5 +110,6 @@ fi
 udevadm control --reload-rules && udevadm trigger --settle
 if [ ! -d "/dev/$UDEV_SYMLINKS_RELDIR/self" ]; then
     warn "/dev/$UDEV_SYMLINKS_RELDIR/self: No such partset!"
+    warn "*** Unlocking emergency service sulogin."
     emergency_service_sulogin_force
 fi
