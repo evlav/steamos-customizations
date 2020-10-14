@@ -21,7 +21,7 @@ ERR=0 # the error code returned by this script
 
 SYMLINKS_DIR=@udev_symlinks_absdir@
 BOOTCONF_RELPATH=@bootconf_relpath@
-PARTDEFS_RELDIR=@partdefs_reldir@
+PARTSETS_RELDIR=@partsets_reldir@
 ROOTHASH_RELPATH=@roothash_relpath@
 GRUB_VARCFG_RELPATH=@grub_var_config_relpath@
 
@@ -59,7 +59,7 @@ configure_other_efi() {
     local efi=$1
     local roothash_update_file=$2
     local bootconf=
-    local partdefs=
+    local partsets=
     local roothash=
     local grub_varcfg=
 
@@ -70,15 +70,15 @@ configure_other_efi() {
         steamos-bootconf > "$bootconf"
     fi
 
-    partdefs=$efi/$PARTDEFS_RELDIR
-    if ! [ -e "$partdefs" ]; then
-        self_partdefs="/efi/$PARTDEFS_RELDIR"
-        log "Initializing 'other' efi partdefs: '$self_partdefs' -> '$partdefs'"
-        mkdir -p "$partdefs"
-        cp "$self_partdefs/all"    "$partdefs/"
-        cp "$self_partdefs/other"  "$partdefs/self"   # swapped!
-        cp "$self_partdefs/self"   "$partdefs/other"  # swapped!
-        cp "$self_partdefs/shared" "$partdefs/"
+    partsets=$efi/$PARTSETS_RELDIR
+    if ! [ -e "$partsets" ]; then
+        self_partsets="/efi/$PARTSETS_RELDIR"
+        log "Initializing 'other' efi partsets: '$self_partsets' -> '$partsets'"
+        mkdir -p "$partsets"
+        cp "$self_partsets/all"    "$partsets/"
+        cp "$self_partsets/other"  "$partsets/self"   # swapped!
+        cp "$self_partsets/self"   "$partsets/other"  # swapped!
+        cp "$self_partsets/shared" "$partsets/"
     fi
 
     roothash=$efi/$ROOTHASH_RELPATH
