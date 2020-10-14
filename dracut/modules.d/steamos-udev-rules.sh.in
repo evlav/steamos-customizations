@@ -24,6 +24,18 @@ UDEV_RULES_DIR=/run/udev/rules.d
 
 # Helpers
 
+emergency_service_sulogin_force() {
+    mkdir /run/systemd/system/emergency.service.d
+    cat <<EOF >/run/systemd/system/emergency.service.d/steamos-var.sh.conf
+#
+# Automatically generated file; DO NOT EDIT.
+# ${0##*/} emergency.service
+#
+[Service]
+Environment=SYSTEMD_SULOGIN_FORCE=1
+EOF
+}
+
 make_udev_rule() {
     local group=$1
     local linkname=$2
@@ -96,3 +108,7 @@ if [ -n "$EFI" ]; then
 fi
 
 udevadm control --reload-rules && udevadm trigger --settle
+if [ ! -d "/dev/$UDEV_SYMLINKS_RELDIR/self" ]; then
+    warn "/dev/$UDEV_SYMLINKS_RELDIR/self: No such partset!"
+    emergency_service_sulogin_force
+fi
