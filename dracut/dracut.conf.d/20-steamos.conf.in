@@ -7,7 +7,7 @@
 #  - steamos-var.sh (/var)
 #  - steamos-etc-overlay.sh (/var)
 # The list of partition can be overriden if the argument rd.steamos.efi= is set.
-install_items+=" /efi/@partdefs_reldir@/all "
-install_items+=" /efi/@partdefs_reldir@/self "
-install_items+=" /efi/@partdefs_reldir@/other "
-install_items+=" /efi/@partdefs_reldir@/shared "
+install_items+=" /efi/@partsets_reldir@/all "
+install_items+=" /efi/@partsets_reldir@/self "
+install_items+=" /efi/@partsets_reldir@/other "
+install_items+=" /efi/@partsets_reldir@/shared "
