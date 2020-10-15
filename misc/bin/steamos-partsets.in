@@ -81,7 +81,7 @@ done
 
 [ -n "$OUTDIR" ] || fail "Too few argument"
 
-# Get to know who we are: A or B?
+# Get to know who we are: A, B or Dev?
 
 ROOTDEV=$(find_device_for_mountpoint_deep '/')
 [ -b "$ROOTDEV" ] || fail "Failed to get device for '/'"
@@ -96,6 +96,7 @@ OTHER=
 case "$SELF" in
     (A) OTHER=B;;
     (B) OTHER=A;;
+    (Dev) OTHER=A;;
 esac
 [ "$OTHER" ] || fail "Failed to determine 'other' for self=$SELF"
 
@@ -108,7 +109,7 @@ DISK=$(get_parent_device "$ROOTDEV")
 
 log "SteamOS root device: $ROOTDEV ($ROOTLABEL)"
 log "SteamOS disk       : $DISK"
-log "A/B status         : self=$SELF, other=$OTHER"
+log "A/B/Dev status     : self=$SELF, other=$OTHER"
 log "Creating partition definitions in $OUTDIR ..."
 
 [ -e "$OUTDIR" ] && fail "'$OUTDIR' already exists"
@@ -155,7 +156,7 @@ while read device partuuid typeuuid partlabel; do
         partlabel=esp
     fi
 
-    # Guess partition set (A or B) and linkname from label.
+    # Guess partition set (A, B or Dev) and linkname from label.
     partset=$(get_partition_set "$partlabel")
     linkname=$(get_partition_linkname "$partlabel")
     partuuid=${partuuid,,}

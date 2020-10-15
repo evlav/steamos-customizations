@@ -20,7 +20,7 @@ _steamos-partsets()
 
     case "$prev" in
         --devices)
-            COMPREPLY=($(compgen -W "efi-{A,B} verity-{A,B} rootfs-{A,B} var-{A,B} home" -- "$cur"))
+            COMPREPLY=($(compgen -W "efi-{A,B,Dev} verity-{A,B} rootfs-{A,B,Dev} var-{A,B,Dev} home" -- "$cur"))
             return
             ;;
     esac

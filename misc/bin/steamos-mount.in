@@ -20,7 +20,7 @@ set -u
 
 usage() {
     cat <<EOF
-Usage: ${0##*/} [-o partset=self|other|A|B,nooffload,nooverlay,noboot] DEVICE MOUNTPOINT
+Usage: ${0##*/} [-o partset=self|other|A|B|Dev,nooffload,nooverlay,noboot] DEVICE MOUNTPOINT
        ${0##*/} -u MOUNTPOINT
 
 Mount all the SteamOS filesystems on MOUNTPOINT using the DEVICE partitions.
@@ -97,6 +97,9 @@ fi
 case "${partset:-other}" in
 A|B)
     PARTITIONS=("efi-$partset" "verity-$partset" "rootfs-$partset" "var-$partset")
+    ;;
+Dev)
+    PARTITIONS=("efi-$partset" "rootfs-$partset" "var-$partset")
     ;;
 *)
     if [[ ! -d "@udev_symlinks_absdir@/$partset" ]]
