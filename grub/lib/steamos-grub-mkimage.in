@@ -106,6 +106,7 @@ while [ $# -gt 0 ]; do
             shift
             ;;
         *)
+            echo "$0: unrecognized option '$1'" >&2
             usage 1
             ;;
     esac
