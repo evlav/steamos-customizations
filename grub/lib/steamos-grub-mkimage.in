@@ -63,20 +63,42 @@ while [ $# -gt 0 ]; do
         -h|--help)
             usage 0
             ;;
-        -O|--format)
-            shift
-            [ "${1:-}" ] || usage 1
-            FORMAT=$1
+        -O|--format|-O=*|--format=*)
+            case "$1" in
+                -O|--format)
+                    shift
+                    FORMAT=$1
+                    ;;
+                *)
+                    FORMAT=${1#*=}
+                    ;;
+            esac
+            [ "${FORMAT:-}" ] || usage 1
             shift
             ;;
-        -o|--output)
-            shift
-            [ "${1:-}" ] || usage 1
-            OUTPUT=$1
+        -o|--output|-o=*|--output=*)
+            case "$1" in
+                -o|--output)
+                    shift
+                    OUTPUT=$1
+                    ;;
+                *)
+                    OUTPUT=${1#*=}
+                    ;;
+            esac
+            [ "${OUTPUT:-}" ] || usage 1
             shift
             ;;
-        -p|--prefix)
-            shift
+        -p|--prefix|-p=*|--prefix=*)
+            case "$1" in
+                -p|--prefix)
+                    shift
+                    PREFIX=$1
+                    ;;
+                *)
+                    PREFIX=${1#*=}
+                    ;;
+            esac
             # prefix can be null
             #[ "${1:-}" ] || usage 1
             PREFIX=$1
