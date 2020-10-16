@@ -22,20 +22,6 @@ UDEV_RULES_DIR=/run/udev/rules.d
 
 . /lib/dracut-lib.sh
 
-# Helpers
-
-emergency_service_sulogin_force() {
-    mkdir /run/systemd/system/emergency.service.d
-    cat <<EOF >/run/systemd/system/emergency.service.d/steamos-var.sh.conf
-#
-# Automatically generated file; DO NOT EDIT.
-# ${0##*/} emergency.service
-#
-[Service]
-Environment=SYSTEMD_SULOGIN_FORCE=1
-EOF
-}
-
 # Main
 
 info "Setting up SteamOS udev rules"
@@ -66,8 +52,3 @@ if [ -n "$EFI" ]; then
 fi
 
 udevadm control --reload-rules && udevadm trigger --settle
-if [ ! -d "/dev/$UDEV_SYMLINKS_RELDIR/self" ]; then
-    warn "/dev/$UDEV_SYMLINKS_RELDIR/self: No such partset!"
-    warn "*** Unlocking emergency service sulogin."
-    emergency_service_sulogin_force
-fi

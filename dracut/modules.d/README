@@ -15,5 +15,7 @@ steamos-etc-overlay.sh		(pre-pivot)
 	Mount a writable /etc overlay.
 steamos-var-lib-modules.sh	(pre-pivot)
 	Initialize /var/lib/modules from factory.
+steamos-emergency.sh		(pre-pivot)
+	Setup things for troubleshooting.
 steamos-factory-reset.sh	(shutdown)
 	Format data partitions.

@@ -1,0 +1,39 @@
+#!/bin/sh
+# -*- mode: sh; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
+# vim: et sts=4 sw=4
+
+#  SPDX-License-Identifier: LGPL-2.1+
+#
+#  Copyright © 2019-2020 Collabora Ltd.
+#  Copyright © 2019-2020 Valve Corporation.
+#
+#  This file is part of steamos-customizations.
+#
+#  steamos-customizations is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU Lesser General Public License as published
+#  by the Free Software Foundation; either version 2.1 of the License, or
+#  (at your option) any later version.
+
+# Unlocking emergency service sulogin
+
+# Helpers
+
+emergency_service_sulogin_force() {
+    mkdir /run/systemd/system/emergency.service.d
+    cat <<EOF >/run/systemd/system/emergency.service.d/steamos-emergency.sh.conf
+#
+# Automatically generated file; DO NOT EDIT.
+# ${0##*/} emergency.service
+#
+[Service]
+Environment=SYSTEMD_SULOGIN_FORCE=1
+EOF
+}
+
+# Main
+
+if [ ! -d /dev/@udev_symlinks_reldir@/self ]; then
+    warn "/dev/@udev_symlinks_reldir@/self: No such directory!"
+    warn "*** Unlocking emergency service sulogin."
+    emergency_service_sulogin_force
+fi
