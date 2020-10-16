@@ -8,6 +8,9 @@ rd.steamos.efi=
 steamos.efi=
         Deprecated! Use rd.steamos.efi instead.
 
+rd.steamos.novar
+	Do not mount /var overlay.
+
 rd.steamos.nooverlay
 	Do not mount /etc overlay.
 

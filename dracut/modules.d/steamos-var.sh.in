@@ -42,4 +42,9 @@ mount_var() {
     emergency_shell
 }
 
+NOVAR=$(getarg 'rd.steamos.novar')
+if [ -n "$NOVAR" ]; then
+    warn "/var is disabled."
+    exit 0
+fi
 mount_var
