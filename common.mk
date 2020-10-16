@@ -6,6 +6,7 @@ sysconfdir := /etc
 bindir     := $(prefix)/bin
 datadir    := $(prefix)/share
 libdir     := $(prefix)/lib
+libexecdir := $(prefix)/libexec
 sbindir    := $(prefix)/sbin
 systemdunitsdir := $(libdir)/systemd/system
 completionsdir := $(shell pkg-config --define-variable=prefix=$(prefix) --variable=completionsdir bash-completion 2>/dev/null \
@@ -79,6 +80,7 @@ UDEV_SYMLINKS_ABSDIR := /dev/$(UDEV_SYMLINKS_RELDIR)
 	@sed \
 	  -e 's;@bindir@;$(bindir);g' \
 	  -e 's;@libdir@;$(libdir);g' \
+	  -e 's;@libexecdir@;$(libexecdir);g' \
 	  -e 's;@sbindir@;$(sbindir);g' \
 	  -e 's;@steamos_n_partitions@;$(STEAMOS_N_PARTITIONS);g' \
 	  -e 's;@steamos_all_partlabels@;$(STEAMOS_ALL_PARTLABELS);g' \
