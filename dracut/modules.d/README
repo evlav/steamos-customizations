@@ -8,6 +8,9 @@ rd.steamos.efi=
 steamos.efi=
         Deprecated! Use rd.steamos.efi instead.
 
+rd.steamos.nooverlay
+	Do not mount /etc overlay.
+
 Here's a brief description of the hooks:
 steamos-udev-rules.sh		(pre-mount)
 	Create udev rules for SteamOS partitions.

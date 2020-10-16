@@ -87,5 +87,10 @@ mount_etc_overlay() {
     fi
 }
 
+NOOVERLAY=$(getarg 'rd.steamos.nooverlay')
+if [ -n "$NOOVERLAY" ]; then
+    warn "/etc overlay not mounted."
+    exit 0
+fi
 prepare_etc_overlay
 mount_etc_overlay
