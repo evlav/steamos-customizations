@@ -37,6 +37,7 @@ if [ -n "$EFI" ]; then
     info "Mounting $EFI with -o ro"
     [ -d /efi ] || mkdir /efi
     mount -o ro "$EFI" /efi 2>&1 | vinfo
+    trap "if ismounted /efi; then umount /efi; fi" 0
     if ! ismounted "/efi"; then
         warn "Mounting /efi failed!"
         warn "*** Dropping you to a shell; the system will continue"
@@ -44,11 +45,9 @@ if [ -n "$EFI" ]; then
         emergency_shell
     fi
 fi
+
 for partset in "/efi/$STEAMOS_PARTSETS_RELDIR/"*; do
     @libexecdir@/steamos/steamos-partsets-generator "$partset"
 done
-if [ -n "$EFI" ]; then
-    umount /efi
-fi
 
 udevadm control --reload-rules && udevadm trigger --settle
