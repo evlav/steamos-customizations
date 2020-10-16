@@ -26,6 +26,11 @@ check() {
         e2label mkfs.ext4 tune2fs \
         || return 1
 
+    # steamos helpers for partsets
+    require_binaries \
+        /usr/lib/steamos/steamos-partsets-generator \
+        || return 1
+
     # systemd helpers for dm-verity
     require_binaries \
         $systemdutildir/systemd-veritysetup \
