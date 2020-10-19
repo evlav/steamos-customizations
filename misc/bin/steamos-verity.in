@@ -70,7 +70,7 @@ read_write() {
     backup
 
     mkdir -p /var/boot/grub
-    GRUB_DISABLE_STEAMOS_VERITY=false update-grub
+    GRUB_DISABLE_STEAMOS_VERITY=true update-grub
     tune2fs -O ^read-only "$1"
     if grep -q '^/dev/mapper/root / ' /proc/mounts
     then
