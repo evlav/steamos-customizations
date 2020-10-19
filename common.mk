@@ -48,6 +48,7 @@ STEAMOS_ALL_PARTLABELS := esp efi-A efi-B verity-A verity-B rootfs-A rootfs-B va
 GRUB_BINARY_RELPATH := EFI/steamos/grubx64.efi
 
 # GRUB configuration (relative to the efi mountpoint)
+GRUB_CONFIG_RELPATH := EFI/steamos/grub.cfg
 GRUB_ROOT_CONFIG_RELPATH := EFI/steamos/grub-root.cfg
 GRUB_VAR_CONFIG_RELPATH  := EFI/steamos/grub-var.cfg
 
@@ -85,6 +86,7 @@ UDEV_SYMLINKS_ABSDIR := /dev/$(UDEV_SYMLINKS_RELDIR)
 	  -e 's;@steamos_n_partitions@;$(STEAMOS_N_PARTITIONS);g' \
 	  -e 's;@steamos_all_partlabels@;$(STEAMOS_ALL_PARTLABELS);g' \
 	  -e 's;@grub_binary_relpath@;$(GRUB_BINARY_RELPATH);g' \
+	  -e 's;@grub_config_relpath@;$(GRUB_CONFIG_RELPATH);g' \
 	  -e 's;@grub_root_config_relpath@;$(GRUB_ROOT_CONFIG_RELPATH);g' \
 	  -e 's;@grub_var_config_relpath@;$(GRUB_VAR_CONFIG_RELPATH);g' \
 	  -e 's;@bootconf_relpath@;$(BOOTCONF_RELPATH);g' \
