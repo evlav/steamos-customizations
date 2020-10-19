@@ -97,7 +97,7 @@ case "$SELF" in
     (A) OTHER=B;;
     (B) OTHER=A;;
 esac
-[ "$OTHER" ] || [ "$SELF" == "Dev"] || fail "Failed to determine 'other' for self=$SELF"
+[ "$OTHER" ] || [ "$SELF" == "Dev" ] || fail "Failed to determine 'other' for self=$SELF"
 
 # Get the disk on which SteamOS lives
 
