@@ -31,11 +31,11 @@ EOF
         cat <<EOF
 ENV{ID_PART_ENTRY_SCHEME}=="gpt", ENV{ID_PART_ENTRY_UUID}=="$partuuid", SYMLINK+="@udev_symlinks_reldir@/$partset/$name"
 EOF
-    done <"$1" >"/run/udev/rules.d/90-steamos-partsets-${file##*/}.rules"
+    done <"$1"
 }
 
 mkdir -p /run/udev/rules.d
 for file in "$@"
 do
-    udev_rules "$file"
+    udev_rules "$file" >"/run/udev/rules.d/90-steamos-partsets-${file##*/}.rules"
 done
