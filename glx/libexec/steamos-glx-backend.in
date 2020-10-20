@@ -147,4 +147,4 @@ then
     esac;
 fi;
 
-exec @libdir@/steamos/steamos-glx-driver "${gpu_class_list[@]}" "$@";
+exec @libexecdir@/steamos/steamos-glx-driver "${gpu_class_list[@]}" "$@";

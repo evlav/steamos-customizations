@@ -19,7 +19,7 @@ RefuseManualStop=yes
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=@libdir@/steamos/steamos-glx-backend
+ExecStart=@libexecdir@/steamos/steamos-glx-backend
 
 [Install]
 WantedBy=sysinit.target

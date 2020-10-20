@@ -33,7 +33,7 @@ has-updates)
     ;;
 online-updates)
     echo "SteamOS is being updated...!" >&2
-    /usr/lib/steamos/steamos-update-os-progress >&2 &
+    @libexecdir@/steamos/steamos-update-os-progress >&2 &
     trap 'kill $!' 0
     steamos-atomupd-client
     echo "SteamOS is updated!" >&2

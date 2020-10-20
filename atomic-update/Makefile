@@ -1,7 +1,8 @@
 include ../common.mk
 
 BINARIES := $(wildcard bin/*)
-LIBRARIES_EXEC := $(wildcard libexec/*)
+LIBRARIES_EXEC_IN := $(wildcard libexec/*.in)
+LIBRARIES_EXEC := $(patsubst %.in,%,$(LIBRARIES_EXEC_IN))
 COMPLETIONS := completions/steamos-update-os completions/steamos-update-os-progress
 RAUC_CONFIG_IN := rauc/system.conf.in
 RAUC_CONFIG :=  $(patsubst %.in,%,$(RAUC_CONFIG_IN))
@@ -12,10 +13,11 @@ SERVICES_IN := $(wildcard systemd/*.service.in)
 SERVICES := $(patsubst %.in,%,$(SERVICES_IN))
 TMPFILES_IN := $(wildcard tmpfiles.d/*.conf.in)
 TMPFILES := $(patsubst %.in,%,$(TMPFILES_IN))
-APPLICATIONS := $(wildcard applications/*.desktop)
+APPLICATIONS_IN := $(wildcard applications/*.in)
+APPLICATIONS := $(patsubst %.in,%,$(APPLICATIONS_IN))
 TARGETS := $(wildcard systemd/*.target)
 
-all: $(RAUC_CONFIG) $(RAUC_HOOKS) $(SERVICES) $(TMPFILES)
+all: $(APPLICATIONS) $(LIBRARIES_EXEC) $(RAUC_CONFIG) $(RAUC_HOOKS) $(SERVICES) $(TMPFILES)
 
 install: all
 	install -d $(DESTDIR)$(sbindir)

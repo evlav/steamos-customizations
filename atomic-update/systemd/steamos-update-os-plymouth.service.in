@@ -15,7 +15,7 @@ Conflicts=plymouth-quit.service
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=@libdir@/steamos/steamos-update-os-progress
+ExecStart=@libexecdir@/steamos/steamos-update-os-progress
 
 [Install]
 WantedBy=steamos-update-os.target

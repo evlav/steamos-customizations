@@ -18,7 +18,7 @@ RefuseManualStart=yes
 Type=oneshot
 RemainAfterExit=yes
 StandardOutput=journal+console
-ExecStart=@libdir@/steamos/steamos-shutdown halt
+ExecStart=@libexecdir@/steamos/steamos-shutdown halt
 
 [Install]
 WantedBy=halt.target

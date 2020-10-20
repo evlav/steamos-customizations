@@ -18,7 +18,7 @@ RefuseManualStart=yes
 Type=oneshot
 RemainAfterExit=yes
 StandardOutput=journal+console
-ExecStart=@libdir@/steamos/steamos-shutdown poweroff
+ExecStart=@libexecdir@/steamos/steamos-shutdown poweroff
 
 [Install]
 WantedBy=poweroff.target
