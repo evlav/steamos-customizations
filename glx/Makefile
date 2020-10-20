@@ -2,7 +2,7 @@ include ../common.mk
 
 LIBRARIES_EXEC_IN := $(wildcard libexec/*.in)
 LIBRARIES_EXEC := $(patsubst %.in,%,$(LIBRARIES_EXEC_IN))
-COMPLETIONS := completions/steamos-glx-backend completions/steamos-glx-drivers
+COMPLETIONS := $(wildcard completions/*)
 SERVICES_IN := $(wildcard systemd/*.service.in)
 SERVICES := $(patsubst %.in,%,$(SERVICES_IN))
 

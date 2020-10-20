@@ -2,7 +2,7 @@ include ../common.mk
 
 BINARIES_IN := $(wildcard bin/*.in)
 BINARIES := $(patsubst %.in,%,$(BINARIES_IN))
-COMPLETIONS := completions/update-dracut
+COMPLETIONS := $(wildcard completions/*)
 MODULES_IN := $(wildcard modules.d/*.sh.in)
 MODULES := $(patsubst %.in,%,$(MODULES_IN))
 README := modules.d/README

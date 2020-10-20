@@ -4,7 +4,7 @@ BINARIES_IN := $(wildcard bin/*.in)
 BINARIES := $(patsubst %.in,%,$(BINARIES_IN))
 LIBRARIES_EXEC_IN := $(wildcard libexec/*.in)
 LIBRARIES_EXEC := $(patsubst %.in,%,$(LIBRARIES_EXEC_IN))
-COMPLETIONS := completions/steamos-reboot completions/steamos-shutdown
+COMPLETIONS := $(wildcard completions/*)
 SERVICES_IN := $(wildcard systemd/*.service.in)
 SERVICES := $(patsubst %.in,%,$(SERVICES_IN))
 

@@ -3,7 +3,7 @@ include ../common.mk
 BINARIES := $(wildcard bin/*)
 LIBRARIES_EXEC_IN := $(wildcard libexec/*.in)
 LIBRARIES_EXEC := $(patsubst %.in,%,$(LIBRARIES_EXEC_IN))
-COMPLETIONS := completions/steamos-update-os completions/steamos-update-os-progress
+COMPLETIONS := $(wildcard completions/*)
 RAUC_CONFIG_IN := rauc/system.conf.in
 RAUC_CONFIG :=  $(patsubst %.in,%,$(RAUC_CONFIG_IN))
 RAUC_HOOKS_IN := $(wildcard rauc/*.sh.in)

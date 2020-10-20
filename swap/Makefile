@@ -1,7 +1,7 @@
 include ../common.mk
 
 BINARIES := bin/mkswapfile
-COMPLETIONS := completions/mkswapfile
+COMPLETIONS := $(wildcard completions/*)
 SERVICES_IN := $(wildcard systemd/*.service.in)
 SERVICES := $(patsubst %.in,%,$(SERVICES_IN))
 SWAPS := $(wildcard systemd/*.swap)

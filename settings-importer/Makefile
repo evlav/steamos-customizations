@@ -1,7 +1,7 @@
 include ../common.mk
 
-BINARIES := bin/steamos-settings-importer
-COMPLETIONS := completions/steamos-settings-importer
+BINARIES := $(wildcard bin/*)
+COMPLETIONS := $(wildcard completions/*)
 SERVICES_IN := $(wildcard systemd/*.service.in)
 SERVICES := $(patsubst %.in,%,$(SERVICES_IN))
 UNITS := $(SERVICES)
