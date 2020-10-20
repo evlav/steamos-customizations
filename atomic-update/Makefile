@@ -1,7 +1,7 @@
 include ../common.mk
 
 BINARIES := $(wildcard bin/*)
-LIBRARIES := $(wildcard lib/*)
+LIBRARIES_EXEC := $(wildcard libexec/*)
 COMPLETIONS := completions/steamos-update-os completions/steamos-update-os-progress
 RAUC_CONFIG_IN := rauc/system.conf.in
 RAUC_CONFIG :=  $(patsubst %.in,%,$(RAUC_CONFIG_IN))
@@ -20,8 +20,8 @@ all: $(RAUC_CONFIG) $(RAUC_HOOKS) $(SERVICES) $(TMPFILES)
 install: all
 	install -d $(DESTDIR)$(sbindir)
 	install -m 0755 $(BINARIES) $(DESTDIR)$(sbindir)
-	install -d $(DESTDIR)$(libdir)/steamos
-	install -m 0755 $(LIBRARIES) $(DESTDIR)$(libdir)/steamos
+	install -d $(DESTDIR)$(libexecdir)/steamos
+	install -m 0755 $(LIBRARIES_EXEC) $(DESTDIR)$(libexecdir)/steamos
 	install -d $(DESTDIR)$(completionsdir)
 	install -m 0644 $(COMPLETIONS) $(DESTDIR)$(completionsdir)
 	install -d $(DESTDIR)$(sysconfdir)/rauc

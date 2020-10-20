@@ -2,11 +2,11 @@ bin/steamos-boot-install
 bin/steamos-bootloaders-install
 bin/steamos-chroot
 bin/steamos-clone
-bin/steamos-create-homedir-if-needed
 bin/steamos-factory-reset
 bin/steamos-mount
 bin/steamos-partsets
 bin/steamos-verity
+libexec/steamos-create-homedir-if-needed
 libexec/steamos-partsets-generator
 systemd/*.mount
 systemd/*.service
