@@ -13,7 +13,7 @@
 #  published by the Free Software Foundation; either version 2.1 of the License,
 #  or (at your option) any later version.
 
-_steamos-create-homedir-if-needed()
+_steamos-create-homedir()
 {
     local cur prev words cword
     _init_completion || return
@@ -25,4 +25,4 @@ _steamos-create-homedir-if-needed()
         return
     fi
 } &&
-complete -F _steamos-create-homedir-if-needed steamos-create-homedir-if-needed
+complete -F _steamos-create-homedir steamos-create-homedir

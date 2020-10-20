@@ -14,7 +14,7 @@ Before=systemd-user-sessions.service
 [Service]
 Type=oneshot
 RemainAfterExit=true
-ExecStart=@libexecdir@/steamos/steamos-create-homedir-if-needed 1000
+ExecStart=@libexecdir@/steamos/steamos-create-homedir 1000
 
 [Install]
 WantedBy=multi-user.target

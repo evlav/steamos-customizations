@@ -6,7 +6,7 @@ bin/steamos-factory-reset
 bin/steamos-mount
 bin/steamos-partsets
 bin/steamos-verity
-libexec/steamos-create-homedir-if-needed
+libexec/steamos-create-homedir
 libexec/steamos-partsets-generator
 systemd/*.mount
 systemd/*.service
