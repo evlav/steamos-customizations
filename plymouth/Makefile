@@ -3,7 +3,7 @@ include ../common.mk
 BINARIES := $(wildcard bin/*)
 SDDM_SERVICE := $(wildcard sddm.service.d/*)
 
-all: $(SERVICES)
+all:
 
 install: all
 	install -d $(DESTDIR)$(sbindir)
