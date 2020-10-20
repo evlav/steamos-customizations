@@ -28,7 +28,7 @@ check() {
 
     # steamos helpers for partsets
     require_binaries \
-        /usr/lib/steamos/steamos-partsets-generator \
+        @libexecdir@/steamos/steamos-partsets-generator \
         || return 1
 
     # systemd helpers for dm-verity
@@ -60,6 +60,7 @@ install() {
     inst_multiple \
         basename dirname plymouth rmdir sed sleep \
         e2label mkfs.ext4 tune2fs \
+        @libexecdir@/steamos/steamos-partsets-generator \
         $systemdutildir/systemd-veritysetup \
         $systemdutildir/system-generators/systemd-veritysetup-generator
     [[ $hostonly ]] && inst_multiple -H -o /efi/@partsets_reldir@/*
