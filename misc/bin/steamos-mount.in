@@ -96,7 +96,7 @@ fi
 # Get the list of partitions
 case "${partset:-other}" in
 A|B)
-    PARTITIONS=("efi-$partset" "verity-$partset" "rootfs-$partset" "var-$partset")
+    PARTITIONS=("efi-$partset" "rootfs-$partset" "var-$partset")
     ;;
 Dev)
     PARTITIONS=("efi-$partset" "rootfs-$partset" "var-$partset")
@@ -144,9 +144,6 @@ do
     efi-*)
         efi="${devices[$dev]}"
         ;;
-    verity-*)
-        verity="${devices[$dev]}"
-        ;;
     rootfs-*)
         rootfs="${devices[$dev]}"
         ;;
@@ -183,10 +180,6 @@ then
 elif [[ ! "${efi:-}" ]]
 then
     echo "efi: No such device" >&2
-    exit 1
-elif [[ ! "${verity:-}" ]]
-then
-    echo "verity: No such device" >&2
     exit 1
 elif [[ ! "${rootfs:-}" ]]
 then
