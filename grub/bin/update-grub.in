@@ -16,18 +16,34 @@
 
 set -e
 set -u
+set -o pipefail
 
 if [[ "$(id -u)" -ne 0 ]]; then
     echo "${0##*/}: You must run this as root" >&2
     exit 1
 fi
 
-grubcfg=
-if mountpoint -q /boot; then
-    grubcfg=grub-var.cfg
-else
-    grubcfg=grub-root.cfg
-fi
+prepare_grub_to_access_device() {
+    set -- prepare_grub_to_access_device "$@"
+    "$SHELL" -c '. /usr/share/grub/grub-mkconfig_lib; "$@"' "$0" "$@"
+}
+
+grubcfg() {
+    cat <<EOF
+#
+# Automatically generated file; DO NOT EDIT.
+# ${0##*/} grub.cfg
+#
+
+EOF
+
+    device="$(grub-probe --target=device "$1")"
+    prepare_grub_to_access_device "$device"
+
+    cat <<EOF
+configfile $1
+EOF
+}
 
 isremovable() {
     if ! devname="$(realpath "$1")"; then
@@ -66,5 +82,15 @@ else
     done
 fi
 
-grub-mkconfig -o /efi/EFI/steamos/$grubcfg "$@"
-ln -sf /efi/EFI/steamos/$grubcfg /boot/grub/grub.cfg 2>/dev/null || :
+grub-mkconfig -o /tmp/grub.cfg "$@"
+if echo "$*" | grep -qE "\(-o\|--output\)"; then
+    exit
+fi
+
+if ! mv /tmp/grub.cfg /boot/grub/grub.cfg; then
+    echo "Warning: /boot/grub/grub.cfg: Read-only file" >&2 
+    mv /tmp/grub.cfg /efi/EFI/steamos/grub.cfg
+    exit
+fi
+
+grubcfg /boot/grub/grub.cfg >/efi/EFI/steamos/grub.cfg
