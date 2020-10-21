@@ -194,7 +194,7 @@ then
     exit 1
 elif [[ ! "${var:-}" ]]
 then
-    echo "rootfs: No such device" >&2
+    echo "var: No such device" >&2
     exit 1
 elif [[ ! "${home:-}" ]]
 then
