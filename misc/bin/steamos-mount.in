@@ -20,10 +20,22 @@ set -u
 
 usage() {
     cat <<EOF
-Usage: ${0##*/} [-o partset=self|other|A|B|Dev,nooffload,nooverlay,noboot] DEVICE MOUNTPOINT
+Usage: ${0##*/} [-o fs-options] DEVICE MOUNTPOINT
        ${0##*/} -u MOUNTPOINT
 
 Mount all the SteamOS filesystems on MOUNTPOINT using the DEVICE partitions.
+
+Options:
+ -o, --options <list>    comma-separated list of mount options
+ -u                      umount
+ -h, --help              display this help
+
+Options for disk:
+ partset=<self|other|A|B|Dev>
+                         explicitly specifies partset
+ nooffload               no bind-mount offloaded directories
+ nooverlay               no mount overlayed /etc
+ noboot                  no bind-mount /boot
 EOF
 }
 
