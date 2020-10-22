@@ -35,7 +35,7 @@ Options for disk:
                          explicitly specifies partset
  noesp                   no mount /esp
  noefi                   no mount /efi
- novar                   no mount /var
+ novar                   no mount /var (implies nooverlay and noboot)
  nohome                  no mount /home (implies nooffload)
  nooffload               no bind-mount offloaded directories
  nooverlay               no mount overlayed /etc
@@ -234,20 +234,27 @@ fi
 # Mount offload
 if [[ ! "${nohome:-}" ]] && [[ ! "${nooverlay:-}" ]]
 then
-    for i in /opt /root /srv /usr/lib/debug /usr/local /var/cache/pacman /var/lib/docker /var/lib/flatpak /var/log /var/tmp
+    for i in /opt /root /srv /usr/lib/debug /usr/local
     do
         mount --bind "$mnt/home/.steamos/offload/$i" "$mnt/$i"
     done
+    if [[ ! "${novar:-}" ]]
+    then
+        for i in /var/cache/pacman /var/lib/docker /var/lib/flatpak /var/log /var/tmp
+        do
+            mount --bind "$mnt/home/.steamos/offload/$i" "$mnt/$i"
+        done
+    fi
 fi
 
 # Mount overlay
-if [[ ! "${nooverlay:-}" ]]
+if [[ ! "${novar:-}" ]] && [[ ! "${nooverlay:-}" ]]
 then
     mount -t overlay -o "lowerdir=$mnt/etc,upperdir=$mnt/var/lib/overlays/etc/upper,workdir=$mnt/var/lib/overlays/etc/work" none "$mnt/etc"
 fi
 
 # Mount boot
-if [[ ! "${noboot:-}" ]]
+if [[ ! "${novar:-}" ]] && [[ ! "${noboot:-}" ]]
 then
     mount --bind "$mnt/var/boot" "$mnt/boot"
 fi
