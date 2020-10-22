@@ -59,6 +59,8 @@ then
         echo "Warning: Skipping installation artifacts to /boot!" >&2
         grub-mkimage
     fi
+    mkdir -p /efi/SteamOS
+    steamos-bootconf >/efi/SteamOS/bootconf
 fi
 if [[ ! "${no_kernel:-}" ]]
 then
