@@ -36,7 +36,7 @@ Options for disk:
  noesp                   no mount /esp
  noefi                   no mount /efi
  novar                   no mount /var
- nohome                  no mount /home
+ nohome                  no mount /home (implies nooffload)
  nooffload               no bind-mount offloaded directories
  nooverlay               no mount overlayed /etc
  noboot                  no bind-mount /boot
@@ -232,7 +232,7 @@ then
 fi
 
 # Mount offload
-if [[ ! "${nooffload:-}" ]]
+if [[ ! "${nohome:-}" ]] && [[ ! "${nooverlay:-}" ]]
 then
     for i in /opt /root /srv /usr/lib/debug /usr/local /var/cache/pacman /var/lib/docker /var/lib/flatpak /var/log /var/tmp
     do
