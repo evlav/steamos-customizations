@@ -87,7 +87,7 @@ if echo "$*" | grep -qE "\(-o\|--output\)"; then
     exit
 fi
 
-if ! mv /tmp/grub.cfg /boot/grub/grub.cfg; then
+if ! mv /tmp/grub.cfg /boot/grub/grub.cfg 2>/dev/null; then
     echo "Warning: /boot/grub/grub.cfg: Read-only file" >&2 
     mv /tmp/grub.cfg /efi/EFI/steamos/grub.cfg
     exit
