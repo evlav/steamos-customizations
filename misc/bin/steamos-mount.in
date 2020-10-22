@@ -236,13 +236,13 @@ if [[ ! "${nohome:-}" ]] && [[ ! "${nooverlay:-}" ]]
 then
     for i in /opt /root /srv /usr/lib/debug /usr/local
     do
-        mount --bind "$mnt/home/.steamos/offload/$i" "$mnt/$i"
+        mount --bind "$mnt/home/.steamos/offload$i" "$mnt$i"
     done
     if [[ ! "${novar:-}" ]]
     then
         for i in /var/cache/pacman /var/lib/docker /var/lib/flatpak /var/log /var/tmp
         do
-            mount --bind "$mnt/home/.steamos/offload/$i" "$mnt/$i"
+            mount --bind "$mnt/home/.steamos/offload$i" "$mnt$i"
         done
     fi
 fi
