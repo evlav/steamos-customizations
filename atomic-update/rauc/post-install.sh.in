@@ -79,6 +79,9 @@ configure_other_efi() {
         cp "$self_partsets/other"  "$partsets/self"   # swapped!
         cp "$self_partsets/self"   "$partsets/other"  # swapped!
         cp "$self_partsets/shared" "$partsets/"
+        if [ -e "$self_partsets/dev" ]; then
+            cp "$self_partsets/dev" "$partsets/dev"
+        fi
     fi
 
     roothash=$efi/$ROOTHASH_RELPATH
