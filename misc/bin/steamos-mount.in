@@ -31,7 +31,7 @@ Options:
  -h, --help              display this help
 
 Options for disk:
- partset=<self|other|A|B|Dev>
+ partset=<self|other|A|B|dev>
                          explicitly specifies partset
  noesp                   no mount /esp
  noefi                   no mount /efi
@@ -111,10 +111,7 @@ fi
 
 # Get the list of partitions
 case "${partset:-other}" in
-A|B)
-    PARTITIONS=("efi-$partset" "rootfs-$partset" "var-$partset")
-    ;;
-Dev)
+A|B|dev)
     PARTITIONS=("efi-$partset" "rootfs-$partset" "var-$partset")
     ;;
 *)

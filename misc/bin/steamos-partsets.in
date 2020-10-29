@@ -81,7 +81,7 @@ done
 
 [ -n "$OUTDIR" ] || fail "Too few argument"
 
-# Get to know who we are: A, B or Dev?
+# Get to know who we are: A, B or dev?
 
 ROOTDEV=$(find_device_for_mountpoint_deep '/')
 [ -b "$ROOTDEV" ] || fail "Failed to get device for '/'"
@@ -97,7 +97,7 @@ case "$SELF" in
     (A) OTHER=B;;
     (B) OTHER=A;;
 esac
-[ "$OTHER" ] || [ "$SELF" == "Dev" ] || fail "Failed to determine 'other' for self=$SELF"
+[ "$OTHER" ] || [ "$SELF" == "dev" ] || fail "Failed to determine 'other' for self=$SELF"
 
 # Get the disk on which SteamOS lives
 
@@ -108,7 +108,7 @@ DISK=$(get_parent_device "$ROOTDEV")
 
 log "SteamOS root device: $ROOTDEV ($ROOTLABEL)"
 log "SteamOS disk       : $DISK"
-log "A/B/Dev status     : self=$SELF, other=$OTHER"
+log "A/B/dev status     : self=$SELF, other=$OTHER"
 log "Creating partition definitions in $OUTDIR ..."
 
 [ -e "$OUTDIR" ] && fail "'$OUTDIR' already exists"
@@ -155,7 +155,7 @@ while read device partuuid typeuuid partlabel; do
         partlabel=esp
     fi
 
-    # Guess partition set (A, B or Dev) and linkname from label.
+    # Guess partition set (A, B or dev) and linkname from label.
     partset=$(get_partition_set "$partlabel")
     linkname=$(get_partition_linkname "$partlabel")
     partuuid=${partuuid,,}
@@ -168,14 +168,14 @@ while read device partuuid typeuuid partlabel; do
             ;;
         ("$SELF")
             group=self
-            if [ "$SELF" == "Dev" ]; then
+            if [ "$SELF" == "dev" ]; then
                 echo "$linkname $partuuid"  >> "$OUTDIR/dev"
             fi
             ;;
         ("$OTHER")
             group=other
             ;;
-        ("Dev")
+        ("dev")
             group=dev
             ;;
         (*)
@@ -186,6 +186,7 @@ while read device partuuid typeuuid partlabel; do
 
     # Add to partition definition files
     echo "$linkname $partuuid"  >> "$OUTDIR/$group"
+    echo "$linkname $partuuid"  >> "$OUTDIR/$partset"
     echo "$partlabel $partuuid" >> "$OUTDIR/all"
 
 done < <(sfdisk -ql -o device,uuid,type-uuid,name "$DISK" | tail +2)
