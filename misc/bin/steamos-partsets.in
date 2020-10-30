@@ -168,15 +168,23 @@ while read device partuuid typeuuid partlabel; do
             ;;
         ("$SELF")
             group=self
+            echo "$linkname $partuuid"  >> "$OUTDIR/$partset"
             if [ "$SELF" == "dev" ]; then
                 echo "$linkname $partuuid"  >> "$OUTDIR/dev"
             fi
             ;;
         ("$OTHER")
             group=other
+            echo "$linkname $partuuid"  >> "$OUTDIR/$partset"
             ;;
         ("dev")
             group=dev
+            ;;
+        ("A")
+            group=A
+            ;;
+        ("B")
+            group=B
             ;;
         (*)
             log "Discarding partition '$partlabel' with unexpected suffix '$partset'"
@@ -186,7 +194,6 @@ while read device partuuid typeuuid partlabel; do
 
     # Add to partition definition files
     echo "$linkname $partuuid"  >> "$OUTDIR/$group"
-    echo "$linkname $partuuid"  >> "$OUTDIR/$partset"
     echo "$partlabel $partuuid" >> "$OUTDIR/all"
 
 done < <(sfdisk -ql -o device,uuid,type-uuid,name "$DISK" | tail +2)
