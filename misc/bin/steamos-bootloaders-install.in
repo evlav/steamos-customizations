@@ -14,4 +14,7 @@
 #  published by the Free Software Foundation; either version 2.1 of the License,
 #  or (at your option) any later version.
 
+echo "Warning: ${0##*/} is deprecated." >&2
+echo "         Use 'steamos-boot-install --no-kernel' instead." >&2
+
 exec steamos-boot-install --no-kernel "$@"
