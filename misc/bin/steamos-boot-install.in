@@ -64,7 +64,7 @@ then
 fi
 if [[ ! "${no_kernel:-}" ]]
 then
-    mapfile -t moduledirs < <(ls -1d /usr/lib/modules.real/* 2>/dev/null)
+    mapfile -t moduledirs < <(ls -1d /usr/lib/steamos/modules/* 2>/dev/null)
     for moduledir in ${moduledirs[@]}
     do
         if ! read -r pkgbase > /dev/null 2>&1 < "$moduledir/pkgbase"; then
