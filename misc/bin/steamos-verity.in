@@ -106,6 +106,7 @@ read_only() {
         tee /dev/stderr | \
         sed -n 's,^Root hash:[[:blank:]]\+\([[:xdigit:]]\{64\}\)$,\1,p' >/efi/SteamOS/roothash
     rm -Rf /var/boot/
+    grub-mkimage
     GRUB_DISABLE_STEAMOS_VERITY=false update-grub
 
     echo "Reboot to complete setup." >&2
