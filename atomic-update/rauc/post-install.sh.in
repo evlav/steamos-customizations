@@ -89,6 +89,9 @@ configure_other_efi() {
     cp -f "$roothash_update_file" "$roothash"
 
     grub_varcfg=$efi/$GRUB_VARCFG_RELPATH
+    if [ -e "$grub_varcfg" ]; then
+        echo "Warning: $grub_varcfg is deprecated." >&2
+    fi
     rm -f $grub_varcfg
 }
 

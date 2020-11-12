@@ -375,6 +375,7 @@ setup_efi() {
 
     grub_rootcfg=$mntpoint/$GRUB_ROOTCFG_RELPATH
     if [ -e $grub_rootcfg ]; then
+        echo "Warning: $grub_rootcfg is deprecated." >&2
         steamos-chroot --disk $disk --partset $self -- \
             update-grub
     fi
@@ -382,6 +383,9 @@ setup_efi() {
     # get rid of the grub config for the var partition, as we cleaned up /var/boot
 
     grub_varcfg=$mntpoint/$GRUB_VARCFG_RELPATH
+    if [ -e $grub_varcfg ]; then
+        echo "Warning: $grub_varcfg is deprecated." >&2
+    fi
     rm -fr $grub_varcfg
 
     umount $mntpoint

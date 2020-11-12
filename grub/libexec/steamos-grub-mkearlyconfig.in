@@ -96,6 +96,8 @@ fi
 
 if [ -z "\$cfg" -a -e \$cmdpath/grub-var.cfg ]; then
 
+    ${STEMOS_DEBUG+:echo "Warning: \$cmdpath/grub-var.cfg is deprecated."}
+
     # If we have both a config file for the VAR partition,
     # and a /boot/grub directory in the VAR partition,
     # then use that.
@@ -116,6 +118,8 @@ if [ -z "\$cfg" -a -e \$cmdpath/grub-var.cfg ]; then
 fi
 
 if [ -z "\$cfg" -a -e \$cmdpath/grub-root.cfg ]; then
+
+    ${STEMOS_DEBUG+:echo "Warning: \$cmdpath/grub-root.cfg is deprecated."}
 
     # If we have both a config file for the ROOT partition,
     # and a /boot/grub directory in the ROOT partition,
