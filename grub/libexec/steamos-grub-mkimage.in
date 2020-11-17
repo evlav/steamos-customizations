@@ -124,6 +124,11 @@ if [ $PREFIX_SET -eq 0 ]; then
     BOOT_GPT_NUMBER=$(echo $BOOT_EFI_HINTS | sed -e 's/^.*,//' -e 's/ *$//')
     PREFIX="(,$BOOT_GPT_NUMBER)/boot/grub"
     PREFIX_SET=1
+    if [ "${STEAMOS_DEBUG:-}" ]; then
+        cat << EOF >&2
+Probing hints for /boot: $BOOT_EFI_HINTS
+EOF
+    fi
 fi
 
 [ "$FORMAT" ] || fail "No format provided, no default either"
@@ -141,6 +146,13 @@ cd $WORKDIR
 MEMDISK=grub-memdisk.tar
 
 @libexecdir@/steamos/steamos-grub-mkearlyconfig > grub.cfg
+if [ "${STEAMOS_DEBUG:-}" ]; then
+    cat - grub.cfg << EOF >&2
+
+Using early grub.cfg
+
+EOF
+fi
 tar -cf - grub.cfg > $MEMDISK
 
 EARLY_CONFIG_MODULES=" \
@@ -154,6 +166,13 @@ EARLY_CONFIG_MODULES=" \
 BOOTSTRAP_CONFIG=grub-bootstrap.cfg
 
 echo 'normal (memdisk)/grub.cfg' > $BOOTSTRAP_CONFIG
+if [ "${STEAMOS_DEBUG:-}" ]; then
+    cat - $BOOTSTRAP_CONFIG << EOF >&2
+
+Using bootstrap grub.cfg
+
+EOF
+fi
 
 BOOTSTRAP_MODULES=" \
   normal memdisk tar \
@@ -167,6 +186,21 @@ MODULES=" \
   "
 
 mkdir -p "$(dirname $OUTPUT)"
+
+if [ "${STEAMOS_DEBUG:-}" ]; then
+    cat << EOF >&2
+
+Creating image using command
+
+grub-mkimage --config="$BOOTSTRAP_CONFIG"
+             --memdisk="$MEMDISK"
+             --prefix="$PREFIX"
+             --format="$FORMAT"
+             --output="$OUTPUT"
+             $MODULES
+             $*
+EOF
+fi
 
 exec /usr/lib/grub/grub-mkimage \
   --config="$BOOTSTRAP_CONFIG" \
