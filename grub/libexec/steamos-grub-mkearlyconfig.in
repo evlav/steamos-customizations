@@ -86,6 +86,12 @@ if [ "$prefix" ]; then
     cat << EOF
 set prefix=$prefix
 EOF
+else
+    cat << EOF
+search --fs-uuid --no-floppy --set=altroot $ROOTUUID
+set prefix=(\$altroot)/boot/grub
+unset altroot
+EOF
 fi
 
 cat << EOF
