@@ -88,8 +88,13 @@ set prefix=$prefix
 EOF
 else
     cat << EOF
-search --fs-uuid --no-floppy --set=altroot $ROOTUUID
-set prefix=(\$altroot)/boot/grub
+for uuid in $VARUUID $ROOTUUID; do
+    search --fs-uuid --no-floppy --set=altroot \$uuid
+    if [ -d (\$altroot)/boot/grub ]; then
+        set prefix=(\$altroot)/boot/grub
+        break
+    fi
+done
 unset altroot
 EOF
 fi
