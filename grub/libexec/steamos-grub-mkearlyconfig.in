@@ -82,6 +82,12 @@ echo "-------------------------------"
 EOF
 fi
 
+if [ "$prefix" ]; then
+    cat << EOF
+set prefix=$prefix
+EOF
+fi
+
 cat << EOF
 set cfg=
 

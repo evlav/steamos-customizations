@@ -19,8 +19,6 @@ set -u
 
 FORMAT= # --format=
 OUTPUT= # --output=
-PREFIX= # --prefix=
-PREFIX_SET=0 # prefix can be set to null...
 
 DEFAULT_FORMAT=x86_64-efi
 DEFAULT_OUTPUT=/efi/@grub_binary_relpath@
@@ -56,8 +54,17 @@ usage() {
     exit $status
 }
 
+prefix-probe() {
+    local hints
+    IFS=, read -r -a hints < <(grub-probe --target=compatibility_hint "$@")
+    if [ "${hints[1]:-}" ]; then
+        echo "(,${hints[1]})/boot/grub"
+    fi
+}
+
 # Arguments
 
+PREFIX="$(prefix-probe /boot)"
 while [ $# -gt 0 ]; do
     case "$1" in
         -h|--help)
@@ -102,7 +109,6 @@ while [ $# -gt 0 ]; do
             # prefix can be null
             #[ "${1:-}" ] || usage 1
             PREFIX=$1
-            PREFIX_SET=1
             shift
             ;;
         *)
@@ -119,23 +125,8 @@ if [ -z "$FORMAT" ] && [ -z "$OUTPUT" ]; then
     OUTPUT=$DEFAULT_OUTPUT
 fi
 
-if [ $PREFIX_SET -eq 0 ]; then
-    BOOT_EFI_HINTS=$(grub-probe -t efi_hints /boot) # -> hd0,gpt8
-    if [ $BOOT_EFI_HINTS ]; then
-        BOOT_GPT_NUMBER=$(echo $BOOT_EFI_HINTS | sed -e 's/^.*,//' -e 's/ *$//')
-        PREFIX="(,$BOOT_GPT_NUMBER)/boot/grub"
-    fi
-    PREFIX_SET=1
-    if [ "${STEAMOS_DEBUG:-}" ]; then
-        cat << EOF >&2
-Probing hints for /boot: ($BOOT_EFI_HINTS)
-EOF
-    fi
-fi
-
 [ "$FORMAT" ] || fail "No format provided, no default either"
 [ "$OUTPUT" ] || fail "No output provided, no default either"
-[ $PREFIX_SET -eq 1 ] || fail "No prefix was set"
 
 # Work in a temporary directory
 
@@ -147,6 +138,7 @@ cd $WORKDIR
 
 MEMDISK=grub-memdisk.tar
 
+prefix=$PREFIX \
 @libexecdir@/steamos/steamos-grub-mkearlyconfig > grub.cfg
 if [ "${STEAMOS_DEBUG:-}" ]; then
     cat - grub.cfg << EOF >&2
@@ -197,7 +189,6 @@ Creating image using command
 
 grub-mkimage --config="$BOOTSTRAP_CONFIG"
              --memdisk="$MEMDISK"
-             --prefix="$PREFIX"
              --format="$FORMAT"
              --output="$OUTPUT"
              $MODULES
@@ -208,7 +199,6 @@ fi
 /usr/lib/grub/grub-mkimage \
   --config="$BOOTSTRAP_CONFIG" \
   --memdisk="$MEMDISK" \
-  --prefix="$PREFIX" \
   --format="$FORMAT" \
   --output="$OUTPUT" \
   $MODULES \
