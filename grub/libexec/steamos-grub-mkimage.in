@@ -137,10 +137,12 @@ cd $WORKDIR
 # Create the early config, pack it in a memdisk
 
 MEMDISK=grub-memdisk.tar
+MODULES=(search search_fs_uuid ext2 fat part_gpt configfile test echo sleep)
 
 prefix=$PREFIX \
 @libexecdir@/steamos/steamos-grub-mkearlyconfig > grub.cfg
 if [ "${STEAMOS_DEBUG:-}" ]; then
+    MODULES+=(read)
     cat - grub.cfg << EOF >&2
 
 Using early grub.cfg
@@ -149,16 +151,10 @@ EOF
 fi
 tar -cf - grub.cfg > $MEMDISK
 
-EARLY_CONFIG_MODULES=" \
-  search search_fs_uuid \
-  ext2 fat part_gpt \
-  configfile test echo sleep \
-  ${STEAMOS_DEBUG:+read} 
-  "
-
 # Create the bootstrap config
 
 BOOTSTRAP_CONFIG=grub-bootstrap.cfg
+MODULES+=(normal memdisk tar)
 
 echo 'normal (memdisk)/grub.cfg' > $BOOTSTRAP_CONFIG
 if [ "${STEAMOS_DEBUG:-}" ]; then
@@ -169,16 +165,7 @@ Using bootstrap grub.cfg
 EOF
 fi
 
-BOOTSTRAP_MODULES=" \
-  normal memdisk tar \
-  "
-
 # Create the grub image
-
-MODULES=" \
-  $EARLY_CONFIG_MODULES \
-  $BOOTSTRAP_MODULES \
-  "
 
 mkdir -p "$(dirname $OUTPUT)"
 
@@ -191,7 +178,7 @@ grub-mkimage --config="$BOOTSTRAP_CONFIG"
              --memdisk="$MEMDISK"
              --format="$FORMAT"
              --output="$OUTPUT"
-             $MODULES
+             ${MODULES[*]}
              $*
 EOF
 fi
@@ -201,5 +188,5 @@ fi
   --memdisk="$MEMDISK" \
   --format="$FORMAT" \
   --output="$OUTPUT" \
-  $MODULES \
+  "${MODULES[@]}" \
   "$@"
