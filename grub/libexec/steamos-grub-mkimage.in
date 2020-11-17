@@ -121,12 +121,14 @@ fi
 
 if [ $PREFIX_SET -eq 0 ]; then
     BOOT_EFI_HINTS=$(grub-probe -t efi_hints /boot) # -> hd0,gpt8
-    BOOT_GPT_NUMBER=$(echo $BOOT_EFI_HINTS | sed -e 's/^.*,//' -e 's/ *$//')
-    PREFIX="(,$BOOT_GPT_NUMBER)/boot/grub"
+    if [ $BOOT_EFI_HINTS ]; then
+        BOOT_GPT_NUMBER=$(echo $BOOT_EFI_HINTS | sed -e 's/^.*,//' -e 's/ *$//')
+        PREFIX="(,$BOOT_GPT_NUMBER)/boot/grub"
+    fi
     PREFIX_SET=1
     if [ "${STEAMOS_DEBUG:-}" ]; then
         cat << EOF >&2
-Probing hints for /boot: $BOOT_EFI_HINTS
+Probing hints for /boot: ($BOOT_EFI_HINTS)
 EOF
     fi
 fi
