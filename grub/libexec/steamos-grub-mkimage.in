@@ -161,6 +161,7 @@ EARLY_CONFIG_MODULES=" \
   search search_fs_uuid \
   ext2 fat part_gpt \
   configfile test echo sleep \
+  ${STEAMOS_DEBUG:+read} 
   "
 
 # Create the bootstrap config
