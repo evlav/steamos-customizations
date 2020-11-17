@@ -146,16 +146,16 @@ if [ ! -d \$prefix ]; then
 
     # Fallback to root partition's prefix if exists
 
-    set altprefix=
+    set altroot=
 
-    search --fs-uuid --no-floppy --set=altprefix $ROOTUUID
+    search --fs-uuid --no-floppy --set=altroot $ROOTUUID
 
-    if [ -n "\$altprefix" -a -d (\$altprefix)/boot/grub ]; then
+    if [ -n "\$altroot" -a -d (\$altroot)/boot/grub ]; then
         echo "falling back to root partition's prefix (unexpected)"
-        set prefix=(\$altprefix)/boot/grub
+        set prefix=(\$altroot)/boot/grub
     fi
 
-    unset altprefix
+    unset altroot
 fi
 
 if [ -z "\$cfg" ]; then
