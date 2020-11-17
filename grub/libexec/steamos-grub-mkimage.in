@@ -54,17 +54,8 @@ usage() {
     exit $status
 }
 
-prefix-probe() {
-    local hints
-    IFS=, read -r -a hints < <(grub-probe --target=compatibility_hint "$@")
-    if [ "${hints[1]:-}" ]; then
-        echo "(,${hints[1]})/boot/grub"
-    fi
-}
-
 # Arguments
 
-PREFIX="$(prefix-probe /boot)"
 while [ $# -gt 0 ]; do
     case "$1" in
         -h|--help)
@@ -139,7 +130,7 @@ cd $WORKDIR
 MEMDISK=grub-memdisk.tar
 MODULES=(search search_fs_uuid ext2 fat part_gpt configfile test echo sleep)
 
-prefix=$PREFIX \
+prefix=${PREFIX:-} \
 @libexecdir@/steamos/steamos-grub-mkearlyconfig > grub.cfg
 if [ "${STEAMOS_DEBUG:-}" ]; then
     MODULES+=(read)

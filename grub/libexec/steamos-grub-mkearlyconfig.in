@@ -91,6 +91,7 @@ else
 for uuid in $VARUUID $ROOTUUID; do
     search --fs-uuid --no-floppy --set=altroot \$uuid
     if [ -d (\$altroot)/boot/grub ]; then
+        set root=\$altroot
         set prefix=(\$altroot)/boot/grub
         break
     fi
