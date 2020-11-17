@@ -140,24 +140,6 @@ if [ -z "\$cfg" -a -e \$cmdpath/grub-root.cfg ]; then
 
 fi
 
-if [ ! -d \$prefix ]; then
-
-    echo "Warning: \$prefix does not exist."
-
-    # Fallback to root partition's prefix if exists
-
-    set altroot=
-
-    search --fs-uuid --no-floppy --set=altroot $ROOTUUID
-
-    if [ -n "\$altroot" -a -d (\$altroot)/boot/grub ]; then
-        echo "falling back to root partition's prefix (unexpected)"
-        set prefix=(\$altroot)/boot/grub
-    fi
-
-    unset altroot
-fi
-
 if [ -z "\$cfg" ]; then
 
     # Fallback to the usual default
