@@ -140,9 +140,9 @@ if [ -z "\$cfg" -a -e \$cmdpath/grub-root.cfg ]; then
 
 fi
 
-if [ ! -d (\$prefix) ]; then
+if [ ! -d \$prefix ]; then
 
-    echo "Warning: (\$prefix) does not exist."
+    echo "Warning: \$prefix does not exist."
 
     # Fallback to root partition's prefix if exists
 
