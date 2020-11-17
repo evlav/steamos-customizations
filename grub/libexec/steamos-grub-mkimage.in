@@ -202,7 +202,7 @@ grub-mkimage --config="$BOOTSTRAP_CONFIG"
 EOF
 fi
 
-exec /usr/lib/grub/grub-mkimage \
+/usr/lib/grub/grub-mkimage \
   --config="$BOOTSTRAP_CONFIG" \
   --memdisk="$MEMDISK" \
   --prefix="$PREFIX" \
