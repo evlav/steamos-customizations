@@ -86,8 +86,9 @@ if [ "$prefix" ]; then
     cat << EOF
 set prefix=$prefix
 EOF
-else
-    cat << EOF
+fi
+
+cat << EOF
 for uuid in $VARUUID $ROOTUUID; do
     search --fs-uuid --no-floppy --set=altroot \$uuid
     if [ -d (\$altroot)/boot/grub ]; then
@@ -98,7 +99,6 @@ for uuid in $VARUUID $ROOTUUID; do
 done
 unset altroot
 EOF
-fi
 
 cat << EOF
 set cfg=
