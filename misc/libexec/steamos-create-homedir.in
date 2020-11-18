@@ -29,7 +29,7 @@ find /etc/skel -maxdepth 1 -mindepth 1 -exec cp -vPax {} "$HOMEDIR" \;
 install -m 0600 /root/.netrc "$HOMEDIR/.netrc"
 cp -vPax /usr/share/pixmaps/steamos.png "$HOMEDIR/.face.icon"
 install -d "$HOMEDIR/Desktop"
-for i in /usr/share/applications/steam.desktop /usr/share/applications/steamos-install.desktop
+for i in /usr/share/applications/steam.desktop /usr/share/applications/steamos-install{,-devel}.desktop
 do
     [ -e "$i" ] || continue
     ln -sf "$i" "$HOMEDIR/Desktop/${i##*/}"
