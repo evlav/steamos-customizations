@@ -89,11 +89,15 @@ EOF
 fi
 
 cat << EOF
+set cfg=
 for uuid in $VARUUID $ROOTUUID; do
     search --fs-uuid --no-floppy --set=altroot \$uuid
     if [ -d (\$altroot)/boot/grub ]; then
         set root=\$altroot
         set prefix=(\$altroot)/boot/grub
+        if [ -e \$prefix/grub.cfg ]; then
+            set cfg=\$prefix/grub.cfg
+        fi
         break
     fi
 done
@@ -101,7 +105,6 @@ unset altroot
 EOF
 
 cat << EOF
-set cfg=
 
 if [ -e "\$cmdpath/grub.cfg" ]; then
 
