@@ -82,7 +82,7 @@ echo "-------------------------------"
 EOF
 fi
 
-if [ "$prefix" ]; then
+if [ "${prefix:-}" ]; then
     cat << EOF
 set prefix=$prefix
 EOF
