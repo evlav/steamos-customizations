@@ -155,6 +155,11 @@ while read device partuuid typeuuid partlabel; do
         partlabel=esp
     fi
 
+    if [ ! "$partlabel" ]; then
+        log "Discarding partition '$device', label is empty"
+        continue
+    fi
+
     # Guess partition set (A, B or dev) and linkname from label.
     partset=$(get_partition_set "$partlabel")
     linkname=$(get_partition_linkname "$partlabel")
