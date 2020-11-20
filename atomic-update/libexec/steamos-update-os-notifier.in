@@ -15,11 +15,13 @@
 #  or (at your option) any later version.
 
 set -e
+set -u
 
 if [ ! -d /dev/@udev_symlinks_reldir@/other ]; then
     return
 fi
 
-exec kupdate-notifier @libexecdir@/steamos/steamos-update-os-notifier.action 3600 --offline-updates \
-                      --tooltip-title "SteamOS Update Operating System Notifier" \
-                      --tooltip-subtitle "SteamOS Update Operating System Notifier for the new systemtray specification"
+opts=(--offline-updates)
+opts+=(--tooltip-title "SteamOS Update Operating System Notifier")
+opts+=(--tooltip-subtitle "SteamOS Update Operating System Notifier for the new systemtray specification")
+exec kupdate-notifier "${opts[@]}" @libexecdir@/steamos/steamos-update-os-notifier.action 3600
