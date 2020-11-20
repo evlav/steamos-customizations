@@ -43,6 +43,10 @@ offline-updates)
     touch /run/steamos/update-other
     ;;
 *)
-    echo "$1: Invalid argument" >&2
+    if [[ ! "$1" ]]; then
+        echo "Too few argument" >&2
+    else
+        echo "$1: Invalid argument" >&2
+    fi
     exit 127
 esac
