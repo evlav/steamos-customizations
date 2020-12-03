@@ -3,8 +3,8 @@
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2019 Collabora Ltd.
-#  Copyright © 2019 Valve Corporation.
+#  Copyright © 2019-2020 Collabora Ltd.
+#  Copyright © 2019-2020 Valve Corporation.
 #
 #  This file is part of steamos-customizations.
 #
@@ -225,11 +225,9 @@ find_mountpoint_for_device() {
     [ -b "$device" ] || return
 
     while read source target; do
-        # ignore bind mounts, ie. lines like '/dev/sda8[/local/root]'
-        if echo "$source" | grep -q '\[.*\]$'; then continue; fi
         # return first match
         echo "$target"; return
-    done < <(findmnt --real -no source,target "$device")
+    done < <(findmnt --real -nvo source,target "$device")
 }
 
 find_device_for_mountpoint() {
@@ -247,11 +245,8 @@ find_device_for_mountpoint() {
         ls >/dev/null "$mountpoint"
     fi
 
-    local source=$(findmnt --real -no source "$mountpoint")
+    local source=$(findmnt --real -nvo source "$mountpoint")
     [ "$source" ] || return
-
-    # discard bind mounts
-    if echo "$source" | grep -q '\[.*\]$'; then return; fi
 
     realpath "$source"
 }
