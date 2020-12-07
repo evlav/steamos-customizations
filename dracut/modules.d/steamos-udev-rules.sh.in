@@ -17,8 +17,6 @@
 # Create udev rules for steamos partitions
 
 STEAMOS_PARTSETS_RELDIR=@partsets_reldir@
-UDEV_SYMLINKS_RELDIR=@udev_symlinks_reldir@
-UDEV_RULES_DIR=/run/udev/rules.d
 
 . /lib/dracut-lib.sh
 
