@@ -47,6 +47,7 @@ if [ -n "$EFI" ]; then
 fi
 
 for partset in "/efi/$STEAMOS_PARTSETS_RELDIR/"*; do
+    [ -e "$partset" ] || continue
     @libexecdir@/steamos/steamos-partsets-generator "$partset"
 done
 
