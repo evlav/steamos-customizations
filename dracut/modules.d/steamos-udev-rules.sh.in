@@ -16,8 +16,6 @@
 
 # Create udev rules for steamos partitions
 
-STEAMOS_PARTSETS_RELDIR=@partsets_reldir@
-
 . /lib/dracut-lib.sh
 
 # Main
@@ -44,7 +42,7 @@ if [ -n "$EFI" ]; then
     fi
 fi
 
-for partset in "/efi/$STEAMOS_PARTSETS_RELDIR/"*; do
+for partset in /efi/@partsets_reldir@/*; do
     [ -e "$partset" ] || continue
     @libexecdir@/steamos/steamos-partsets-generator "$partset"
 done
