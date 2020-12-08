@@ -140,11 +140,11 @@ status() {
     if [[ ! "${roothash:-}" ]] && [[ ! "${filesystem_is_readonly:-}" ]]
     then
         echo "disabled"
-        return
+        return 1
     elif [[ ! "${roothash:-}" ]] && [[ ! "${filesystem_is_readonly:-}" ]]
     then
         echo "disabled${device_is_readonly:+ (after reboot)}"
-        return
+        return 1
     fi
 
     if [[ "${device_is_readonly:-}" ]]
@@ -158,6 +158,7 @@ status() {
     fi
 
     echo "unknown (device-is-read-only: $device_is_readonly, filesystem-is-read-only: $filesystem_is_readonly, roothash: ${roothash:-none})"
+    return 1
 }
 
 verify() {
