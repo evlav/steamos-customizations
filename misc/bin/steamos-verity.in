@@ -43,7 +43,7 @@ cleanup() {
 
     if [[ "$ret" -ne 0 ]]
     then
-        for file in /efi/EFI/steamos/grub{,-root,-var}.cfg /efi/SteamOS/roothash
+        for file in /efi/EFI/steamos/grub.cfg /efi/SteamOS/roothash
         do
             if [[ -e "$file.bak" ]]
             then

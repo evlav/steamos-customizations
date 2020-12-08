@@ -28,8 +28,7 @@ FACTORY_RESET=0  # --factory-reset=
 BOOTCONF_RELPATH=@bootconf_relpath@
 PARTSETS_RELDIR=@partsets_reldir@
 GRUB_BINARY_RELPATH=@grub_binary_relpath@
-GRUB_ROOTCFG_RELPATH=@grub_root_config_relpath@
-GRUB_VARCFG_RELPATH=@grub_var_config_relpath@
+GRUB_CONFIG_RELPATH=@grub_config_relpath@
 
 STEAMOS_N_PARTITIONS=@steamos_n_partitions@
 STEAMOS_ALL_PARTLABELS='@steamos_all_partlabels@'
@@ -373,20 +372,11 @@ setup_efi() {
 
     # update the grub config for the root partition, only if it exists already
 
-    grub_rootcfg=$mntpoint/$GRUB_ROOTCFG_RELPATH
-    if [ -e $grub_rootcfg ]; then
-        echo "Warning: $grub_rootcfg is deprecated." >&2
+    grub_cfg=$mntpoint/$GRUB_CONFIG_RELPATH
+    if [ -e $grub_cfg ]; then
         steamos-chroot --disk $disk --partset $self -- \
             update-grub
     fi
-
-    # get rid of the grub config for the var partition, as we cleaned up /var/boot
-
-    grub_varcfg=$mntpoint/$GRUB_VARCFG_RELPATH
-    if [ -e $grub_varcfg ]; then
-        echo "Warning: $grub_varcfg is deprecated." >&2
-    fi
-    rm -fr $grub_varcfg
 
     umount $mntpoint
     rmdir $mntpoint

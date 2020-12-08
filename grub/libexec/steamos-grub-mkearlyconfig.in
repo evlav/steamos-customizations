@@ -108,62 +108,10 @@ cat << EOF
 
 if [ -e "\$cmdpath/grub.cfg" ]; then
 
-    # If we have config file grub.cfg file then use that.
-
     ${STEMOS_DEBUG+:echo "efi partition selected to boot"}
     set cfg=\$cmdpath/grub.cfg
 
-fi
-
-if [ -z "\$cfg" -a -e \$cmdpath/grub-var.cfg ]; then
-
-    ${STEMOS_DEBUG+:echo "Warning: \$cmdpath/grub-var.cfg is deprecated."}
-
-    # If we have both a config file for the VAR partition,
-    # and a /boot/grub directory in the VAR partition,
-    # then use that.
-
-    set altroot=
-
-    search --fs-uuid --no-floppy --set=altroot $VARUUID
-
-    if [ -n "\$altroot" -a -d (\$altroot)/boot/grub ]; then
-        ${STEMOS_DEBUG+:echo "var partition $VARUUID selected to boot"}
-        set root=\$altroot
-        set prefix=(\$altroot)/boot/grub
-        set cfg=\$cmdpath/grub-var.cfg
-    fi
-
-    unset altroot
-
-fi
-
-if [ -z "\$cfg" -a -e \$cmdpath/grub-root.cfg ]; then
-
-    ${STEMOS_DEBUG+:echo "Warning: \$cmdpath/grub-root.cfg is deprecated."}
-
-    # If we have both a config file for the ROOT partition,
-    # and a /boot/grub directory in the ROOT partition,
-    # then use that.
-
-    set altroot=
-
-    search --fs-uuid --no-floppy --set=altroot $ROOTUUID
-
-    if [ -n "\$altroot" -a -d (\$altroot)/boot/grub ]; then
-        ${STEMOS_DEBUG+:echo "root partition $ROOTUUID selected to boot"}
-        set root=\$altroot
-        set prefix=(\$altroot)/boot/grub
-        set cfg=\$cmdpath/grub-root.cfg
-    fi
-
-    unset altroot
-
-fi
-
-if [ -z "\$cfg" ]; then
-
-    # Fallback to the usual default
+else
 
     echo "falling back to grub's usual default (unexpected)"
     set cfg=\$prefix/grub.cfg

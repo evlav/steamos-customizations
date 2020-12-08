@@ -23,7 +23,6 @@ SYMLINKS_DIR=@udev_symlinks_absdir@
 BOOTCONF_RELPATH=@bootconf_relpath@
 PARTSETS_RELDIR=@partsets_reldir@
 ROOTHASH_RELPATH=@roothash_relpath@
-GRUB_VARCFG_RELPATH=@grub_var_config_relpath@
 
 #
 # Helpers
@@ -60,7 +59,6 @@ configure_other_efi() {
     local bootconf=
     local partsets=
     local roothash=
-    local grub_varcfg=
 
     bootconf=$efi/$BOOTCONF_RELPATH
     if ! [ -e "$bootconf" ]; then
@@ -88,12 +86,6 @@ configure_other_efi() {
         mkdir -p "$(dirname "$roothash")"
         cp -f "$roothash_update_file" "$roothash"
     fi
-
-    grub_varcfg=$efi/$GRUB_VARCFG_RELPATH
-    if [ -e "$grub_varcfg" ]; then
-        echo "Warning: $grub_varcfg is deprecated." >&2
-    fi
-    rm -f $grub_varcfg
 }
 
 log "Configuring the 'other' efi partition"

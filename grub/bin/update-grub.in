@@ -75,9 +75,6 @@ else
         test -e "$device" || continue
         if uuid=$(grub-probe --target=fs_uuid --device "$device"); then
             GRUB_OS_PROBER_SKIP_LIST="${GRUB_OS_PROBER_SKIP_LIST:+$GRUB_OS_PROBER_SKIP_LIST }$uuid@/@grub_config_relpath@"
-            # Deprecated grub-root.cfg and grub-var.cfg.
-            GRUB_OS_PROBER_SKIP_LIST="${GRUB_OS_PROBER_SKIP_LIST:+$GRUB_OS_PROBER_SKIP_LIST }$uuid@/@grub_root_config_relpath@"
-            GRUB_OS_PROBER_SKIP_LIST="${GRUB_OS_PROBER_SKIP_LIST:+$GRUB_OS_PROBER_SKIP_LIST }$uuid@/@grub_var_config_relpath@"
             export GRUB_OS_PROBER_SKIP_LIST
         fi
     done
