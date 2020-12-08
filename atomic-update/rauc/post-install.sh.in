@@ -57,7 +57,6 @@ rm -f $ACTIVE_TIMERS
 
 configure_other_efi() {
     local efi=$1
-    local roothash_update_file=$2
     local bootconf=
     local partsets=
     local roothash=
@@ -85,8 +84,10 @@ configure_other_efi() {
     fi
 
     roothash=$efi/$ROOTHASH_RELPATH
-    mkdir -p "$(dirname "$roothash")"
-    cp -f "$roothash_update_file" "$roothash"
+    if [ -e "$RAUC_UPDATE_SOURCE/roothash" ]; then
+        mkdir -p "$(dirname "$roothash")"
+        cp -f "$roothash_update_file" "$roothash"
+    fi
 
     grub_varcfg=$efi/$GRUB_VARCFG_RELPATH
     if [ -e "$grub_varcfg" ]; then
@@ -101,7 +102,7 @@ EFI_DEVICE_OTHER=$(realpath $SYMLINKS_DIR/other/efi)
 [ -b "$EFI_DEVICE_OTHER" ] || fail "Other efi device '$EFI_DEVICE_OTHER' not found"
 
 mount "$EFI_DEVICE_OTHER" /mnt
-configure_other_efi /mnt "$RAUC_UPDATE_SOURCE/roothash" || \
+configure_other_efi /mnt || \
     err "Failed to configure the 'other' efi"
 umount /mnt
 
@@ -192,13 +193,7 @@ umount /mnt
 
 log "Installing the bootloaders"
 
-ROOTHASH_FILE="$RAUC_UPDATE_SOURCE/roothash"
-[ -e "$ROOTHASH_FILE" ] || fail "'$ROOTHASH_FILE' not found in the bundle"
-
-ROOTHASH="$(cat "$ROOTHASH_FILE")"
-[ "$ROOTHASH" ] || fail "'$ROOTHASH' is empty in the bundle"
-
-steamos-chroot --partset other -- steamos-boot-install --no-kernel --roothash "$ROOTHASH" || \
+steamos-chroot --partset other -- steamos-boot-install --no-kernel || \
     err "Failed to install bootloaders"
 
 log "Reconfiguring the bootloader"
