@@ -82,8 +82,10 @@ status() {
     if tune2fs -l "$1" | grep -q '^Filesystem features: .*read-only.*$'
     then
         echo "enabled"
+        return
     else
         echo "disabled"
+        return 1
     fi
 }
 
