@@ -4,8 +4,8 @@
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2020 Collabora Ltd.
-#  Copyright © 2020 Valve Corporation.
+#  Copyright © 2020-2021 Collabora Ltd.
+#  Copyright © 2020-2021 Valve Corporation.
 #
 #  This file is part of steamos-customizations.
 #
@@ -52,12 +52,12 @@ cleanup() {
         done
     fi
 
-    rm -f /efi/EFI/steamos/grub-{root,var}.cfg.bak /efi/SteamOS/roothash.bak
+    rm -f /efi/EFI/steamos/grub.cfg.bak /efi/SteamOS/roothash.bak
 }
 
 backup() {
     trap cleanup 0
-    for file in /efi/EFI/steamos/grub-{root,var}.cfg /efi/SteamOS/roothash
+    for file in /efi/EFI/steamos/grub.cfg /efi/SteamOS/roothash
     do
         if [[ -e "$file" ]]
         then
