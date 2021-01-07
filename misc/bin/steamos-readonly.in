@@ -4,8 +4,8 @@
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2020 Collabora Ltd.
-#  Copyright © 2020 Valve Corporation.
+#  Copyright © 2020-2021 Collabora Ltd.
+#  Copyright © 2020-2021 Valve Corporation.
 #
 #  This file is part of steamos-customizations.
 #
@@ -49,6 +49,10 @@ backup() {
 read_write() {
     backup
 
+    if mountpoint -q /boot
+    then
+        umount /boot
+    fi
     mkdir -p /var/boot/grub
     GRUB_DISABLE_STEAMOS_VERITY=true update-grub
     tune2fs -O ^read-only "$1"
@@ -67,6 +71,10 @@ read_only() {
 
     backup
 
+    if mountpoint -q /boot
+    then
+        umount /boot
+    fi
     sync /
     mount -o remount,ro /
     tune2fs -O read-only "$1"

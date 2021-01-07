@@ -79,6 +79,10 @@ read_write() {
         return
     fi
 
+    if mountpoint -q /boot
+    then
+        umount /boot
+    fi
     mount -o remount,rw /
     rm -Rf /var/boot/ /efi/SteamOS/roothash
     sync /
