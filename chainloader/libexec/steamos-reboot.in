@@ -4,8 +4,8 @@
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2019 Collabora Ltd.
-#  Copyright © 2019 Valve Corporation.
+#  Copyright © 2019,2021 Collabora Ltd.
+#  Copyright © 2019,2021 Valve Corporation.
 #
 #  This file is part of steamos-customizations.
 #
@@ -16,33 +16,30 @@
 
 set -eu;
 
-STEAMOS_BOOTCONF=/efi/@bootconf_relpath@
-
-op=${1:-invalid};
-cf_args="--output-to input $STEAMOS_BOOTCONF";
-op_args=;
-
-case "$op" in
-    halt|poweroff) op_args="--mode shutdown"; ;;
-    reboot)        op_args="--mode reboot"  ; ;;
+args=("--output-to" "input" "/efi/@bootconf_relpath@");
+case "${1:-}" in
+    halt|poweroff) mode="shutdown"; ;;
+    reboot)        mode="reboot"; ;;
     *)
         echo "Usage: $0 <halt|poweroff|reboot>" >&2;
         exit 1;
         ;;
 esac;
 
-if [ -f /run/steamos/update ];
+for i in update update-other reboot-other;
+do
+    [ -f "/run/steamos/$i" ] || continue;
+
+    mode="$i";
+    break;
+done
+
+if [[ "${mode:-}" ]];
 then
-    op_args="--mode update";
-elif [ -f /run/steamos/update-other ];
-then
-    op_args="--mode update-other";
-elif [ -f /run/steamos/reboot-other ];
-then
-    op_args="--mode reboot-other";
+    args+=("--mode" "$mode");
 fi;
 
 mount /efi;
-echo "steamos-bootconf $op_args $cf_args" >&2;
-steamos-bootconf $op_args $cf_args;
+echo "steamos-bootconf" "${args[@]}" >&2;
+steamos-bootconf "${args[@]}";
 umount /efi;
