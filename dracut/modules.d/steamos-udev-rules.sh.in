@@ -1,11 +1,11 @@
-#!/bin/sh
+#!/bin/bash
 # -*- mode: sh; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
 # vim: et sts=4 sw=4
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2019-2020 Collabora Ltd.
-#  Copyright © 2019-2020 Valve Corporation.
+#  Copyright © 2019-2021 Collabora Ltd.
+#  Copyright © 2019-2021 Valve Corporation.
 #
 #  This file is part of steamos-customizations.
 #
@@ -17,6 +17,29 @@
 # Create udev rules for steamos partitions
 
 . /lib/dracut-lib.sh
+
+expand_dev() {
+    local dev
+
+    case "$1" in
+    LABEL=*)
+        dev="/dev/disk/by-label/${1#LABEL=}"
+        ;;
+    UUID=*)
+        dev="${1#UUID=}"
+        dev="/dev/disk/by-uuid/${dev,,}"
+        ;;
+    PARTUUID=*)
+        dev="${1#PARTUUID=}"
+        dev="/dev/disk/by-partuuid/${dev,,}"
+            ;;
+    PARTLABEL=*)
+        dev="/dev/disk/by-partlabel/${1#PARTLABEL=}"
+        ;;
+    esac
+
+    echo "$dev"
+}
 
 # Main
 
@@ -32,6 +55,7 @@ fi
 if [ -n "$EFI" ]; then
     info "Mounting $EFI with -o ro"
     [ -d /efi ] || mkdir /efi
+    EFI="$(expand_dev "$EFI")"
     mount -o ro "$EFI" /efi 2>&1 | vinfo
     trap "if ismounted /efi; then umount /efi; fi" 0
     if ! ismounted "/efi"; then

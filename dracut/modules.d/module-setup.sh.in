@@ -4,8 +4,8 @@
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2019-2020 Collabora Ltd.
-#  Copyright © 2019-2020 Valve Corporation.
+#  Copyright © 2019-2021 Collabora Ltd.
+#  Copyright © 2019-2021 Valve Corporation.
 #
 #  This file is part of steamos-customizations.
 #
@@ -18,7 +18,7 @@
 check() {
     # basic commands
     require_binaries \
-        basename dirname rmdir sed \
+        basename bash dirname rmdir sed \
         || return 1
     
     # for factory reset at shutdown
