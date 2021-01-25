@@ -92,3 +92,8 @@ touch /var/lib/calamares-steamos/initial_setup_complete
 rm -f /etc/sddm.conf.d/calamares-initial-setup.conf \
       /root/.config/kwinrulesrc \
       /root/.xsessions/steamos-initial-setup.desktop
+
+# Copy steam-settings files from /efi/steam-settings to /home/steamos/.steam-settings/ folder.
+mkdir /home/steamos/.steam-settings
+cp /efi/steam-settings/* /home/steamos/.steam-settings
+
