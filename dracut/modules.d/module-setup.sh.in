@@ -46,6 +46,17 @@ depends() {
     return 0
 }
 
+find_device() {
+    local dev="/dev/block/$(find_block_device "$1")"
+
+    if [ ! -b "$dev" ]; then
+        return
+    fi
+    
+    dev="$(persistent_policy=by-partuuid get_persistent_dev "$dev")"
+    echo "$(shorten_persistent_dev "$dev")"
+}
+
 # called by dracut
 installkernel() {
     hostonly='' instmods ext4 overlay dm-verity
@@ -57,6 +68,14 @@ installkernel() {
 
 # called by dracut
 install() {
+    local dev
+
+    if [ "$hostonly_cmdline" = "yes" ]; then
+        dev="$(find_device /efi)"
+        [ "$dev" ] && echo " steamos.efi=$dev" \
+            >> "$initdir/etc/cmdline.d/95steamos-dev.conf"
+    fi
+
     inst_multiple \
         basename dirname plymouth rmdir sed sleep \
         e2label mkfs.ext4 tune2fs \
