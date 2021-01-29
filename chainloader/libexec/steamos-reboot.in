@@ -41,5 +41,4 @@ fi
 
 mount /efi
 trap "umount /efi" 0
-echo "steamos-bootconf" "${args[@]}" >&2
 steamos-bootconf "${args[@]}"
