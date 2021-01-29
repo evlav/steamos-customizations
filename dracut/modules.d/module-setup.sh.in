@@ -18,7 +18,7 @@
 check() {
     # basic commands
     require_binaries \
-        basename bash dirname rmdir sed \
+        basename bash dirname rmdir sed udevadm \
         || return 1
     
     # for factory reset at shutdown
