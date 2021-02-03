@@ -4,8 +4,8 @@
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2019-2020 Collabora Ltd.
-#  Copyright © 2019-2020 Valve Corporation.
+#  Copyright © 2019-2021 Collabora Ltd.
+#  Copyright © 2019-2021 Valve Corporation.
 #
 #  This file is part of steamos-customizations.
 #
@@ -18,11 +18,26 @@
 
 FACTORY_RESET_STAMPFILE=@factory_reset_stampfile@
 SYMLINKS_DIR=@udev_symlinks_absdir@
+GRUB_CONFIG_RELPATH=@grub_config_relpath@
+EFI_A_DEVICE=$SYMLINKS_DIR/all/efi-A
+EFI_B_DEVICE=$SYMLINKS_DIR/all/efi-B
 VAR_A_DEVICE=$SYMLINKS_DIR/all/var-A
 VAR_B_DEVICE=$SYMLINKS_DIR/all/var-B
 HOME_DEVICE=$SYMLINKS_DIR/all/home
 
 . /lib/dracut-lib.sh
+
+reset_efi() {
+    mkdir -p /efi
+    for device in "$@"; do
+        [ -b "$device" ] || continue
+
+        echo "Removing $GRUB_CONFIG_RELPATH on device $device"
+        mount "$device" /efi
+        rm -f "/efi/$GRUB_CONFIG_RELPATH"
+        umount /efi
+    done
+}
 
 reset_device_ext4() {
     local device=$1
@@ -65,6 +80,7 @@ reset_device_ext4() {
 [ -e $FACTORY_RESET_STAMPFILE ] || return 0
 
 warn "A factory reset was required, let's execute"
+reset_efi "$EFI_A_DEVICE" "$EFI_B_DEVICE" 2>&1 | vinfo
 reset_device_ext4 "$VAR_A_DEVICE" 2>&1 | vinfo
 reset_device_ext4 "$VAR_B_DEVICE" 2>&1 | vinfo
 reset_device_ext4 "$HOME_DEVICE"  2>&1 | vinfo
