@@ -18,6 +18,6 @@ _steamos-factory-reset()
     local cur prev words cword
     _init_completion || return
 
-    COMPREPLY=($(compgen -W "-h --help -f --force" -- "$cur"))
+    COMPREPLY=($(compgen -W "-h --help" -- "$cur"))
 } &&
 complete -F _steamos-factory-reset steamos-factory-reset

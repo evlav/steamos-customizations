@@ -21,8 +21,10 @@ SYMLINKS_DIR=@udev_symlinks_absdir@
 GRUB_CONFIG_RELPATH=@grub_config_relpath@
 EFI_A_DEVICE=$SYMLINKS_DIR/all/efi-A
 EFI_B_DEVICE=$SYMLINKS_DIR/all/efi-B
+EFI_DEV_DEVICE=$SYMLINKS_DIR/all/efi-dev
 VAR_A_DEVICE=$SYMLINKS_DIR/all/var-A
 VAR_B_DEVICE=$SYMLINKS_DIR/all/var-B
+VAR_DEV_DEVICE=$SYMLINKS_DIR/all/var-dev
 HOME_DEVICE=$SYMLINKS_DIR/all/home
 
 . /lib/dracut-lib.sh
@@ -48,7 +50,6 @@ reset_device_ext4() {
 
     device=$(readlink -f "$device")
     if ! [ -b "$device" ]; then
-        echo "'$device' is not a block device"
         return
     fi
 
@@ -80,7 +81,8 @@ reset_device_ext4() {
 [ -e $FACTORY_RESET_STAMPFILE ] || return 0
 
 warn "A factory reset was required, let's execute"
-reset_efi "$EFI_A_DEVICE" "$EFI_B_DEVICE" 2>&1 | vinfo
+reset_efi "$EFI_A_DEVICE" "$EFI_B_DEVICE" "$EFI_DEV_DEVICE" 2>&1 | vinfo
 reset_device_ext4 "$VAR_A_DEVICE" 2>&1 | vinfo
 reset_device_ext4 "$VAR_B_DEVICE" 2>&1 | vinfo
+reset_device_ext4 "$VAR_DEV_DEVICE" 2>&1 | vinfo
 reset_device_ext4 "$HOME_DEVICE"  2>&1 | vinfo

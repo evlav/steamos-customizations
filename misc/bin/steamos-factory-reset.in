@@ -4,8 +4,8 @@
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2019 Collabora Ltd.
-#  Copyright © 2019 Valve Corporation.
+#  Copyright © 2019-2021 Collabora Ltd.
+#  Copyright © 2019-2021 Valve Corporation.
 #
 #  This file is part of steamos-customizations.
 #
@@ -40,10 +40,6 @@ usage() {
     echo "This script only configures the system to jump into the initrd"
     echo "on shutdown, and reboot. The work is done in the initrd."
     echo
-    echo "OPTIONS"
-    echo
-    echo "  --force    Do things even when it looks unsafe. Use with caution."
-    echo
 
     exit $status
 }
@@ -71,21 +67,11 @@ while [ $# -gt 0 ]; do
         -h|--help)
             usage 0
             ;;
-        -f|--force)
-            shift
-            FORCE=1
-            ;;
         *)
             usage 1
             ;;
     esac
 done
-
-if ! verity_is_enabled && ! [ $FORCE -eq 1 ]; then
-    echo "Factory reset is available only when dm-verity is enabled."
-    echo "Use --force if you really want to proceed."
-    exit 1
-fi
 
 echo
 echo "You're about to perform a factory reset of your SteamOS install!"
