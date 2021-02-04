@@ -35,8 +35,32 @@ Options:
                  Set mode update-other to update other at next boot
      --reboot-to-bootloader-menu TIMEOUT
                  Set timeout in sec and enter menu at next boot
+     --reboot-to-firmware-setup
+                 Set OS indications to enter firmware setup at next boot
 EOF
     "${0##*/steamos-}" --help | sed -n '/^Options:/,//{//d;p}'
+}
+
+get_efivar_hex() {
+    local hex
+
+    read -r hex < <(od -An -tx8 -N8 -j4 "/sys/firmware/efi/efivars/$1")
+    echo "0x$hex"
+}
+
+set_efivar_hex() {
+    local file
+    local fmt
+    local hex
+
+    hex="$(printf "%016x" "$2")"
+    fmt="\x07\x00\x00\x00"
+    fmt+="\x${hex:14:2}\x${hex:12:2}\x${hex:10:2}\x${hex:8:2}"
+    fmt+="\x${hex:6:2}\x${hex:4:2}\x${hex:2:2}\x${hex:0:2}"
+
+    file="$1.$$"
+    printf "$fmt" >"$file"
+    trap "rm -f $file" 0
 }
 
 set_efivar_ascii() {
@@ -107,6 +131,14 @@ do
         ascii="$(($1 * 1000000))"
         set_efivar_ascii "LoaderConfigTimeoutOneShot-4a67b082-0a4c-41cf-b6c7-440b29bb8c4f" "$ascii"
         unset ascii
+    elif [[ "$1" =~ ^--reboot-to-firmware-setup$ ]]
+    then
+        shift
+
+        hex="$(get_efivar_hex "OsIndicationsSupported-8be4df61-93ca-11d2-aa0d-00e098032b8c")"
+        hex="$((hex|1))"
+        set_efivar_hex "OsIndications-8be4df61-93ca-11d2-aa0d-00e098032b8c" "$hex"
+        unset hex
     else
         opts+=("$1")
     fi

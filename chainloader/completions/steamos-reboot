@@ -31,6 +31,10 @@ _steamos-reboot()
             ;;
     esac
 
-    COMPREPLY=($(compgen -W "-h --help --update-other --reboot-other --next --reboot-to-bootloader-menu" -- "$cur"))
+    local options
+    options=(-h --help --update-other --reboot-other --next)
+    options+=(--reboot-to-bootloader-menu)
+    options+=(--reboot-to-firmware-setup)
+    COMPREPLY=($(compgen -W "${options[*]}" -- "$cur"))
 } &&
 complete -F _steamos-reboot steamos-reboot steamos-halt steamos-poweroff
