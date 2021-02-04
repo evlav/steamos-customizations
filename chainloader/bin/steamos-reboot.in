@@ -4,8 +4,8 @@
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2020 Collabora Ltd.
-#  Copyright © 2020 Valve Corporation.
+#  Copyright © 2020-2021 Collabora Ltd.
+#  Copyright © 2020-2021 Valve Corporation.
 #
 #  This file is part of steamos-customizations.
 #
@@ -33,8 +33,24 @@ Options:
                  Set mode reboot-other to boot on other at next boot
      --update-other
                  Set mode update-other to update other at next boot
+     --reboot-to-bootloader-menu TIMEOUT
+                 Set timeout in sec and enter menu at next boot
 EOF
     "${0##*/steamos-}" --help | sed -n '/^Options:/,//{//d;p}'
+}
+
+set_efivar_ascii() {
+    local file
+
+    file="$1.$$"
+    touch "$file"
+    trap "rm -f $file" 0
+    printf "\x07\x00\x00\x00" >"$file"
+    iconv -t utf-16le <<<"$2" | tr '\n' '\0' >>"$file"
+
+    cp "$file" "/sys/firmware/efi/efivars/$1"
+    rm -f "$file"
+    trap - 0
 }
 
 opts=()
@@ -78,6 +94,19 @@ do
         else
             echo "Warning: $1: No Such BootEntry" >&2
         fi
+    elif [[ "$1" =~ ^--reboot-to-bootloader-menu$ ]]
+    then
+        shift
+        if [[ ! "${1:-}" ]]
+        then
+            usage
+            echo "Error: Too few argument" >&2
+            exit 1
+        fi
+
+        ascii="$(($1 * 1000000))"
+        set_efivar_ascii "LoaderConfigTimeoutOneShot-4a67b082-0a4c-41cf-b6c7-440b29bb8c4f" "$ascii"
+        unset ascii
     else
         opts+=("$1")
     fi
