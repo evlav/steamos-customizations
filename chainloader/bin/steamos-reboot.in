@@ -30,6 +30,8 @@ Options:
                  to boot on XXXX at next boot
                  See efibootmgr --bootnext usage
                  Same as --reboot-to-firmware-entry XXXX
+     --update
+                 Set mode update to update at next boot
      --reboot-other
                  Set mode reboot-other to boot on other at next boot
      --update-other
@@ -98,7 +100,7 @@ do
     then
         usage
         exit 0
-    elif [[ "$1" =~ ^--(reboot|update)-other$ ]]
+    elif [[ "$1" =~ ^--update$ ]] || [[ "$1" =~ ^--(reboot|update)-other$ ]]
     then
         touch "/run/steamos/${1:2}"
     elif [[ "$1" =~ ^--next$ ]]
