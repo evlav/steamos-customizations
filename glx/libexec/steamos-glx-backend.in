@@ -4,8 +4,8 @@
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2019 Collabora Ltd.
-#  Copyright © 2019 Valve Corporation.
+#  Copyright © 2019-2021 Collabora Ltd.
+#  Copyright © 2019-2021 Valve Corporation.
 #
 #  This file is part of steamos-customizations.
 #
@@ -24,68 +24,6 @@ PCI_VENDOR_NVIDIA=10de;
 
 gpu_class=;
 gpu_class_list=();
-glx_alternative_path=;
-
-have_glx_alternatives ()
-{
-    update-alternatives --get-selections | grep -q '^glx\s';
-}
-
-get_glx_alternative_path ()
-{
-    local classes=("$@");
-    local path=;
-    local prio=;
-    local k=;
-    local v=;
-
-    local chosen_prio=0;
-    glx_alternative_path=auto;
-
-    if ! have_glx_alternatives;
-    then
-        echo "No GLX alternatives installed";
-        glx_alternative_path=none;
-        return;
-    fi;
-
-    # nvidia alternatives have the highest prio, so nothing to do here
-    # NOTE: the bumblebee vs vanilla nvidia priority is handled
-    # internally by the nvidia glx alternatives package:
-    for class in "${classes[@]}";
-    do
-        if [ "$class" = "nvidia" ];
-        then
-            return;
-        fi;
-    done;
-
-    # pick the highest prio non-nvidia choice
-    while read k v;
-    do
-        case "$k" in
-            Alternative:) path="$v"; ;;
-            Priority:)    prio="$v"; ;;
-        esac;
-
-        if [ "$path" ] && [ "$prio" ];
-        then
-            case "$path" in
-                *nvidia*) true; ;;
-                *)
-                    echo "GLX path $path at priority $prio";
-                    if [ "$prio" -gt "$chosen_prio" ];
-                    then
-                        chosen_prio="$prio";
-                        glx_alternative_path="$path";
-                    fi;
-                    ;;
-            esac;
-            path=;
-            prio=;
-        fi;
-    done < <(update-alternatives --query glx)
-}
 
 gpu_class_from_id ()
 {
@@ -134,17 +72,5 @@ get_gpu_class_list ()
 
 get_gpu_class_list;
 echo "GPUs found:" "${gpu_class_list[@]}";
-
-if command -v update-alternatives >/dev/null 2>&1;
-then
-    get_glx_alternative_path "${gpu_class_list[@]}";
-    echo "Chose GLX path:" "$glx_alternative_path";
-
-    case "$glx_alternative_path" in
-        none) true; ;;
-        auto) update-alternatives --auto glx; ;;
-        /*)   update-alternatives --set glx "$glx_alternative_path";
-    esac;
-fi;
 
 exec @libexecdir@/steamos/steamos-glx-driver "${gpu_class_list[@]}" "$@";
