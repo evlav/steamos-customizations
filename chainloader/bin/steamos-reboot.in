@@ -32,10 +32,10 @@ Options:
                  Same as --reboot-to-firmware-entry XXXX
      --update
                  Set mode update to update at next boot
-     --reboot-other
-                 Set mode reboot-other to boot on other at next boot
      --update-other
                  Set mode update-other to update other at next boot
+     --reboot-other
+                 Set mode reboot-other to boot on other at next boot
      --reboot-to-firmware-entry ENTRY
                  Set firmware entry at next boot
      --reboot-to-bootloader-menu TIMEOUT
@@ -100,7 +100,7 @@ do
     then
         usage
         exit 0
-    elif [[ "$1" =~ ^--update$ ]] || [[ "$1" =~ ^--(reboot|update)-other$ ]]
+    elif [[ "$1" =~ ^--update$ ]] || [[ "$1" =~ ^--(update|reboot)-other$ ]]
     then
         touch "/run/steamos/${1:2}"
     elif [[ "$1" =~ ^--next$ ]]
