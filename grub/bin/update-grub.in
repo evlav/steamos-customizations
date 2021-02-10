@@ -4,8 +4,8 @@
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2020 Collabora Ltd.
-#  Copyright © 2020 Valve Corporation.
+#  Copyright © 2020-2021 Collabora Ltd.
+#  Copyright © 2020-2021 Valve Corporation.
 #
 #  This file is part of steamos-customizations.
 #
@@ -85,10 +85,11 @@ if echo "$*" | grep -qE "\(-o\|--output\)"; then
     exit
 fi
 
+file=/efi/@grub_config_relpath@
 if ! mv /tmp/grub.cfg /boot/grub/grub.cfg 2>/dev/null; then
     echo "Warning: /boot/grub/grub.cfg: Read-only file" >&2 
-    mv /tmp/grub.cfg /efi/EFI/steamos/grub.cfg
+    mv /tmp/grub.cfg "$file"
     exit
 fi
 
-grubcfg /boot/grub/grub.cfg >/efi/EFI/steamos/grub.cfg
+grubcfg /boot/grub/grub.cfg >"$file"
