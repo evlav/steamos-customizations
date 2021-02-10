@@ -37,7 +37,7 @@ gpu_class_from_id ()
         gpu_class="nvidia";
     elif [ "$vend" ];
     then
-         gpu_class="mesa";
+        gpu_class="mesa";
     fi;
 }
 
