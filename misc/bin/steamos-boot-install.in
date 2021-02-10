@@ -60,7 +60,7 @@ then
         grub-mkimage
     fi
     mkdir -p /efi/SteamOS
-    steamos-bootconf >/efi/SteamOS/bootconf
+    steamos-bootconf >/efi/@bootconf_relpath@
 fi
 if [[ ! "${no_kernel:-}" ]]
 then
