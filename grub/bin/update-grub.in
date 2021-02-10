@@ -81,7 +81,7 @@ else
 fi
 
 grub-mkconfig -o /tmp/grub.cfg "$@"
-if echo "$*" | grep -qE "\(-o\|--output\)"; then
+if grep -qE "(-o|--output)([[:blank:]]|=)" <<<"$*"; then
     exit
 fi
 
