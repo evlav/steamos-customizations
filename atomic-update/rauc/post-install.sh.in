@@ -4,8 +4,8 @@
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2019-2020 Collabora Ltd.
-#  Copyright © 2019-2020 Valve Corporation.
+#  Copyright © 2019-2021 Collabora Ltd.
+#  Copyright © 2019-2021 Valve Corporation.
 #
 #  This file is part of steamos-customizations.
 #
@@ -59,12 +59,17 @@ configure_other_efi() {
     local bootconf=
     local partsets=
     local roothash=
+    local label=
 
     bootconf=$efi/$BOOTCONF_RELPATH
     if ! [ -e "$bootconf" ]; then
         log "Initializing 'other' efi bootconf: '$bootconf'"
         mkdir -p "$(dirname "$bootconf")"
         steamos-bootconf > "$bootconf"
+        label="$(lsblk --noheadings --output PARTLABEL "$efi")"
+        if [ "${label:-}" ]; then
+            steamos-bootconf --output-to input "$bootconf" --set label "${label#*-}"
+        fi
     fi
 
     partsets=$efi/$PARTSETS_RELDIR
