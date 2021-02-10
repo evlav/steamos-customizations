@@ -30,6 +30,8 @@ Options:
                  to boot on XXXX at next boot
                  See efibootmgr --bootnext usage
                  Same as --reboot-to-firmware-entry XXXX
+     --factory-reset
+                 Perform factory reset at shutdown
      --update
                  Set mode update to update at next boot
      --update-other
@@ -50,6 +52,25 @@ Options:
                  List bootloader entries
 EOF
     "${0##*/steamos-}" --help | sed -n '/^Options:/,//{//d;p}'
+}
+
+prompt() {
+    if [[ ! -t 0 ]]
+    then
+        return 0
+    fi
+
+    while true
+    do
+        echo -n "$* " >&2
+        read -r resp _
+        resp="${resp:-no}"
+
+        case "${resp,,}" in
+        yes) return 0;;
+        n|no)  return 1;;
+        esac
+    done
 }
 
 get_efivar_str() {
@@ -100,6 +121,16 @@ do
     then
         usage
         exit 0
+    elif [[ "$1" =~ ^--factory-reset$ ]]
+    then
+        if ! prompt "Are you sure to perform factory-reset [no/yes]?"
+        then
+            echo "Abort!" >&2
+            exit 1
+        fi
+
+        touch /run/initramfs/.need_shutdown
+        touch "/run/steamos/${1:2}"
     elif [[ "$1" =~ ^--update$ ]] || [[ "$1" =~ ^--(update|reboot)-other$ ]]
     then
         touch "/run/steamos/${1:2}"
