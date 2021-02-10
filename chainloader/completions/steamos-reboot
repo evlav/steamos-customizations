@@ -25,6 +25,12 @@ _steamos-reboot()
             COMPREPLY=($(compgen -W "${entries[*]// /\\\\ }" -- "${cur// /\\\\ }"))
             return
             ;;
+        --reboot-to-bootloader-entry)
+            local entries
+            mapfile -t entries < <(steamos-reboot --list-bootloader-entries)
+            COMPREPLY=($(compgen -W "${entries[*]}" -- "$cur" ))
+            return
+            ;;
         --reboot-to-bootloader-menu)
             _filedir
             return
@@ -33,7 +39,7 @@ _steamos-reboot()
 
     local options
     options=(-h --help --update-other --reboot-other --next)
-    options+=(--reboot-to-bootloader-menu)
+    options+=(--reboot-to-bootloader-entry --reboot-to-bootloader-menu --list-bootloader-entries)
     options+=(--reboot-to-firmware-setup)
     COMPREPLY=($(compgen -W "${options[*]}" -- "$cur"))
 } &&

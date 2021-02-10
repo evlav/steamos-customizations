@@ -35,10 +35,19 @@ Options:
                  Set mode update-other to update other at next boot
      --reboot-to-bootloader-menu TIMEOUT
                  Set timeout in sec and enter menu at next boot
+     --reboot-to-bootloader-entry ENTRY
+                 Set bootloader entry at next boot
      --reboot-to-firmware-setup
                  Set OS indications to enter firmware setup at next boot
+     --list-bootloader-entries
+                 List bootloader entries
 EOF
     "${0##*/steamos-}" --help | sed -n '/^Options:/,//{//d;p}'
+}
+
+get_efivar_str() {
+    cat "/sys/firmware/efi/efivars/$1" | dd bs=1 skip=4 status=none | \
+    iconv -t ASCII -f UTF-16LE | tr '\0' '\n'
 }
 
 get_efivar_hex() {
@@ -131,6 +140,17 @@ do
         ascii="$(($1 * 1000000))"
         set_efivar_ascii "LoaderConfigTimeoutOneShot-4a67b082-0a4c-41cf-b6c7-440b29bb8c4f" "$ascii"
         unset ascii
+    elif [[ "$1" =~ ^--reboot-to-bootloader-entry$ ]]
+    then
+        shift
+        if [[ ! "${1:-}" ]]
+        then
+            usage
+            echo "Error: Too few argument" >&2
+            exit 1
+        fi
+
+        set_efivar_ascii "LoaderEntryOneShot-4a67b082-0a4c-41cf-b6c7-440b29bb8c4f" "$1"
     elif [[ "$1" =~ ^--reboot-to-firmware-setup$ ]]
     then
         shift
@@ -139,6 +159,10 @@ do
         hex="$((hex|1))"
         set_efivar_hex "OsIndications-8be4df61-93ca-11d2-aa0d-00e098032b8c" "$hex"
         unset hex
+    elif [[ "$1" =~ ^--list-bootloader-entries$ ]]
+    then
+        get_efivar_str "LoaderEntries-4a67b082-0a4c-41cf-b6c7-440b29bb8c4f"
+        exit 0
     else
         opts+=("$1")
     fi
