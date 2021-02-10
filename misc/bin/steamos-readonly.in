@@ -32,18 +32,18 @@ cleanup() {
 
     if [[ "$ret" -ne 0 ]]
     then
-        if [[ -e "/efi/EFI/steamos/grub.cfg.bak" ]]
+        if [[ -e /efi/@grub_config_relpath@.bak ]]
         then
-            mv /efi/EFI/steamos/grub.cfg{.bak,}
+            mv /efi/@grub_config_relpath@{.bak,}
         fi
     fi
 
-    rm -f /efi/EFI/steamos/grub.cfg.bak
+    rm -f /efi/@grub_config_relpath@.bak
 }
 
 backup() {
     trap cleanup 0
-    mv /efi/EFI/steamos/grub.cfg{,.bak}
+    mv /efi/@grub_config_relpath@{,.bak}
 }
 
 read_write() {

@@ -43,7 +43,7 @@ cleanup() {
 
     if [[ "$ret" -ne 0 ]]
     then
-        for file in /efi/EFI/steamos/grub.cfg /efi/SteamOS/roothash
+        for file in /efi/@grub_config_relpath@ /efi/SteamOS/roothash
         do
             if [[ -e "$file.bak" ]]
             then
@@ -52,12 +52,12 @@ cleanup() {
         done
     fi
 
-    rm -f /efi/EFI/steamos/grub.cfg.bak /efi/SteamOS/roothash.bak
+    rm -f /efi/@grub_config_relpath@.bak /efi/SteamOS/roothash.bak
 }
 
 backup() {
     trap cleanup 0
-    for file in /efi/EFI/steamos/grub.cfg /efi/SteamOS/roothash
+    for file in /efi/@grub_config_relpath@ /efi/SteamOS/roothash
     do
         if [[ -e "$file" ]]
         then
