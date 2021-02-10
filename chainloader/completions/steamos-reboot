@@ -21,7 +21,8 @@ _steamos-reboot()
     case "$prev" in
         --next)
             local IFS=$'\n'
-            entries=($(efibootmgr | sed -n '/^Boot[0-9A-Fa-f]\{4,4\}. /s,\(Boot[0-9A-Fa-f]\{4\,4\}\). \(.*\),\1\n\2,p'))
+            local entries
+            mapfile -t entries < <(steamos-reboot --list-firmware-entries)
             COMPREPLY=($(compgen -W "${entries[*]// /\\\\ }" -- "${cur// /\\\\ }"))
             return
             ;;
@@ -40,7 +41,7 @@ _steamos-reboot()
     local options
     options=(-h --help --update-other --reboot-other --next)
     options+=(--reboot-to-bootloader-entry --reboot-to-bootloader-menu --list-bootloader-entries)
-    options+=(--reboot-to-firmware-setup)
+    options+=(--reboot-to-firmware-setup --list-firmware-entries)
     COMPREPLY=($(compgen -W "${options[*]}" -- "$cur"))
 } &&
 complete -F _steamos-reboot steamos-reboot steamos-halt steamos-poweroff

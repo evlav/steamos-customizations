@@ -39,6 +39,8 @@ Options:
                  Set bootloader entry at next boot
      --reboot-to-firmware-setup
                  Set OS indications to enter firmware setup at next boot
+     --list-firmware-entries
+                 List firmware entries
      --list-bootloader-entries
                  List bootloader entries
 EOF
@@ -159,6 +161,12 @@ do
         hex="$((hex|1))"
         set_efivar_hex "OsIndications-8be4df61-93ca-11d2-aa0d-00e098032b8c" "$hex"
         unset hex
+    elif [[ "$1" =~ ^--list-firmware-entries$ ]]
+    then
+        efibootmgr | sed -n '/^Boot[0-9A-Fa-f]\{4,4\}. /s,\(Boot[0-9A-Fa-f]\{4\,4\}\). \(.*\),\1\n\2,p' \
+                   | sed '/^$/d' \
+                   | sort -u
+        exit 0
     elif [[ "$1" =~ ^--list-bootloader-entries$ ]]
     then
         get_efivar_str "LoaderEntries-4a67b082-0a4c-41cf-b6c7-440b29bb8c4f"
