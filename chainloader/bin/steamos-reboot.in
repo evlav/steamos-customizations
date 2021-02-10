@@ -25,7 +25,7 @@ ${0##*/} [OPTIONS...] [ARG]
 Reboot SteamOS.
 
 Options:
-     --bootnext XXXX
+     --next XXXX
                  Set BootNext to XXXX (Boothex or Label)
                  to boot on XXXX at next boot
                  See efibootmgr --bootnext usage
