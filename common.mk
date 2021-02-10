@@ -44,20 +44,26 @@ STEAMOS_N_PARTITIONS := 10
 # The SteamOS partition labels
 STEAMOS_ALL_PARTLABELS := esp efi-A efi-B verity-A verity-B rootfs-A rootfs-B var-A var-B home
 
+# GRUB directory (relative to the efi mountpoint)
+GRUB_RELPATH := EFI/steamos
+
 # GRUB binary (relative to the efi mountpoint)
-GRUB_BINARY_RELPATH := EFI/steamos/grubx64.efi
+GRUB_BINARY_RELPATH := $(GRUB_RELPATH)/grubx64.efi
 
 # GRUB configuration (relative to the efi mountpoint)
-GRUB_CONFIG_RELPATH := EFI/steamos/grub.cfg
+GRUB_CONFIG_RELPATH := $(GRUB_RELPATH)/grub.cfg
+
+# SteamOS directory (relative to the efi mountpoint)
+STEAMOS_RELPATH := SteamOS
 
 # Bootconf file (relative to the efi mountpoint)
-BOOTCONF_RELPATH := SteamOS/bootconf
+BOOTCONF_RELPATH := $(STEAMOS_RELPATH)/bootconf
 
 # Partition sets dir (relative to the efi mountpoint)
-PARTSETS_RELDIR := SteamOS/partsets
+PARTSETS_RELDIR := $(STEAMOS_RELPATH)/partsets
 
 # Roothash file (relative to the efi mountpoint)
-ROOTHASH_RELPATH := SteamOS/roothash
+ROOTHASH_RELPATH := $(STEAMOS_RELPATH)/roothash
 
 # Factory reset stampfile
 FACTORY_RESET_STAMPFILE := /run/steamos/factory-reset
