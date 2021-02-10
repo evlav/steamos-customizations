@@ -29,10 +29,13 @@ Options:
                  Set BootNext to XXXX (Boothex or Label)
                  to boot on XXXX at next boot
                  See efibootmgr --bootnext usage
+                 Same as --reboot-to-firmware-entry XXXX
      --reboot-other
                  Set mode reboot-other to boot on other at next boot
      --update-other
                  Set mode update-other to update other at next boot
+     --reboot-to-firmware-entry ENTRY
+                 Set firmware entry at next boot
      --reboot-to-bootloader-menu TIMEOUT
                  Set timeout in sec and enter menu at next boot
      --reboot-to-bootloader-entry ENTRY
