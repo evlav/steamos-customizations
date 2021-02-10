@@ -4,8 +4,8 @@
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2019 Collabora Ltd.
-#  Copyright © 2019 Valve Corporation.
+#  Copyright © 2019-2021 Collabora Ltd.
+#  Copyright © 2019-2021  Valve Corporation.
 #
 #  This file is part of steamos-customizations.
 #
@@ -28,6 +28,6 @@ usage() { echo >&2 "Usage: $(basename $0) FILE SIZE"; exit 1; }
 
 [ -e "$SWAPFILE" ] && fail "File '$SWAPFILE' already exists"
 
-dd if=/dev/zero of="$SWAPFILE" bs=1M count="$SWAPSIZE" 
+dd if=/dev/zero of="$SWAPFILE" bs=1M count="$SWAPSIZE"
 chmod 600 "$SWAPFILE"
 mkswap "$SWAPFILE"

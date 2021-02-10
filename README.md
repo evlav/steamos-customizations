@@ -5,7 +5,7 @@ You everyday commands:
 
     # build it all
     make DESTDIR=tmp install
- 
+
     # have a look at the result
     tree tmp
 

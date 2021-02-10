@@ -4,8 +4,8 @@
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2019 Collabora Ltd.
-#  Copyright © 2019 Valve Corporation.
+#  Copyright © 2019,2021 Collabora Ltd.
+#  Copyright © 2019,2021 Valve Corporation.
 #
 #  This file is part of steamos-customizations.
 #
@@ -35,7 +35,7 @@ EOF
               );
 
 DEVICE_TEST=$(cat - <<EOF
-# this test block detects a thinkpad x220 which I use for 
+# this test block detects a thinkpad x220 which I use for
 # testing when I don't have a GPD: edit to match your own hw
 dmi  system-manufacturer               EQ  LENOVO
 dmi  system-product-name               EQ  42914CG
@@ -45,7 +45,7 @@ dmi  bios-release-date                 IN  07/18/2013
 EOF
             );
 DEVICE_GPD=$(cat - <<EOF
-# This test block replicates the logic used by the kernel quirk 
+# This test block replicates the logic used by the kernel quirk
 # code so if it's wrong we're going to be broken anyway:
 dmi  system-manufacturer               EQ  Default\\ string
 dmi  system-product-name               EQ  Default\\ string

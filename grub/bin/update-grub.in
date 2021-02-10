@@ -89,7 +89,7 @@ file=/efi/@grub_config_relpath@
 mkdir -p "${file%/*}"
 echo "Installing grub configuration file to /efi..." >&2
 if ! mv /tmp/grub.cfg /boot/grub/grub.cfg 2>/dev/null; then
-    echo "Warning: /boot/grub/grub.cfg: Read-only file" >&2 
+    echo "Warning: /boot/grub/grub.cfg: Read-only file" >&2
     mv /tmp/grub.cfg "$file"
     exit
 fi

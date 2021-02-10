@@ -168,7 +168,7 @@ sync_var_mountpoints() {
         --exclude="/lib/modules/" \
         --exclude="/lib/pacman/" \
         --exclude="/lost+found/" \
-        "$src/" "$dst/" 
+        "$src/" "$dst/"
     fsfreeze -u "$src"
 }
 

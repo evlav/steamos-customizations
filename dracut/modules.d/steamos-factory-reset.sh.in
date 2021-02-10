@@ -69,7 +69,7 @@ reset_device_ext4() {
     features=$(tune2fs -l "$device" | sed -n 's/^Filesystem features:\s*//p')
     for tmp in $features; do
        if [ "$tmp" = "casefold" ]; then
-          opts="$opts -O casefold" 
+          opts="$opts -O casefold"
           break
        fi
     done

@@ -4,8 +4,8 @@
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2019 Collabora Ltd.
-#  Copyright © 2019 Valve Corporation.
+#  Copyright © 2019-2021 Collabora Ltd.
+#  Copyright © 2019-2021  Valve Corporation.
 #
 #  This file is part of steamos-customizations.
 #
@@ -416,7 +416,7 @@ done
 
 ROOTDEV=$(find_device_for_mountpoint_deep '/')
 DEVICE_IN=$(get_parent_device $ROOTDEV)
-[ -b "$DEVICE_IN" ] || fail "'$DEVICE_IN' is not a block device" 
+[ -b "$DEVICE_IN" ] || fail "'$DEVICE_IN' is not a block device"
 
 DEVICE_OUT=$(realpath $DEVICE_OUT)
 [ -b "$DEVICE_OUT" ] || fail "'$DEVICE_OUT' is not a block device"
