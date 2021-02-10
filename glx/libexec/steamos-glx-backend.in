@@ -62,7 +62,7 @@ get_gpu_class_list ()
            [ "$vendor" ] && [ "$device" ];
         then
             gpu_class_from_id "$vendor" "$device";
-            echo "Device $vendor:$class is in class '$gpu_class'";
+            echo "Device $vendor:$class is in class '$gpu_class'" >&2;
             vendor=;
             class=;
             gpu_class_list+=("$gpu_class")
@@ -71,6 +71,6 @@ get_gpu_class_list ()
 }
 
 get_gpu_class_list;
-echo "GPUs found:" "${gpu_class_list[@]}";
+echo "GPUs found:" "${gpu_class_list[@]}" >&2;
 
 exec @libexecdir@/steamos/steamos-glx-driver "${gpu_class_list[@]}" "$@";
