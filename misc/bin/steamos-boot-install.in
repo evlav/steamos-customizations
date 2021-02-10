@@ -83,7 +83,7 @@ fi
 if [[ "${roothash:-}" ]]
 then
     mkdir -p /efi/SteamOS
-    echo "$roothash" >/efi/SteamOS/roothash
+    echo "$roothash" >/efi/@roothash_relpath@
 fi
 mapfile -t linux < <(ls -1 /boot/vmlinuz-* 2>/dev/null)
 if [[ "${#linux[*]}" -eq 0 ]]
