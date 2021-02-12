@@ -32,7 +32,7 @@ expand_dev() {
     PARTUUID=*)
         dev="${1#PARTUUID=}"
         dev="/dev/disk/by-partuuid/${dev,,}"
-            ;;
+        ;;
     PARTLABEL=*)
         dev="/dev/disk/by-partlabel/${1#PARTLABEL=}"
         ;;
