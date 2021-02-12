@@ -1,0 +1,117 @@
+#!/bin/bash
+# -*- mode: sh; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
+# vim: et sts=4 sw=4
+
+#  SPDX-License-Identifier: LGPL-2.1+
+#
+#  Copyright © 2021 Collabora Ltd.
+#  Copyright © 2021 Valve Corporation.
+#
+#  This file is part of steamos-customizations.
+#
+#  steamos-customizations is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU Lesser General Public License as
+#  published by the Free Software Foundation; either version 2.1 of the License,
+#  or (at your option) any later version.
+
+set -e
+set -u
+
+MOUNTDIR="${MOUNTDIR:-/mnt}"
+OUTPUTS=("path" "label" "boot-requested-at" "boot-other" "boot-other-disabled"
+         "boot-attempts" "boot-count" "boot-time" "image-invalid" "update"
+         "update-disabled" "update-window-start" "update-window-end" "loader"
+         "partitions" "comment")
+
+usage() {
+    cat <<EOF
+${0##*/} [options] [<device> ...]
+
+List bootconf parameters about SteamOS devices.
+
+Options:
+ -o, --output <list>  output columns
+EOF
+}
+
+opts=()
+while [[ "$#" -ne 0 ]]
+do
+    if [[ "$1" =~ ^(-h|--help)$ ]]
+    then
+        usage
+        exit 0
+    elif [[ "$1" =~ ^(-o|--output)$ ]]
+    then
+        shift
+        if [[ "$1" == "help" ]]
+        then
+            echo "${OUTPUTS[@]}"
+            exit 0
+        fi
+
+        IFS=, read -r -a output <<<"$1"
+    elif [[ "$1" == -- ]]
+    then
+        shift
+        break
+    else
+        opts+=("$1")
+    fi
+    shift
+done
+
+mapfile -t devices < <(lsblk --noheadings --output PATH,PARTTYPE "${opts[@]}" "$@")
+for dev in "${devices[@]}"
+do
+    read -r path parttype <<<"$dev"
+    [[ "${parttype:-}" == "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" ]] || continue
+
+    mount -oro "$path" /mnt
+    trap 'umount /mnt' 0
+
+    cfgs=()
+    if [[ -e "$MOUNTDIR/SteamOS/bootconf" ]]
+    then
+        mapfile -t cfgs <"$MOUNTDIR/SteamOS/bootconf"
+    fi
+
+    # FIXME: Small delay to avoid umount exiting with EBUSY
+    while ! umount "$MOUNTDIR"
+    do
+        sleep 0.01
+    done 2>/dev/null
+    trap - 0
+
+    [[ "${#cfgs[@]}" -ne 0 ]] || continue
+
+    if [[ ! "${output[@]:-}" ]]
+    then
+        printf "$path@/SteamOS/bootconf: %s\n" "${cfgs[@]}"
+        continue
+    fi
+
+    vals=()
+    cfgs+=("path: $path")
+    for i in "${output[@]}"
+    do
+        val=
+        for cfg in "${cfgs[@]}"
+        do
+            read -r p v <<<"$cfg"
+            p="${p%:}"
+            [[ "$i" == "$p" ]] || continue
+
+            val="$v"
+            break
+        done
+
+        if [[ ! "$val" ]] && [[ "${FS:- }" == " " ]]
+        then
+            val="-"
+        fi
+
+        vals+=("$val")
+    done
+    ( IFS="${FS:- }"; printf "%s" "${vals[*]}"; printf "\n" )
+done
