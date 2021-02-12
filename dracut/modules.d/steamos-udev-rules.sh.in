@@ -18,6 +18,53 @@
 
 . /lib/dracut-lib.sh
 
+guess_efi() {
+    local other
+    local path
+    local dev
+
+    IFS=, mapfile -t cfgs < <(FS=, steamos-ls --output boot-requested-at,boot-other,boot-other-disabled,image-invalid,path "${opts[@]}" "$@" | sort -r)
+    for i in "${cfgs[@]}"
+    do
+        local boot_requested_at
+        local boot_other
+        local boot_other_disabled
+        local image_invalid
+
+        IFS=, read -r boot_requested_at boot_other boot_other_disabled image_invalid path <<<"$i"
+
+        if [[ "$boot_other" -ne 0 ]]
+        then
+            other=1
+            echo "$path has boot-other set, skip it..." >&2
+            continue
+        fi
+
+        if [[ "${other:-0}" -ne 0 ]] && [[ "$boot_other_disabled" -ne 0 ]]
+        then
+            echo "$path has boot-other-disabled set, skip it..." >&2
+            continue
+        fi
+
+        if [[ "$image_invalid" -ne 0 ]]
+        then
+            echo "$path has image-invalid set, skip it..." >&2
+            continue
+        fi
+
+        dev="$path"
+        break
+    done
+
+    if [ ! "${dev:-}" ]
+    then
+        echo "Warning: No such device, assuming last if any..." >&2
+        dev="$path"
+    fi
+
+    echo "$dev"
+}
+
 expand_dev() {
     local dev
 
@@ -36,6 +83,9 @@ expand_dev() {
     PARTLABEL=*)
         dev="/dev/disk/by-partlabel/${1#PARTLABEL=}"
         ;;
+    *)
+        dev="$1"
+        ;;
     esac
 
     echo "$dev"
@@ -50,6 +100,12 @@ if [ -z "$EFI" ]; then
     EFI=$(getarg 'steamos.efi=')
     if [ -n "$EFI" ]; then
         warn "SteamOS command line option 'steamos.efi' is deprecated, use 'rd.steamos.efi' instead."
+    fi
+fi
+if [ -z "$EFI" ]; then
+    EFI="$(guess_efi)"
+    if [ -n "$EFI" ]; then
+        warn "SteamOS command line option 'rd.steamos.efi' unset, assuming 'rd.steamos.efi=$EFI'."
     fi
 fi
 if [ -n "$EFI" ]; then

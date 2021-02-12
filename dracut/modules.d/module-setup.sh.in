@@ -28,6 +28,7 @@ check() {
 
     # steamos helpers for partsets
     require_binaries \
+        lsblk sort steamos-ls \
         @libexecdir@/steamos/steamos-partsets-generator \
         || return 1
 
@@ -76,9 +77,12 @@ install() {
             >> "$initdir/etc/cmdline.d/95steamos-dev.conf"
     fi
 
+    inst_dir /mnt
+
     inst_multiple \
         basename dirname plymouth rmdir sed sleep \
         e2label mkfs.ext4 tune2fs \
+        lsblk sort steamos-ls \
         @libexecdir@/steamos/steamos-partsets-generator \
         $systemdutildir/systemd-veritysetup \
         $systemdutildir/system-generators/systemd-veritysetup-generator
