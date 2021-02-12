@@ -18,10 +18,10 @@ set -e
 set -u
 
 MOUNTDIR="${MOUNTDIR:-/mnt}"
-OUTPUTS=("path" "label" "boot-requested-at" "boot-other" "boot-other-disabled"
-         "boot-attempts" "boot-count" "boot-time" "image-invalid" "update"
-         "update-disabled" "update-window-start" "update-window-end" "loader"
-         "partitions" "comment")
+OUTPUTS=("path" "partuuid" "partlabel" "label" "boot-requested-at" "boot-other"
+         "boot-other-disabled" "boot-attempts" "boot-count" "boot-time"
+         "image-invalid" "update" "update-disabled" "update-window-start"
+         "update-window-end" "loader" "partitions" "comment")
 
 usage() {
     cat <<EOF
@@ -61,10 +61,10 @@ do
     shift
 done
 
-mapfile -t devices < <(lsblk --noheadings --output PATH,PARTTYPE "${opts[@]}" "$@")
+mapfile -t devices < <(lsblk --noheadings --output PATH,PARTTYPE,PARTUUID,PARTLABEL "${opts[@]}" "$@")
 for dev in "${devices[@]}"
 do
-    read -r path parttype <<<"$dev"
+    read -r path parttype partuuid partlabel <<<"$dev"
     [[ "${parttype:-}" == "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" ]] || continue
 
     mount -oro "$path" /mnt
@@ -93,6 +93,8 @@ do
 
     vals=()
     cfgs+=("path: $path")
+    cfgs+=("partuuid: $partuuid")
+    cfgs+=("partlabel: $partlabel")
     for i in "${output[@]}"
     do
         val=
