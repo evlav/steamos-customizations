@@ -59,7 +59,7 @@ configure_other_efi() {
     local bootconf=
     local partsets=
     local roothash=
-    local label=
+    local title=
     local self_partsets=
 
     bootconf=$efi/$BOOTCONF_RELPATH
@@ -67,9 +67,9 @@ configure_other_efi() {
         log "Initializing 'other' efi bootconf: '$bootconf'"
         mkdir -p "$(dirname "$bootconf")"
         steamos-bootconf > "$bootconf"
-        label="$(findmnt --noheadings --output PARTLABEL "$efi")"
-        if [ "${label:-}" ]; then
-            steamos-bootconf --output-to input "$bootconf" --set label "${label#*-}"
+        title="$(findmnt --noheadings --output PARTLABEL "$efi")"
+        if [ "${title:-}" ]; then
+            steamos-bootconf --output-to input "$bootconf" --set title "${title#*-}"
         fi
     fi
 
