@@ -67,7 +67,7 @@ configure_other_efi() {
         log "Initializing 'other' efi bootconf: '$bootconf'"
         mkdir -p "$(dirname "$bootconf")"
         steamos-bootconf > "$bootconf"
-        label="$(lsblk --noheadings --output PARTLABEL "$efi")"
+        label="$(findmnt --noheadings --output PARTLABEL "$efi")"
         if [ "${label:-}" ]; then
             steamos-bootconf --output-to input "$bootconf" --set label "${label#*-}"
         fi
