@@ -16,6 +16,7 @@
 
 set -e
 
+opts=(--force --persistent-policy by-partuuid)
 while read -r line; do
     if ! read -r pkgbase > /dev/null 2>&1 < "${line%/vmlinuz}/pkgbase"; then
         # if the kernel has no pkgbase, we skip it
@@ -24,6 +25,6 @@ while read -r line; do
 
     kver="${line%/*}"
     kver="${kver##*/}"
-    dracut --force --hostonly "/boot/initramfs-$pkgbase.img" "$kver" "$@"
-    dracut --force --no-hostonly "/boot/initramfs-$pkgbase-fallback.img" "$kver" "$@"
+    dracut "${opts[@]}" --hostonly "/boot/initramfs-$pkgbase.img" "$kver" "$@"
+    dracut "${opts[@]}" --no-hostonly "/boot/initramfs-$pkgbase-fallback.img" "$kver" "$@"
 done < <(compgen -G /usr/lib/modules/"*"/vmlinuz)

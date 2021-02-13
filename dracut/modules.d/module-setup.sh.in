@@ -54,7 +54,7 @@ find_device() {
         return
     fi
     
-    dev="$(persistent_policy=by-partuuid get_persistent_dev "$dev")"
+    dev="$(get_persistent_dev "$dev")"
     echo "$(shorten_persistent_dev "$dev")"
 }
 
