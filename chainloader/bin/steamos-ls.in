@@ -67,7 +67,11 @@ do
     read -r path parttype partuuid partlabel <<<"$dev"
     [[ "${parttype:-}" == "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" ]] || continue
 
-    mount -oro "$path" /mnt
+    if ! mount -oro "$path" /mnt
+    then
+        echo "Warning: $path: No such mountable device" >&2
+        continue
+    fi
     trap 'umount /mnt' 0
 
     cfgs=()
