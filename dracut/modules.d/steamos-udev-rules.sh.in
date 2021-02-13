@@ -108,21 +108,23 @@ if [ -z "$EFI" ]; then
         warn "SteamOS command line option 'rd.steamos.efi' unset, assuming 'rd.steamos.efi=$EFI'."
     fi
 fi
-if [ -n "$EFI" ]; then
-    info "Mounting $EFI with -o ro"
-    [ -d /efi ] || mkdir /efi
-    EFI="$(expand_dev "$EFI")"
-    mount -o ro "$EFI" /efi 2>&1 | vinfo
-    trap "if ismounted /efi; then umount /efi; fi" 0
-    if ! ismounted "/efi"; then
-        warn "Mounting /efi failed!"
-        warn "*** Dropping you to a shell; the system will continue"
-        warn "*** when you leave the shell."
-        emergency_shell
-    fi
+if [ -z "$EFI" ]; then
+    warn "SteamOS command line option 'rd.steamos.efi' unset, skipping..."
+    exit 0
 fi
 
-for partset in /efi/@partsets_reldir@/*; do
+info "Mounting $EFI with -o ro"
+EFI="$(expand_dev "$EFI")"
+mount -o ro "$EFI" /mnt 2>&1 | vinfo
+trap "if ismounted /mnt; then umount /mnt; fi" 0
+if ! ismounted /mnt; then
+    warn "Mounting $EFI failed!"
+    warn "*** Dropping you to a shell; the system will continue"
+    warn "*** when you leave the shell."
+    emergency_shell
+fi
+
+for partset in /mnt/@partsets_reldir@/*; do
     [ -e "$partset" ] || continue
     @libexecdir@/steamos/steamos-partsets-generator "$partset"
 done
