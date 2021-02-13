@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # -*- mode: sh; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
 # vim: et sts=4 sw=4
 
@@ -43,7 +43,7 @@ reset_efi() {
 
 reset_device_ext4() {
     local device=$1
-    local opts=
+    local opts=(-qF)
     local label=
     local features=
     local tmp=
@@ -63,19 +63,19 @@ reset_device_ext4() {
 
     label=$(e2label "$device")
     if [ "$label" ]; then
-        opts="$opts -L $label"
+        opts+=(-L "$label")
     fi
 
-    features=$(tune2fs -l "$device" | sed -n 's/^Filesystem features:\s*//p')
-    for tmp in $features; do
+    read -r -a features < <(tune2fs -l "$device" | sed -n 's/^Filesystem features:\s*//p')
+    for tmp in "${features[@]}"; do
         if [ "$tmp" = "casefold" ]; then
-            opts="$opts -O casefold"
+            opts+=(-O casefold)
             break
         fi
     done
 
-    echo "Making ext4 filesystem on device $device (options: $opts)"
-    mkfs.ext4 -q -F $opts "$device"
+    echo "Making ext4 filesystem on device $device (options: ${opts[*]})"
+    mkfs.ext4 "${opts[@]}" "$device"
 }
 
 [ -e $FACTORY_RESET_STAMPFILE ] || return 0
