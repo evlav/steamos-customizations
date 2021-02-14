@@ -80,6 +80,12 @@ else
     done
 fi
 
+if [[ "${GRUB_DISABLE_LINUX_PARTUUID:-false}" != true ]]
+then
+    GRUB_DISABLE_LINUX_PARTUUID=false
+    export GRUB_DISABLE_LINUX_PARTUUID
+fi
+
 grub-mkconfig -o /tmp/grub.cfg "$@"
 if grep -qE "(-o|--output)([[:blank:]]|=)" <<<"$*"; then
     exit
