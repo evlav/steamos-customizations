@@ -4,8 +4,8 @@
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2020 Collabora Ltd.
-#  Copyright © 2020 Valve Corporation.
+#  Copyright © 2020-2021 Collabora Ltd.
+#  Copyright © 2020-2021 Valve Corporation.
 #
 #  This file is part of steamos-customizations.
 #
@@ -22,24 +22,17 @@ has-updates)
     if buildid=$(steamos-atomupd-client --query-only | \
                  jq -cerM '.minor.candidates[-1].image.buildid')
     then
-        echo "SteamOS $buildid is available!" >&2
         echo "SteamOS $buildid is available!"
         exit 0
     fi
 
-    echo "SteamOS is up-to-date!" >&2
     echo "SteamOS is up-to-date!"
     exit 1
     ;;
 online-updates)
-    echo "SteamOS is being updated...!" >&2
-    @libexecdir@/steamos/steamos-update-os-progress >&2 &
-    trap 'kill $!' 0
     steamos-atomupd-client
-    echo "SteamOS is updated!" >&2
     ;;
 offline-updates)
-    echo "SteamOS is ready to update at next reboot!" >&2
     touch /run/steamos/update-other
     ;;
 *)
