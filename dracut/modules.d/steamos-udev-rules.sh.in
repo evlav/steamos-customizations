@@ -98,9 +98,6 @@ info "Setting up SteamOS udev rules"
 EFI=$(getarg 'rd.steamos.efi=')
 if [ -z "$EFI" ]; then
     EFI=$(getarg 'steamos.efi=')
-    if [ -n "$EFI" ]; then
-        warn "SteamOS command line option 'steamos.efi' is deprecated, use 'rd.steamos.efi' instead."
-    fi
 fi
 if [ -z "$EFI" ]; then
     EFI="$(guess_efi)"
