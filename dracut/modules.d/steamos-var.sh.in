@@ -4,8 +4,8 @@
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2020 Collabora Ltd.
-#  Copyright © 2020 Valve Corporation.
+#  Copyright © 2020-2021 Collabora Ltd.
+#  Copyright © 2020-2021 Valve Corporation.
 #
 #  This file is part of steamos-customizations.
 #
@@ -30,13 +30,13 @@ mount_var() {
 
     # Mount the /var mountpoint using tmpfs
 
-    warn "Mounting /var failed! Fallback using tmpfs!"
+    warn "Mounting /dev/${UDEV_SYMLINKS_RELDIR}/self/var failed! Fallback using tmpfs!"
     mount -t tmpfs -o size=512m tmpfs "$NEWROOT/var" 2>&1 | vinfo
     if ismounted "$NEWROOT/var"; then
         return
     fi
 
-    warn "Mounting /var failed! Compile the kernel with CONFIG_TMPFS!"
+    warn "Mounting /dev/${UDEV_SYMLINKS_RELDIR}/self/var failed! Compile the kernel with CONFIG_TMPFS!"
     warn "*** Dropping you to a shell; the system will continue"
     warn "*** when you leave the shell."
     emergency_shell
