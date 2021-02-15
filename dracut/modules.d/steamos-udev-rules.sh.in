@@ -18,10 +18,22 @@
 
 . /lib/dracut-lib.sh
 
-guess_efi() {
+get_second_loader_device() {
+    local partuuid
+    local efivar
     local other
     local path
     local dev
+
+    efivar="SecondLoaderDevicePartUUID-4a67b082-0a4c-41cf-b6c7-440b29bb8c4f"
+    partuuid="$(cat "/sys/firmware/efi/efivars/$efivar" 2>/dev/null | \
+                dd bs=1 skip=4 status=none | \
+                iconv -t ASCII -f UTF-16LE | tr '\0' '\n')"
+    if [[ "$partuuid" ]]
+    then
+        echo "PARTUUID=$partuuid"
+        exit 0
+    fi
 
     IFS=, mapfile -t cfgs < <(FS=, steamos-ls --output boot-requested-at,boot-other,boot-other-disabled,image-invalid,path "${opts[@]}" "$@" | sort -r)
     for i in "${cfgs[@]}"
@@ -100,13 +112,9 @@ if [ -z "$EFI" ]; then
     EFI=$(getarg 'steamos.efi=')
 fi
 if [ -z "$EFI" ]; then
-    EFI="$(guess_efi)"
-    if [ -n "$EFI" ]; then
-        warn "SteamOS command line option 'rd.steamos.efi' unset, assuming 'rd.steamos.efi=$EFI'."
-    fi
+    EFI="$(get_second_loader_device)"
 fi
 if [ -z "$EFI" ]; then
-    warn "SteamOS command line option 'rd.steamos.efi' unset, skipping..."
     exit 0
 fi
 
