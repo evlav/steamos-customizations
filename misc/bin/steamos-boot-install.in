@@ -4,8 +4,8 @@
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2020 Collabora Ltd.
-#  Copyright © 2020 Valve Corporation.
+#  Copyright © 2020-2021 Collabora Ltd.
+#  Copyright © 2020-2021 Valve Corporation.
 #
 #  This file is part of steamos-customizations.
 #
@@ -73,9 +73,9 @@ then
         fi
 
         kver="${moduledir##*/}"
-        install -Dm644 "/usr/share/factory/var/lib/modules/$kver/vmlinuz" "/boot/vmlinuz-$pkgbase"
+        install -Dm644 "@datadir@/factory/var/lib/modules/$kver/vmlinuz" "/boot/vmlinuz-$pkgbase"
         mkdir -p "/var/lib/modules/$kver"
-        cp -a "/usr/share/factory/var/lib/modules/$kver" "/var/lib/modules/"
+        cp -a "@datadir@/factory/var/lib/modules/$kver" "/var/lib/modules/"
         dracut --force --hostonly "/boot/initramfs-$pkgbase.img" "$kver"
         dracut --force --no-hostonly "/boot/initramfs-$pkgbase-fallback.img" "$kver"
     done

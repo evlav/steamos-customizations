@@ -25,7 +25,7 @@ fi
 
 prepare_grub_to_access_device() {
     set -- prepare_grub_to_access_device "$@"
-    "$SHELL" -c '. /usr/share/grub/grub-mkconfig_lib; "$@"' "$0" "$@"
+    "$SHELL" -c '. @datadir@/grub/grub-mkconfig_lib; "$@"' "$0" "$@"
 }
 
 grubcfg() {

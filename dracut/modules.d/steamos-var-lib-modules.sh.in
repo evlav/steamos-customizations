@@ -4,8 +4,8 @@
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2019-2020 Collabora Ltd.
-#  Copyright © 2019-2020 Valve Corporation.
+#  Copyright © 2019-2021 Collabora Ltd.
+#  Copyright © 2019-2021 Valve Corporation.
 #
 #  This file is part of steamos-customizations.
 #
@@ -39,7 +39,7 @@ initialize_var_lib_modules() {
     # Create /var/lib/modules from factory
 
     local moddir=var/lib/modules
-    local orig=$NEWROOT/usr/share/factory/$moddir
+    local orig=$NEWROOT@datadir@/factory/$moddir
     local dest=$NEWROOT/$moddir
 
     [ -e "$dest" ] && return

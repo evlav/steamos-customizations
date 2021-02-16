@@ -4,8 +4,8 @@
 
 #  SPDX-License-Identifier: MPL-2.0
 #
-#  Copyright © 2015-2020 Collabora Ltd.
-#  Copyright © 2019-2020 Valve Corporation.
+#  Copyright © 2015-2021 Collabora Ltd.
+#  Copyright © 2019-2021 Valve Corporation.
 #
 #  This file is part of steamos-customizations.
 #
@@ -27,16 +27,16 @@ echo "Creating homedir $HOMEDIR for UID $ID"
 mkdir -p "$HOMEDIR"
 find /etc/skel -maxdepth 1 -mindepth 1 -exec cp -vPax {} "$HOMEDIR" \;
 install -m 0600 /root/.netrc "$HOMEDIR/.netrc"
-cp -vPax /usr/share/pixmaps/steamos.png "$HOMEDIR/.face.icon"
+cp -vPax @datadir@/pixmaps/steamos.png "$HOMEDIR/.face.icon"
 install -d "$HOMEDIR/Desktop"
-for i in /usr/share/applications/steam.desktop /usr/share/applications/steamos-install{,-devel}.desktop
+for i in @datadir@/applications/steam.desktop @datadir@/applications/steamos-install{,-devel}.desktop
 do
     [ -e "$i" ] || continue
     ln -sf "$i" "$HOMEDIR/Desktop/${i##*/}"
 done
 mkdir -p "$HOMEDIR/.config/autostart"
-ln -sf /usr/share/applications/steamos-update-os-notifier.desktop "$HOMEDIR/.config/autostart/steamos-update-os-notifier.desktop"
-install -D -m644 /usr/share/steamos/kupdatenotifierrc "$HOMEDIR/.config/kupdatenotifierrc"
+ln -sf @datadir@/applications/steamos-update-os-notifier.desktop "$HOMEDIR/.config/autostart/steamos-update-os-notifier.desktop"
+install -D -m644 @datadir@/steamos/kupdatenotifierrc "$HOMEDIR/.config/kupdatenotifierrc"
 mkdir -p "$HOMEDIR/.config/systemd/user/default.target.wants"
 ln -sf /usr/lib/systemd/user/gamemoded.service "$HOMEDIR/.config/systemd/user/default.target.wants/gamemoded.service"
 chown -R "$ID:$ID" "$HOMEDIR"

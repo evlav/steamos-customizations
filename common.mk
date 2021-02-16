@@ -87,6 +87,7 @@ UDEV_SYMLINKS_ABSDIR := /dev/$(UDEV_SYMLINKS_RELDIR)
 	  -e 's;@libdir@;$(libdir);g' \
 	  -e 's;@libexecdir@;$(libexecdir);g' \
 	  -e 's;@sbindir@;$(sbindir);g' \
+	  -e 's;@datadir@;$(datadir);g' \
 	  -e 's;@steamos_n_partitions@;$(STEAMOS_N_PARTITIONS);g' \
 	  -e 's;@steamos_all_partlabels@;$(STEAMOS_ALL_PARTLABELS);g' \
 	  -e 's;@grub_binary_relpath@;$(GRUB_BINARY_RELPATH);g' \
