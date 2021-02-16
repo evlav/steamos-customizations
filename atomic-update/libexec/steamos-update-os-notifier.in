@@ -4,8 +4,8 @@
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2020 Collabora Ltd.
-#  Copyright © 2020 Valve Corporation.
+#  Copyright © 2020-2021 Collabora Ltd.
+#  Copyright © 2020-2021 Valve Corporation.
 #
 #  This file is part of steamos-customizations.
 #
@@ -21,7 +21,4 @@ if [ ! -d /dev/@udev_symlinks_reldir@/other ]; then
     return
 fi
 
-opts=(--offline-updates)
-opts+=(--tooltip-title "SteamOS Update Operating System Notifier")
-opts+=(--tooltip-subtitle "SteamOS Update Operating System Notifier for the new systemtray specification")
-exec kupdate-notifier "${opts[@]}" @libexecdir@/steamos/steamos-update-os-notifier.action 3600
+exec kupdate-notifier

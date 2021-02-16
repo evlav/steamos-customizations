@@ -36,6 +36,7 @@ do
 done
 mkdir -p "$HOMEDIR/.config/autostart"
 ln -sf /usr/share/applications/steamos-update-os-notifier.desktop "$HOMEDIR/.config/autostart/steamos-update-os-notifier.desktop"
+install -D -m644 /usr/share/steamos/kupdatenotifierrc "$HOMEDIR/.config/kupdatenotifierrc"
 mkdir -p "$HOMEDIR/.config/systemd/user/default.target.wants"
 ln -sf /usr/lib/systemd/user/gamemoded.service "$HOMEDIR/.config/systemd/user/default.target.wants/gamemoded.service"
 chown -R "$ID:$ID" "$HOMEDIR"

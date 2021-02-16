@@ -4,6 +4,8 @@ BINARIES := $(wildcard bin/*)
 LIBRARIES_EXEC_IN := $(wildcard libexec/*.in)
 LIBRARIES_EXEC := $(patsubst %.in,%,$(LIBRARIES_EXEC_IN))
 COMPLETIONS := $(wildcard completions/*)
+DATA_IN := $(wildcard share/*.in)
+DATA := $(patsubst %.in,%,$(DATA_IN))
 RAUC_CONFIG_IN := rauc/system.conf.in
 RAUC_CONFIG :=  $(patsubst %.in,%,$(RAUC_CONFIG_IN))
 RAUC_HOOKS_IN := $(wildcard rauc/*.sh.in)
@@ -17,13 +19,15 @@ APPLICATIONS_IN := $(wildcard applications/*.in)
 APPLICATIONS := $(patsubst %.in,%,$(APPLICATIONS_IN))
 TARGETS := $(wildcard systemd/*.target)
 
-all: $(APPLICATIONS) $(LIBRARIES_EXEC) $(RAUC_CONFIG) $(RAUC_HOOKS) $(SERVICES) $(TMPFILES)
+all: $(APPLICATIONS) $(DATA) $(LIBRARIES_EXEC) $(RAUC_CONFIG) $(RAUC_HOOKS) $(SERVICES) $(TMPFILES)
 
 install: all
 	install -d $(DESTDIR)$(sbindir)
 	install -m 0755 $(BINARIES) $(DESTDIR)$(sbindir)
 	install -d $(DESTDIR)$(libexecdir)/steamos
 	install -m 0755 $(LIBRARIES_EXEC) $(DESTDIR)$(libexecdir)/steamos
+	install -d $(DESTDIR)$(datadir)/steamos
+	install -m 0644 $(DATA) $(DESTDIR)$(datadir)/steamos
 	install -d $(DESTDIR)$(completionsdir)
 	install -m 0644 $(COMPLETIONS) $(DESTDIR)$(completionsdir)
 	install -d $(DESTDIR)$(sysconfdir)/rauc
