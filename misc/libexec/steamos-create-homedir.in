@@ -14,14 +14,28 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 set -e
+set -u
 
-ID="$1"
-test -n "$ID" || exit 1
+if [[ "$#" -eq 0 ]]
+then
+    cat <<EOF
+Usage: ${0##*/} UID
+EOF
+    echo "Too few argument" >&2
+    exit 1
+fi
 
-HOMEDIR=$(getent passwd "$ID" | cut -d ':' -f 6)
-test -n "$HOMEDIR" || exit 1
+IFS=: read -r _ _ ID _ _ HOMEDIR _ < <(getent passwd "$1")
+if [[ ! "${HOMEDIR:-}" ]]
+then
+    echo "$1: No such USER" >&2
+    exit 1
+fi
 
-test -d "$HOMEDIR" && exit 0
+if [[ -d "${HOMEDIR:-}" ]]
+then
+    exit 0
+fi
 
 echo "Creating homedir $HOMEDIR for UID $ID"
 mkdir -p "$HOMEDIR"
