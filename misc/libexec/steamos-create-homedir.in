@@ -25,32 +25,32 @@ EOF
     exit 1
 fi
 
-IFS=: read -r _ _ ID _ _ HOMEDIR _ < <(getent passwd "$1")
-if [[ ! "${HOMEDIR:-}" ]]
+IFS=: read -r user _ uid gid _ homedir _ < <(getent passwd "$1")
+if [[ ! "${homedir:-}" ]]
 then
     echo "$1: No such USER" >&2
     exit 1
 fi
 
-if [[ -d "${HOMEDIR:-}" ]]
+if [[ -d "${homedir:-}" ]]
 then
     exit 0
 fi
 
-echo "Creating homedir $HOMEDIR for UID $ID"
-mkdir -p "$HOMEDIR"
-find /etc/skel -maxdepth 1 -mindepth 1 -exec cp -vPax {} "$HOMEDIR" \;
-install -m 0600 /root/.netrc "$HOMEDIR/.netrc"
-cp -vPax @datadir@/pixmaps/steamos.png "$HOMEDIR/.face.icon"
-install -d "$HOMEDIR/Desktop"
+echo "Creating homedir $homedir for UID $uid"
+mkdir -p "$homedir"
+find /etc/skel -maxdepth 1 -mindepth 1 -exec cp -vPax {} "$homedir" \;
+install -m 0600 /root/.netrc "$homedir/.netrc"
+cp -vPax @datadir@/pixmaps/steamos.png "$homedir/.face.icon"
+install -d "$homedir/Desktop"
 for i in @datadir@/applications/steam.desktop @datadir@/applications/steamos-install{,-devel}.desktop
 do
     [ -e "$i" ] || continue
-    ln -sf "$i" "$HOMEDIR/Desktop/${i##*/}"
+    ln -sf "$i" "$homedir/Desktop/${i##*/}"
 done
-mkdir -p "$HOMEDIR/.config/autostart"
-ln -sf @datadir@/applications/steamos-update-os-notifier.desktop "$HOMEDIR/.config/autostart/steamos-update-os-notifier.desktop"
-install -D -m644 @datadir@/steamos/kupdatenotifierrc "$HOMEDIR/.config/kupdatenotifierrc"
-mkdir -p "$HOMEDIR/.config/systemd/user/default.target.wants"
-ln -sf /usr/lib/systemd/user/gamemoded.service "$HOMEDIR/.config/systemd/user/default.target.wants/gamemoded.service"
-chown -R "$ID:$ID" "$HOMEDIR"
+mkdir -p "$homedir/.config/autostart"
+ln -sf @datadir@/applications/steamos-update-os-notifier.desktop "$homedir/.config/autostart/steamos-update-os-notifier.desktop"
+install -D -m644 @datadir@/steamos/kupdatenotifierrc "$homedir/.config/kupdatenotifierrc"
+mkdir -p "$homedir/.config/systemd/user/default.target.wants"
+ln -sf /usr/lib/systemd/user/gamemoded.service "$homedir/.config/systemd/user/default.target.wants/gamemoded.service"
+chown -R "$uid:$gid" "$homedir"
