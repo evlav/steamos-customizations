@@ -38,17 +38,17 @@ then
 fi
 
 echo "Creating homedir $homedir for UID $uid"
-mkdir -p "$homedir"
+install -d -m 755 "$homedir"
 find /etc/skel -maxdepth 1 -mindepth 1 -exec cp -vPax {} "$homedir" \;
 install -m 0600 /root/.netrc "$homedir/.netrc"
 cp -vPax @datadir@/pixmaps/steamos.png "$homedir/.face.icon"
-install -d "$homedir/Desktop"
+install -d -m755 "$homedir/Desktop"
 for i in @datadir@/applications/steam.desktop @datadir@/applications/steamos-install{,-devel}.desktop
 do
     [ -e "$i" ] || continue
     ln -sf "$i" "$homedir/Desktop/${i##*/}"
 done
-mkdir -p "$homedir/.config/autostart"
+install -d -m755 "$homedir/.config/autostart"
 ln -sf @datadir@/applications/steamos-update-os-notifier.desktop "$homedir/.config/autostart/steamos-update-os-notifier.desktop"
 install -D -m644 @datadir@/steamos/kupdatenotifierrc "$homedir/.config/kupdatenotifierrc"
 mkdir -p "$homedir/.config/systemd/user/default.target.wants"
