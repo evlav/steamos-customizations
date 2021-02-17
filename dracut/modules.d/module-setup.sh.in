@@ -82,7 +82,8 @@ install() {
     inst_multiple \
         basename dirname plymouth rmdir sed sleep \
         e2label mkfs.ext4 tune2fs \
-        dd iconv lsblk sort steamos-ls \
+        dd lsblk sort steamos-ls \
+        iconv /usr/lib/gconv/UTF-16.so /usr/lib/gconv/gconv-modules \
         @libexecdir@/steamos/steamos-partsets-generator \
         $systemdutildir/systemd-veritysetup \
         $systemdutildir/system-generators/systemd-veritysetup-generator
