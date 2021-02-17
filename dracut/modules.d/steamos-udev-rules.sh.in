@@ -25,10 +25,7 @@ get_second_loader_device() {
     local path
     local dev
 
-    efivar="SecondLoaderDevicePartUUID-4a67b082-0a4c-41cf-b6c7-440b29bb8c4f"
-    partuuid="$(cat "/sys/firmware/efi/efivars/$efivar" 2>/dev/null | \
-                dd bs=1 skip=4 status=none | \
-                iconv -t ASCII -f UTF-16LE | tr '\0' '\n')"
+    partuuid="$(lsblk --noheaddings --output PARTUUID /dev/secondloader 2>/dev/null)"
     if [[ "$partuuid" ]]
     then
         echo "PARTUUID=$partuuid"
