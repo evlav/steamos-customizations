@@ -82,7 +82,7 @@ install() {
     inst_multiple \
         basename dirname plymouth rmdir sed sleep \
         e2label mkfs.ext4 tune2fs \
-        lsblk sort steamos-ls \
+        dd iconv lsblk sort steamos-ls \
         @libexecdir@/steamos/steamos-partsets-generator \
         $systemdutildir/systemd-veritysetup \
         $systemdutildir/system-generators/systemd-veritysetup-generator
