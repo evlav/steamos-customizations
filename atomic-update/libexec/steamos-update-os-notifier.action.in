@@ -45,6 +45,8 @@ online-updates)
     rm -f /run/steamos-atomupd/has-updates.json
     ;;
 offline-updates)
+    dbus-send --session --type=method_call --dest=org.kde.LogoutPrompt \
+              /LogoutPrompt org.kde.LogoutPrompt.promptReboot
     touch /run/steamos/update-other
     ;;
 *)
