@@ -48,6 +48,7 @@ offline-updates)
     dbus-send --session --type=method_call --dest=org.kde.LogoutPrompt \
               /LogoutPrompt org.kde.LogoutPrompt.promptReboot
     touch /run/steamos/update-other
+    "$SHELL" -c 'sleep "$((30+5))"; rm -f /run/steamos/update-other' &
     ;;
 *)
     if [[ ! "$1" ]]; then
