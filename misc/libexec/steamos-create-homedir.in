@@ -32,6 +32,12 @@ then
     exit 1
 fi
 
+if [[ -d "${homedir:-}" ]]
+then
+    exit 0
+fi
+
+echo "Creating homedir $homedir for UID $uid"
 install -d -m 755 "$homedir"
 find /etc/skel -maxdepth 1 -mindepth 1 -exec cp -vPax {} "$homedir" \;
 install -m 0600 /root/.netrc "$homedir/.netrc"
