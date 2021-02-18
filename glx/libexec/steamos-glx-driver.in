@@ -30,7 +30,7 @@ get_initrd ()
 {
     local ver="$1";
     local pkgbase="/usr/lib/modules/$(uname -r)/pkgbase";
-    
+
     initrd=;
     if [ -e "$pkgbase" ];
     then

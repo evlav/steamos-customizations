@@ -28,7 +28,7 @@ mount_root() {
         return
     fi
 
-    warn "Mounting /dev/${UDEV_SYMLINKS_RELDIR} failed!" 
+    warn "Mounting /dev/${UDEV_SYMLINKS_RELDIR} failed!"
     warn "*** Dropping you to a shell; the system will continue"
     warn "*** when you leave the shell."
     emergency_shell

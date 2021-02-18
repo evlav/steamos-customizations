@@ -20,7 +20,7 @@ check() {
     require_binaries \
         basename bash dd dirname iconv rmdir sed tr udevadm \
         || return 1
-    
+
     # for factory reset at shutdown
     require_binaries \
         e2label mkfs.ext4 tune2fs \
@@ -53,7 +53,7 @@ find_device() {
     if [ ! -b "$dev" ]; then
         return
     fi
-    
+
     dev="$(get_persistent_dev "$dev")"
     echo "$(shorten_persistent_dev "$dev")"
 }

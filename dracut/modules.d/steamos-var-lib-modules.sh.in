@@ -25,7 +25,7 @@
 # so we end up having kernel module things in /var rather than /usr.
 # The kernel modules must be available super early at boot, earlier than
 # what systemd-tmpfiles provides out of the box.
-# 
+#
 # So systemd-tmpfiles won't work for us. I thought about using it from the
 # initrd instead, and using the `--root=/sysroot` option, but that doesn't
 # really work either, see <https://github.com/systemd/systemd/issues/12467>.
@@ -44,7 +44,7 @@ initialize_var_lib_modules() {
 
     [ -e "$dest" ] && return
     [ -d "$orig" ] || return
-    
+
     info "Creating module directory '$dest'"
     mkdir -p "$(dirname "$dest")"
     cp -a "$orig" "$dest"

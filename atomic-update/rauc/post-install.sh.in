@@ -187,7 +187,7 @@ umount /mnt
 
 #
 # Handle the bootloaders
-# 
+#
 
 log "Installing the bootloaders"
 

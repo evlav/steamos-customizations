@@ -268,7 +268,7 @@ grow_fs() {
 
     local device=$1
     local fs=
-    
+
     fs=$(lsblk -no fstype "$device")
 
     case "$fs" in

@@ -93,7 +93,7 @@ check-device-type ()
     local gpd=1;
     local allowed=;
     local matched=;
-    
+
     while read src key op value;
     do
         data="";

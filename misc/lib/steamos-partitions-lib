@@ -262,10 +262,10 @@ find_device_for_mountpoint_deep() {
     #
     # For example:
     # / -> /dev/sda6
-    
+
     local mountpoint=$(realpath "$1")
     mountpoint -q "$mountpoint" || return
-    
+
     local device=$(find_device_for_mountpoint "$mountpoint")
     if [[ "$device" != /dev/dm-* ]]; then echo "$device"; return; fi
 
