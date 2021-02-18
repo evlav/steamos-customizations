@@ -18,14 +18,14 @@
 
 . /lib/dracut-lib.sh
 
-get_second_loader_device() {
+get_chainedloader_device() {
     local partuuid
     local efivar
     local other
     local path
     local dev
 
-    partuuid="$(lsblk --noheaddings --output PARTUUID /dev/secondloader 2>/dev/null)"
+    partuuid="$(lsblk --noheaddings --output PARTUUID /dev/chainedloader 2>/dev/null)"
     if [[ "$partuuid" ]]
     then
         echo "PARTUUID=$partuuid"
@@ -109,7 +109,7 @@ if [ -z "$EFI" ]; then
     EFI=$(getarg 'steamos.efi=')
 fi
 if [ -z "$EFI" ]; then
-    EFI="$(get_second_loader_device)"
+    EFI="$(get_chainedloader_device)"
 fi
 if [ -z "$EFI" ]; then
     warn "No second loader found!"
