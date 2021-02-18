@@ -112,6 +112,11 @@ if [ -z "$EFI" ]; then
     EFI="$(get_second_loader_device)"
 fi
 if [ -z "$EFI" ]; then
+    warn "No second loader found!"
+    warn "Creates the by-partsets symlinks manually and exit."
+    warn "*** Dropping you to a shell; the system will continue"
+    warn "*** when you leave the shell."
+    emergency_shell
     exit 0
 fi
 
