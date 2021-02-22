@@ -11,7 +11,7 @@
 Description=Boot Directory Bind-Mount (/var/boot -> /boot)
 Requires=steamos-mkvarboot.service
 After=steamos-mkvarboot.service
-ConditionKernelCommandLine=ro
+ConditionPathIsReadWrite=!/
 
 [Mount]
 What=/var/boot

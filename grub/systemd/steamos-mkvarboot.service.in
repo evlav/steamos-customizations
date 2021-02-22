@@ -13,7 +13,7 @@ DefaultDependencies=no
 Before=shutdown.target
 Conflicts=shutdown.target
 RefuseManualStart=yes
-ConditionKernelCommandLine=ro
+ConditionPathIsReadWrite=!/
 ConditionPathExists=!/var/boot
 RequiresMountsFor=/var
 
