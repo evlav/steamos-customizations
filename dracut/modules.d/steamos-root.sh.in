@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # -*- mode: sh; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
 # vim: et sts=4 sw=4
 
@@ -19,11 +19,17 @@ UDEV_SYMLINKS_RELDIR=@udev_symlinks_reldir@
 . /lib/dracut-lib.sh
 
 mount_root() {
+    local opts
+
+    opts=(-o "${rflags:-ro}")
+    if [[ "${fstype:-auto}" != auto ]]; then
+        opts=(-t "$fstype")
+    fi
 
     # Mount the / mountpoint
 
-    info "Mounting /dev/${UDEV_SYMLINKS_RELDIR}/self/rootfs with -o ${rflags:-ro}"
-    mount -o "${rflags:-ro}" "/dev/${UDEV_SYMLINKS_RELDIR}/self/rootfs" "$NEWROOT" 2>&1 | vinfo
+    info "Mounting /dev/${UDEV_SYMLINKS_RELDIR}/self/rootfs with ${opts[*]}"
+    mount "${opts[@]}" "/dev/${UDEV_SYMLINKS_RELDIR}/self/rootfs" "$NEWROOT" 2>&1 | vinfo
     if ismounted "$NEWROOT"; then
         return
     fi
