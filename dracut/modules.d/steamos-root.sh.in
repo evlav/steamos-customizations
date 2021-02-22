@@ -34,7 +34,7 @@ mount_root() {
     emergency_shell
 }
 
-ROOT=$(getarg 'root')
+ROOT=$(getarg 'root=')
 if [ -n "$ROOT" ]; then
     exit 0
 fi
