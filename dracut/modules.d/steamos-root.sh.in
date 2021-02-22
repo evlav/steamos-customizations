@@ -40,8 +40,7 @@ mount_root() {
     emergency_shell
 }
 
-ROOT=$(getarg 'root=')
-if [ -n "$ROOT" ]; then
-    exit 0
+if ismounted "$NEWROOT"; then
+    return
 fi
 mount_root
