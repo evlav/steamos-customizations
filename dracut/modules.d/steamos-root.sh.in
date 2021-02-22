@@ -22,8 +22,8 @@ mount_root() {
 
     # Mount the / mountpoint
 
-    info "Mounting /dev/${UDEV_SYMLINKS_RELDIR}/self/rootfs with -o ro"
-    mount -o ro "/dev/${UDEV_SYMLINKS_RELDIR}/self/rootfs" "$NEWROOT" 2>&1 | vinfo
+    info "Mounting /dev/${UDEV_SYMLINKS_RELDIR}/self/rootfs with -o ${rflags:-ro}"
+    mount -o "${rflags:-ro}" "/dev/${UDEV_SYMLINKS_RELDIR}/self/rootfs" "$NEWROOT" 2>&1 | vinfo
     if ismounted "$NEWROOT"; then
         return
     fi
