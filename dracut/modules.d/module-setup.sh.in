@@ -71,6 +71,8 @@ installkernel() {
 install() {
     local dev
 
+    echo " rd.systemd.gpt_auto=no" \
+        >> "$initdir/etc/cmdline.d/95steamos-dev.conf"
     if [ "$hostonly_cmdline" = "yes" ]; then
         dev="$(find_device /efi)"
         [ "$dev" ] && echo " steamos.efi=$dev" \
