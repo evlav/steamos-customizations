@@ -13,13 +13,15 @@ RAUC_HOOKS := $(patsubst %.in,%,$(RAUC_HOOKS_IN))
 STEAMOS_ATOMUPD_CONFIG := steamos-atomupd/client.conf
 SERVICES_IN := $(wildcard systemd/*.service.in)
 SERVICES := $(patsubst %.in,%,$(SERVICES_IN))
+SERVICES_OVERRIDE_IN := $(wildcard systemd/*/override.conf.in)
+SERVICES_OVERRIDE := $(patsubst %.in,%,$(SERVICES_OVERRIDE_IN))
 TMPFILES_IN := $(wildcard tmpfiles.d/*.conf.in)
 TMPFILES := $(patsubst %.in,%,$(TMPFILES_IN))
 APPLICATIONS_IN := $(wildcard applications/*.in)
 APPLICATIONS := $(patsubst %.in,%,$(APPLICATIONS_IN))
 TARGETS := $(wildcard systemd/*.target)
 
-all: $(APPLICATIONS) $(DATA) $(LIBRARIES_EXEC) $(RAUC_CONFIG) $(RAUC_HOOKS) $(SERVICES) $(TMPFILES)
+all: $(APPLICATIONS) $(DATA) $(LIBRARIES_EXEC) $(RAUC_CONFIG) $(RAUC_HOOKS) $(SERVICES) $(SERVICES_OVERRIDE) $(TMPFILES)
 
 install: all
 	install -d $(DESTDIR)$(sbindir)
@@ -38,6 +40,9 @@ install: all
 	install -m 0644 $(STEAMOS_ATOMUPD_CONFIG) $(DESTDIR)$(sysconfdir)/steamos-atomupd
 	install -d $(DESTDIR)$(systemdunitsdir)
 	install -m 644 $(SERVICES) $(DESTDIR)$(systemdunitsdir)
+	for i in $(SERVICES_OVERRIDE); do \
+		install -D -m 644 $$i $(DESTDIR)$(systemdunitsdir)/$$i; \
+	done
 	$(call enable-systemd-units,$(DESTDIR)$(systemdunitsdir),$(notdir $(SERVICES)))
 	install -m 644 $(TARGETS) $(DESTDIR)$(systemdunitsdir)
 	install -d $(DESTDIR)$(libdir)/tmpfiles.d
