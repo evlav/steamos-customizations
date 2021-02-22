@@ -1,6 +1,6 @@
 [system]
 compatible=steamos-amd64
-bootloader=noop
+bootloader=custom
 max-bundle-download-size=268435456
 
 [keyring]
@@ -10,29 +10,26 @@ path=/etc/rauc/keyring.pem
 tmppath=/tmp
 
 [handlers]
+bootloader-custom-backend=@libdir@/rauc/bootloader-custom-backend.sh
 pre-install=@libdir@/rauc/pre-install.sh
 post-install=@libdir@/rauc/post-install.sh
 
-# SteamOS-A
-
 [slot.rootfs.0]
-bootname=SteamOS-A
-device=@udev_symlinks_absdir@/all/rootfs-A
+bootname=self
+device=@udev_symlinks_absdir@/self/rootfs
 type=raw
 
 [slot.verity.0]
-device=@udev_symlinks_absdir@/all/verity-A
+device=@udev_symlinks_absdir@/self/verity
 parent=rootfs.0
 type=raw
 
-# SteamOS-B
-
 [slot.rootfs.1]
-bootname=SteamOS-B
-device=@udev_symlinks_absdir@/all/rootfs-B
+bootname=other
+device=@udev_symlinks_absdir@/other/rootfs
 type=raw
 
 [slot.verity.1]
-device=@udev_symlinks_absdir@/all/verity-B
+device=@udev_symlinks_absdir@/other/verity
 parent=rootfs.1
 type=raw
