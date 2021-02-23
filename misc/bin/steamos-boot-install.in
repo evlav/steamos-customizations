@@ -53,7 +53,8 @@ done
 if [[ ! "${no_bootloaders:-}" ]]
 then
     steamcl-install
-    if mountpoint -q /boot; then
+    if mountpoint -q /boot
+    then
         grub-install
     else
         echo "Warning: Skipping installation artifacts to /boot!" >&2
@@ -67,7 +68,8 @@ then
     mapfile -t moduledirs < <(ls -1d /usr/lib/steamos/modules/* 2>/dev/null)
     for moduledir in ${moduledirs[@]}
     do
-        if ! read -r pkgbase > /dev/null 2>&1 < "$moduledir/pkgbase"; then
+        if ! read -r pkgbase > /dev/null 2>&1 < "$moduledir/pkgbase"
+        then
             # if the kernel has no pkgbase, we skip it
             continue
         fi
