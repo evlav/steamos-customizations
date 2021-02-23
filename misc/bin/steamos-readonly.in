@@ -106,6 +106,35 @@ status() {
     fi
 }
 
+shell() {
+    local dev
+    local ret
+    local ro
+
+    dev="$1"
+    shift
+
+    if status "$dev" >/dev/null 2>&1
+    then
+        read_write "$dev"
+        ro=1
+    fi
+
+    if "${SHELL:-/bin/sh}" "$@"
+    then
+        ret=$?
+    else
+        ret=$?
+    fi
+
+    if [[ "${ro:-0}" -eq 1 ]]
+    then
+        read_only "$dev"
+    fi
+
+    return "$ret"
+}
+
 case "${1:-}" in
     disable)
         read_write @udev_symlinks_absdir@/self/rootfs
@@ -118,6 +147,10 @@ case "${1:-}" in
         ;;
     status)
         status @udev_symlinks_absdir@/self/rootfs
+        ;;
+    shell)
+        shift
+        shell @udev_symlinks_absdir@/self/rootfs "$@"
         ;;
     *)
         usage

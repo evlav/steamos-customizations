@@ -22,10 +22,21 @@ _steamos-readonly()
     _count_args
     if [[ "$args" -eq 1 ]]; then
         if steamos-readonly status >/dev/null 2>&1; then
-            COMPREPLY=( $( compgen -W "disable toggle status" -- "$cur" ) )
+            COMPREPLY=( $( compgen -W "disable toggle status shell" -- "$cur" ) )
         else
-            COMPREPLY=( $( compgen -W "enable toggle status" -- "$cur" ) )
+            COMPREPLY=( $( compgen -W "enable toggle status shell" -- "$cur" ) )
         fi
     fi
+
+    local arg
+    _get_first_arg
+    if [[ "$arg" != shell ]]; then
+        return
+    fi
+
+    COMP_WORDS=(sh "${COMP_WORDS[@]:2}" "$cur")
+    COMP_LINE=${COMP_WORDS[*]}
+    COMP_POINT=${#COMP_LINE}
+    _command_offset 0
 } &&
 complete -F _steamos-readonly steamos-readonly
