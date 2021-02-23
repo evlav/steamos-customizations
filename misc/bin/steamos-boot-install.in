@@ -60,8 +60,11 @@ then
         echo "Warning: Skipping installation artifacts to /boot!" >&2
         grub-mkimage
     fi
-    mkdir -p /efi/SteamOS
-    steamos-bootconf >/efi/@bootconf_relpath@
+    if [[ ! -e /efi/@bootconf_relpath@ ]]
+    then
+        mkdir -p /efi/SteamOS
+        steamos-bootconf >/efi/@bootconf_relpath@
+    fi
 fi
 if [[ ! "${no_kernel:-}" ]]
 then
