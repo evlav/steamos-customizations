@@ -37,40 +37,7 @@ blockinfo() {
     echo "${BLOCK_SIZE:-}"
 }
 
-cleanup() {
-    ret="$?"
-    trap - 0
-
-    if [[ "$ret" -ne 0 ]]
-    then
-        for file in /efi/@grub_config_relpath@ /efi/@roothash_relpath@
-        do
-            if [[ -e "$file.bak" ]]
-            then
-                mv "$file"{.bak,}
-            fi
-        done
-    fi
-
-    rm -f /efi/@grub_config_relpath@.bak /efi/@roothash_relpath@.bak
-}
-
-backup() {
-    trap cleanup 0
-    for file in /efi/@grub_config_relpath@ /efi/@roothash_relpath@
-    do
-        if [[ -e "$file" ]]
-        then
-            mv "$file"{,.bak}
-        fi
-    done
-}
-
 read_write() {
-    backup
-
-    mkdir -p /var/boot/grub
-    update-grub
     tune2fs -O ^read-only "$1"
     if grep -q '^/dev/mapper/root / ' /proc/mounts
     then
@@ -79,12 +46,8 @@ read_write() {
         return
     fi
 
-    if mountpoint -q /boot
-    then
-        umount /boot
-    fi
     mount -o remount,rw /
-    rm -Rf /var/boot/ /efi/@roothash_relpath@
+    rm -f /efi/@roothash_relpath@
     sync /
 }
 
@@ -96,21 +59,14 @@ read_only() {
         return
     fi
 
-    backup
     mapfile -t rootfs < <(blockinfo "$1")
 
-    if mountpoint -q /boot
-    then
-        umount /boot
-    fi
     sync /
     mount -o remount,ro /
     tune2fs -O read-only "${rootfs[0]}"
     veritysetup format --data-block-size "${rootfs[6]}" --hash-block-size "${rootfs[6]}" "$@" | \
         tee /dev/stderr | \
         sed -n 's,^Root hash:[[:blank:]]\+\([[:xdigit:]]\{64\}\)$,\1,p' >/efi/@roothash_relpath@
-    rm -Rf /var/boot/
-    update-grub
 
     echo "Reboot to complete setup." >&2
 }

@@ -26,38 +26,9 @@ Enable or disable read-only on the current running SteamOS.
 EOF
 }
 
-cleanup() {
-    ret="$?"
-    trap - 0
-
-    if [[ "$ret" -ne 0 ]]
-    then
-        if [[ -e /efi/@grub_config_relpath@.bak ]]
-        then
-            mv /efi/@grub_config_relpath@{.bak,}
-        fi
-    fi
-
-    rm -f /efi/@grub_config_relpath@.bak
-}
-
-backup() {
-    trap cleanup 0
-    mv /efi/@grub_config_relpath@{,.bak}
-}
-
 read_write() {
-    backup
-
-    if mountpoint -q /boot
-    then
-        umount /boot
-    fi
-    mkdir -p /var/boot/grub
-    update-grub
     tune2fs -O ^read-only "$1"
     mount -o remount,rw /
-    rm -Rf /var/boot/
     sync /
 }
 
@@ -69,17 +40,9 @@ read_only() {
         return
     fi
 
-    backup
-
-    if mountpoint -q /boot
-    then
-        umount /boot
-    fi
     sync /
     mount -o remount,ro /
     tune2fs -O read-only "$1"
-    rm -Rf /var/boot/
-    update-grub
 }
 
 toggle() {
@@ -108,8 +71,6 @@ status() {
 
 shell() {
     local dev
-    local ret
-    local ro
 
     dev="$1"
     shift
@@ -117,22 +78,10 @@ shell() {
     if status "$dev" >/dev/null 2>&1
     then
         read_write "$dev"
-        ro=1
+        trap "read_only \"$dev\"" 0
     fi
 
-    if "${SHELL:-/bin/sh}" "$@"
-    then
-        ret=$?
-    else
-        ret=$?
-    fi
-
-    if [[ "${ro:-0}" -eq 1 ]]
-    then
-        read_only "$dev"
-    fi
-
-    return "$ret"
+    "${SHELL:-/bin/sh}" "$@"
 }
 
 case "${1:-}" in
