@@ -21,6 +21,7 @@ _steamos-create-homedir()
     local args
     _count_args
     if [[ "$args" -eq 1 ]]; then
+    genent
         COMPREPLY=($(compgen -W "$(sed -n '\,.*:.*:.*:.*:/home/,s,\([[:alnum:]]\+\):.*\([[:digit:]]\+\):.*,\1\n\2,p' /etc/passwd)" -- "$cur"))
         return
     fi

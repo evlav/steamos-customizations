@@ -3,8 +3,8 @@
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2020 Collabora Ltd.
-#  Copyright © 2020 Valve Corporation.
+#  Copyright © 2020-2021 Collabora Ltd.
+#  Copyright © 2020-2021 Valve Corporation.
 #
 #  This file is part of steamos-customizations.
 #
@@ -25,6 +25,6 @@ _steamos-boot-install()
             ;;
     esac
 
-    COMPREPLY=( $(compgen -W "--roothash --no-bootloaders" "--no-kernel" -- "$cur") )
+    COMPREPLY=($(compgen -W "--roothash --no-bootloaders" "--no-kernel" -- "$cur"))
 } &&
 complete -F _steamos-boot-install steamos-boot-install steamos-bootloaders-install

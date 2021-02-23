@@ -29,7 +29,7 @@ _steamos-reboot()
         --reboot-to-bootloader-entry)
             local entries
             mapfile -t entries < <(steamos-reboot --list-bootloader-entries)
-            COMPREPLY=($(compgen -W "${entries[*]}" -- "$cur" ))
+            COMPREPLY=($(compgen -W "${entries[*]}" -- "$cur"))
             return
             ;;
         --reboot-to-bootloader-menu)
