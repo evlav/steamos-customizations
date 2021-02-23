@@ -82,6 +82,15 @@ read_only() {
     update-grub
 }
 
+toggle() {
+    if status "$@" 2>/dev/null
+    then
+        read_write "$@"
+    else
+        read_only "$@"
+    fi
+}
+
 status() {
     local filesystem_is_readonly
     local device_is_readonly
@@ -103,6 +112,9 @@ case "${1:-}" in
         ;;
     enable)
         read_only @udev_symlinks_absdir@/self/rootfs
+        ;;
+    toggle)
+        toggle @udev_symlinks_absdir@/self/rootfs
         ;;
     status)
         status @udev_symlinks_absdir@/self/rootfs

@@ -3,8 +3,8 @@
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2020 Collabora Ltd.
-#  Copyright © 2020 Valve Corporation.
+#  Copyright © 2020-2021 Collabora Ltd.
+#  Copyright © 2020-2021 Valve Corporation.
 #
 #  This file is part of steamos-customizations.
 #
@@ -22,9 +22,9 @@ _steamos-readonly()
     _count_args
     if [[ "$args" -eq 1 ]]; then
         if steamos-readonly status >/dev/null 2>&1; then
-            COMPREPLY=( $( compgen -W "disable status" -- "$cur" ) )
+            COMPREPLY=( $( compgen -W "disable toggle status" -- "$cur" ) )
         else
-            COMPREPLY=( $( compgen -W "enable status" -- "$cur" ) )
+            COMPREPLY=( $( compgen -W "enable toggle status" -- "$cur" ) )
         fi
     fi
 } &&
