@@ -25,7 +25,7 @@ get_chainedloader_device() {
     local path
     local dev
 
-    partuuid="$(lsblk --noheaddings --output PARTUUID /dev/chainedloader 2>/dev/null)"
+    partuuid="$(lsblk --noheadings --output PARTUUID /dev/chainedloader 2>/dev/null)"
     if [[ "$partuuid" ]]
     then
         echo "PARTUUID=$partuuid"
