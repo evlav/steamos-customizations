@@ -54,7 +54,7 @@ read_write() {
         umount /boot
     fi
     mkdir -p /var/boot/grub
-    GRUB_DISABLE_STEAMOS_VERITY=true update-grub
+    update-grub
     tune2fs -O ^read-only "$1"
     mount -o remount,rw /
     rm -Rf /var/boot/
@@ -79,7 +79,7 @@ read_only() {
     mount -o remount,ro /
     tune2fs -O read-only "$1"
     rm -Rf /var/boot/
-    GRUB_DISABLE_STEAMOS_VERITY=true update-grub
+    update-grub
 }
 
 status() {

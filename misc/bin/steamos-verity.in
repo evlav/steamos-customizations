@@ -70,7 +70,7 @@ read_write() {
     backup
 
     mkdir -p /var/boot/grub
-    GRUB_DISABLE_STEAMOS_VERITY=true update-grub
+    update-grub
     tune2fs -O ^read-only "$1"
     if grep -q '^/dev/mapper/root / ' /proc/mounts
     then
@@ -110,7 +110,7 @@ read_only() {
         tee /dev/stderr | \
         sed -n 's,^Root hash:[[:blank:]]\+\([[:xdigit:]]\{64\}\)$,\1,p' >/efi/@roothash_relpath@
     rm -Rf /var/boot/
-    GRUB_DISABLE_STEAMOS_VERITY=false update-grub
+    update-grub
 
     echo "Reboot to complete setup." >&2
 }
