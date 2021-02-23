@@ -194,9 +194,4 @@ log "Installing the bootloaders"
 steamos-chroot --partset other -- steamos-boot-install --no-kernel || \
     err "Failed to install bootloaders"
 
-log "Reconfiguring the bootloader"
-
-update-grub || \
-    warn "Failed to reconfigure the bootloader"
-
 exit $ERR
