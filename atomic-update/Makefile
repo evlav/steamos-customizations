@@ -41,7 +41,7 @@ install: all
 	install -d $(DESTDIR)$(systemdunitsdir)
 	install -m 644 $(SERVICES) $(DESTDIR)$(systemdunitsdir)
 	for i in $(SERVICES_OVERRIDE); do \
-		install -D -m 644 $$i $(DESTDIR)$(systemdunitsdir)/$$i; \
+		install -D -m 644 $$i $(DESTDIR)$(systemdunitsdir)/$${i#systemd/}; \
 	done
 	$(call enable-systemd-units,$(DESTDIR)$(systemdunitsdir),$(notdir $(SERVICES)))
 	install -m 644 $(TARGETS) $(DESTDIR)$(systemdunitsdir)
