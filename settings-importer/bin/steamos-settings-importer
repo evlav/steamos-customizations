@@ -16,6 +16,16 @@
 
 SETTINGS_DIR=/efi/settings
 
+# Copy steam-settings files from /efi/steam-settings to /home/steamos/.steam-settings/ folder.
+if [ -d /efi/steam-settings ]; then
+    # Create target folder if it doesn't exist
+    mkdir -p /home/steamos/.steam-settings
+    # Copy all settings files to .steam-settings
+    cp /efi/steam-settings/* /home/steamos/.steam-settings
+    # Change the owner so steam client can read the files.
+    chown -R steamos:steamos /home/steamos/.steam-settings
+fi
+
 if ! [ -d $SETTINGS_DIR ]; then
     return 0
 fi
@@ -92,8 +102,4 @@ touch /var/lib/calamares-steamos/initial_setup_complete
 rm -f /etc/sddm.conf.d/calamares-initial-setup.conf \
       /root/.config/kwinrulesrc \
       /root/.xsessions/steamos-initial-setup.desktop
-
-# Copy steam-settings files from /efi/steam-settings to /home/steamos/.steam-settings/ folder.
-mkdir /home/steamos/.steam-settings
-cp /efi/steam-settings/* /home/steamos/.steam-settings
 
