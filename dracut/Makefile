@@ -1,5 +1,9 @@
 include ../common.mk
 
+ALPM_HOOKS_IN := $(wildcard alpm/hooks/*.in)
+ALPM_HOOKS := $(patsubst %.in,%,$(ALPM_HOOKS_IN))
+ALPM_SCRIPTS_IN := $(wildcard alpm/scripts/*.in)
+ALPM_SCRIPTS := $(patsubst %.in,%,$(ALPM_SCRIPTS_IN))
 BINARIES_IN := $(wildcard bin/*.in)
 BINARIES := $(patsubst %.in,%,$(BINARIES_IN))
 COMPLETIONS := $(wildcard completions/*)
@@ -7,7 +11,7 @@ MODULES_IN := $(wildcard modules.d/*.sh.in)
 MODULES := $(patsubst %.in,%,$(MODULES_IN))
 README := modules.d/README
 
-all: $(BINARIES) $(MODULES)
+all: $(ALPM_SCRIPTS) $(ALPM_HOOKS) $(BINARIES) $(MODULES)
 
 install: all
 	install -d $(DESTDIR)$(sbindir)
@@ -18,4 +22,7 @@ install: all
 	install -d $(DESTDIR)$(libdir)/dracut/modules.d/60steamos
 	install -m 0755 $(MODULES) $(DESTDIR)$(libdir)/dracut/modules.d/60steamos
 	install -m 0644 $(README)  $(DESTDIR)$(libdir)/dracut/modules.d/60steamos
-
+	install -d $(DESTDIR)$(datadir)/libalpm/hooks
+	install -m 644 $(ALPM_HOOKS) $(DESTDIR)$(datadir)/libalpm/hooks
+	install -d $(DESTDIR)$(datadir)/libalpm/scripts
+	install -m 755 $(ALPM_SCRIPTS) $(DESTDIR)$(datadir)/libalpm/scripts

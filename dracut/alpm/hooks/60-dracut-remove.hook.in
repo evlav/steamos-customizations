@@ -1,0 +1,16 @@
+[Trigger]
+Type = File
+Operation = Remove
+Target = usr/lib/stemaos/modules/*/vmlinuz
+
+[Trigger]
+Type = Package
+Operation = Remove
+Target = dracut 
+Target = dracut-git
+
+[Action]
+Description = Removing linux initcpios...
+When = PreTransaction
+Exec = /usr/share/libalpm/scripts/dracut-remove
+NeedsTargets

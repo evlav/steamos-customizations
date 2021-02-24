@@ -1,0 +1,31 @@
+#!/bin/bash -e
+
+while read -r line; do
+    if [[ $line != */vmlinuz ]]; then
+        # triggers when it's a change to usr/lib/dracut/modules.d/*
+        continue
+    fi
+
+    if ! read -r pkgbase > /dev/null 2>&1 < "${line%/vmlinuz}/pkgbase"; then
+        # if the kernel has no pkgbase, we skip it
+        continue
+    fi
+
+    # remove the actual kernel and images for the package being removed
+    kernel="/boot/vmlinuz-${pkgbase}"
+    initramfs="/boot/initramfs-${pkgbase}.img"
+    fallback_initramfs="/boot/initramfs-${pkgbase}-fallback.img"
+    if [[ -e $kernel ]]; then
+        # remove the installed kernel
+        rm $kernel
+    fi
+
+    if [[ -e $initramfs ]]; then
+        # remove the main image
+        rm $initramfs
+    fi
+    if [[ -e $fallback_initramfs ]]; then
+        # remove the fallback image
+        rm $fallback_initramfs
+    fi
+done
