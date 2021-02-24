@@ -1,7 +1,7 @@
 [Trigger]
 Type = File
 Operation = Remove
-Target = usr/lib/stemaos/modules/*/vmlinuz
+Target = usr/lib/steamos/modules/*/vmlinuz
 
 [Trigger]
 Type = Package
