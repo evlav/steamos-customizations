@@ -5,6 +5,5 @@ Exec=@libexecdir@/steamos/steamos-update-os-notifier
 Icon=system-software-update
 Type=Application
 NoDisplay=true
-X-KDE-autostart-phase=1
 OnlyShowIn=KDE
 Keywords=kupdate-notifier;system;update;updater
