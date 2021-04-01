@@ -27,7 +27,7 @@ if [ -d /efi/steam-settings ]; then
 fi
 
 if ! [ -d $SETTINGS_DIR ]; then
-    return 0
+    exit 0
 fi
 
 # Make sure to consume the settings dir, whatever happens
