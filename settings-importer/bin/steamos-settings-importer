@@ -89,6 +89,14 @@ EOF
     fi
 fi
 
+# Import steam libraries
+if [ -f $SETTINGS_DIR/fstab ]; then
+    echo "Setting fstab:" 
+    cat $SETTINGS_DIR/fstab | tee --append /etc/fstab
+    systemctl daemon-reload
+    systemctl restart local-fs.target
+fi
+
 # Import network configuration
 if [ -d $SETTINGS_DIR/network-connections ]; then
     echo "Installing network configuration"
