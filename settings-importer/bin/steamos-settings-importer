@@ -89,6 +89,14 @@ EOF
     fi
 fi
 
+# Import steam libraries
+if [ -f $SETTINGS_DIR/steamlibtab ]; then
+    echo "Setting steamlibtab:"
+    cat $SETTINGS_DIR/steamlibtab | tee --append /etc/steamlibtab
+    systemctl daemon-reload
+    systemctl restart local-fs.target
+fi
+
 # Import network configuration
 if [ -d $SETTINGS_DIR/network-connections ]; then
     echo "Installing network configuration"
