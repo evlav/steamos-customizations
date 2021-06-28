@@ -65,39 +65,58 @@ isremovable() {
     grep -q 1 "$devpath/removable"
 }
 
-if isremovable @udev_symlinks_absdir@/self/rootfs; then
-    GRUB_DISABLE_OS_PROBER=true
-    export GRUB_DISABLE_OS_PROBER
-else
+# We never want SteamOS second stage loader to probe other OSes:
+# We deploy grub as our (mostly invisible) second stage loader
+# because it's easy to add the functionality we need as a module
+GRUB_DISABLE_OS_PROBER=true
+export GRUB_DISABLE_OS_PROBER
+
+# If we're _not_ on removable media (ie not running from the
+# installer) then don't probe known EFI locations/variables either.
+if ! isremovable @udev_symlinks_absdir@/self/rootfs;
+then
     GRUB_DISABLE_EFI_PROBER=true
     export GRUB_DISABLE_EFI_PROBER
-    for device in @udev_symlinks_absdir@/*/efi; do
-        test -e "$device" || continue
-        if uuid=$(grub-probe --target=fs_uuid --device "$device"); then
-            GRUB_OS_PROBER_SKIP_LIST="${GRUB_OS_PROBER_SKIP_LIST:+$GRUB_OS_PROBER_SKIP_LIST }$uuid@/@grub_config_relpath@"
-            export GRUB_OS_PROBER_SKIP_LIST
-        fi
-    done
 fi
 
+# Don't use partuuid identification unless explicitly enabled
+# (this inverts the default behaviour):
 if [[ "${GRUB_DISABLE_LINUX_PARTUUID:-false}" != true ]]
 then
     GRUB_DISABLE_LINUX_PARTUUID=false
     export GRUB_DISABLE_LINUX_PARTUUID
 fi
 
-grub-mkconfig -o /tmp/grub.cfg "$@"
-if grep -qE "(-o|--output)([[:blank:]]|=)" <<<"$*"; then
+CDIR=$(mktemp -d);
+grub-mkconfig -o "$CDIR"/grub.cfg "$@"
+
+# COMMENTME - appear to be bailing out if -o, --output
+# followed by whitespace or = are detected on the command line
+# please add reasons for this here.
+if grep -qE "(-o|--output)([[:blank:]]|=)" <<<"$*";
+then
+    echo "Generated config is in $CDIR/grub.cfg" >&2;
     exit
 fi
 
 file=/efi/@grub_config_relpath@
 mkdir -p "${file%/*}"
+
+# If we can't move the config file into the non-EFI location
+# then move it directly to the EFI location and boot from there
 echo "Installing grub configuration file to /efi..." >&2
 if ! mv /tmp/grub.cfg /boot/grub/grub.cfg 2>/dev/null; then
     echo "Warning: /boot/grub/grub.cfg: Read-only file" >&2
-    mv /tmp/grub.cfg "$file"
-    exit
+    mv "$CDIR"/grub.cfg $file;
+    rmdir "$CDIR";
+    exit;
 fi
 
-grubcfg /boot/grub/grub.cfg >"$file"
+# If we did move the config to the non-EFI location generate
+# a minimal grub config wrapper that lets the EFI grub binary
+# read the config from the OS filesystem
+grubcfg /boot/grub/grub.cfg > $file;
+
+# clean up (carefully, since we're root - make sure CDIR is safe to erase):
+CDIR=${CDIR%/};
+rm -rvf "${CDIR:-/tmp/-no-such-directory-}";
