@@ -45,34 +45,6 @@ configfile $1
 EOF
 }
 
-isremovable() {
-    if ! devname="$(realpath "$1")"; then
-        return 1
-    fi
-
-    if ! devpath="$(realpath "/sys/class/block/${devname##*/}")"; then
-        return 1
-    fi
-
-    if ! test -e "$devpath/removable"; then
-        devpath="${devpath%/*}"
-    fi
-
-    if ! test -e "$devpath/removable"; then
-        return 1
-    fi
-
-    grep -q 1 "$devpath/removable"
-}
-
-# If we're _not_ on removable media (ie not running from the
-# installer) then don't probe known EFI locations/variables either.
-if ! isremovable @udev_symlinks_absdir@/self/rootfs;
-then
-    GRUB_DISABLE_EFI_PROBER=true
-    export GRUB_DISABLE_EFI_PROBER
-fi
-
 CDIR=$(mktemp -d);
 grub-mkconfig -o "$CDIR"/grub.cfg "$@"
 

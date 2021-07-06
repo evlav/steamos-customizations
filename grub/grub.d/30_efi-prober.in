@@ -20,6 +20,32 @@ if [ "x${GRUB_DISABLE_EFI_PROBER}" = "xtrue" ]; then
   exit 0
 fi
 
+isremovable() {
+    if ! devname="$(realpath "$1")"; then
+        return 1
+    fi
+
+    if ! devpath="$(realpath "/sys/class/block/${devname##*/}")"; then
+        return 1
+    fi
+
+    if ! test -e "$devpath/removable"; then
+        devpath="${devpath%/*}"
+    fi
+
+    if ! test -e "$devpath/removable"; then
+        return 1
+    fi
+
+    grep -q 1 "$devpath/removable"
+}
+
+# If we're _not_ on removable media (ie not running from the
+# installer) then don't probe known EFI locations/variables either.
+if ! isremovable @udev_symlinks_absdir@/self/rootfs; then
+  exit 0
+fi
+
 cat <<EOF
 submenu 'Other EFI Loaders' "\$menuentry_id_option" 'efi' {
 	for efi in (*,gpt*)/EFI/steamos/steamcl.efi; do
