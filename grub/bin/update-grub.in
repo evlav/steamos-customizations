@@ -79,14 +79,6 @@ then
     export GRUB_DISABLE_EFI_PROBER
 fi
 
-# Don't use partuuid identification unless explicitly enabled
-# (this inverts the default behaviour):
-if [[ "${GRUB_DISABLE_LINUX_PARTUUID:-false}" != true ]]
-then
-    GRUB_DISABLE_LINUX_PARTUUID=false
-    export GRUB_DISABLE_LINUX_PARTUUID
-fi
-
 CDIR=$(mktemp -d);
 grub-mkconfig -o "$CDIR"/grub.cfg "$@"
 
