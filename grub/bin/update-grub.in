@@ -65,12 +65,6 @@ isremovable() {
     grep -q 1 "$devpath/removable"
 }
 
-# We never want SteamOS second stage loader to probe other OSes:
-# We deploy grub as our (mostly invisible) second stage loader
-# because it's easy to add the functionality we need as a module
-GRUB_DISABLE_OS_PROBER=true
-export GRUB_DISABLE_OS_PROBER
-
 # If we're _not_ on removable media (ie not running from the
 # installer) then don't probe known EFI locations/variables either.
 if ! isremovable @udev_symlinks_absdir@/self/rootfs;
