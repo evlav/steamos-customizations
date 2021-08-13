@@ -48,15 +48,6 @@ EOF
 CDIR=$(mktemp -d);
 grub-mkconfig -o "$CDIR"/grub.cfg "$@"
 
-# COMMENTME - appear to be bailing out if -o, --output
-# followed by whitespace or = are detected on the command line
-# please add reasons for this here.
-if grep -qE "(-o|--output)([[:blank:]]|=)" <<<"$*";
-then
-    echo "Generated config is in $CDIR/grub.cfg" >&2;
-    exit
-fi
-
 file=/efi/@grub_config_relpath@
 mkdir -p "${file%/*}"
 

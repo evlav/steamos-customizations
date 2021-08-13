@@ -18,13 +18,6 @@ _update-grub()
     local cur prev words cword
     _init_completion || return
 
-    case "$prev" in
-        -o|output)
-            _filedir
-            return
-            ;;
-    esac
-
-    COMPREPLY=($(compgen -W "-o --output -h --help -v --version" -- "$cur"))
+    COMPREPLY=($(compgen -W "-h --help -v --version" -- "$cur"))
 } &&
 complete -F _update-grub update-grub
