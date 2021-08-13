@@ -18,10 +18,7 @@ set -e
 set -u
 set -o pipefail
 
-if [[ "$(id -u)" -ne 0 ]]; then
-    echo "${0##*/}: You must run this as root" >&2
-    exit 1
-fi
+fail() { echo >&2 "$@"; exit 1; }
 
 usage() {
     local status=${1-2}
@@ -80,6 +77,10 @@ parse_args() {
 }
 
 parse_args "$@"
+
+if [[ "$(id -u)" -ne 0 ]]; then
+    fail "${0##*/}: You must run this as root"
+fi
 
 CDIR=$(mktemp -d);
 grub-mkconfig -o "$CDIR"/grub.cfg
