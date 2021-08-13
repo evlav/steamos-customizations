@@ -63,7 +63,7 @@ mkdir -p "${file%/*}"
 # If we can't move the config file into the non-EFI location
 # then move it directly to the EFI location and boot from there
 echo "Installing grub configuration file to /efi..." >&2
-if ! mv /tmp/grub.cfg /boot/grub/grub.cfg 2>/dev/null; then
+if ! mv "$CDIR"/grub.cfg /boot/grub/grub.cfg 2>/dev/null; then
     echo "Warning: /boot/grub/grub.cfg: Read-only file" >&2
     mv "$CDIR"/grub.cfg $file;
     rmdir "$CDIR";
