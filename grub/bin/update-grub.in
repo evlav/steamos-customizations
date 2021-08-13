@@ -23,6 +23,27 @@ if [[ "$(id -u)" -ne 0 ]]; then
     exit 1
 fi
 
+usage() {
+    local status=${1-2}
+
+    if [ $status -ne 0 ]; then
+        exec >&2
+    fi
+
+    echo
+    echo "Usage: $(basename $0) [OPTION]"
+    echo
+    echo "A wrapper around grub-mkconfig, applying extra magic on top."
+    echo
+    echo "OPTIONS"
+    echo
+    echo "  -h, --help"
+    echo "        This help screen."
+    echo
+
+    exit $status
+}
+
 prepare_grub_to_access_device() {
     set -- prepare_grub_to_access_device "$@"
     "$SHELL" -c '. @datadir@/grub/grub-mkconfig_lib; "$@"' "$0" "$@"
@@ -45,8 +66,23 @@ configfile $1
 EOF
 }
 
+parse_args() {
+    while (( $# > 0 )); do
+        case "$1" in
+            -h|--help)
+                usage 0
+                ;;
+            *)
+                usage 1
+                ;;
+        esac
+    done
+}
+
+parse_args "$@"
+
 CDIR=$(mktemp -d);
-grub-mkconfig -o "$CDIR"/grub.cfg "$@"
+grub-mkconfig -o "$CDIR"/grub.cfg
 
 file=/efi/@grub_config_relpath@
 mkdir -p "${file%/*}"
