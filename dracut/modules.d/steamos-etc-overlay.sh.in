@@ -38,14 +38,15 @@ ETC_OVERLAY_ABSDIR=@etc_overlay_absdir@
 
 . /lib/dracut-lib.sh
 
+sysroot="$NEWROOT"
+overlaydir="$ETC_OVERLAY_ABSDIR"
+upperdir="${sysroot}${overlaydir}/upper"
+lowerdir="${sysroot}/etc"
+workdir="${sysroot}${overlaydir}/work"
+
 prepare_etc_overlay() {
 
     # Prepare the directories needed for the /etc overlay
-
-    local sysroot="$NEWROOT"
-    local overlaydir="$ETC_OVERLAY_ABSDIR"
-    local upperdir="${sysroot}${overlaydir}/upper"
-    local workdir="${sysroot}${overlaydir}/work"
     local dir=
 
     # upper dir contains persistent data, create it only if it doesn't exist
@@ -65,32 +66,33 @@ prepare_etc_overlay() {
 mount_etc_overlay() {
 
     # Mount the /etc overlay
-
-    local sysroot="$NEWROOT"
-    local overlaydir="$ETC_OVERLAY_ABSDIR"
-    local lowerdir="${sysroot}/etc"
-    local upperdir="${sysroot}${overlaydir}/upper"
-    local workdir="${sysroot}${overlaydir}/work"
-
-    info "Mounting $upperdir"
+    info "Mounting { $upperdir / $lowerdir / $workdir }"
     mount -v \
         -t overlay \
         -o lowerdir=$lowerdir,upperdir=$upperdir,workdir=$workdir \
         overlay \
         $lowerdir 2>&1 | vinfo
 
-    if ! ismounted "$lowerdir"; then
-        warn "Mounting $upperdir! Compile the kernel with CONFIG_OVERLAY_FS!"
-        warn "*** Dropping you to a shell; the system will continue"
-        warn "*** when you leave the shell."
-        emergency_shell
+    if ismounted "$lowerdir"; then
+        return 0
     fi
+
+    return 1
 }
 
 NOOVERLAY=$(getarg 'rd.steamos.nooverlay=')
 if [ -n "$NOOVERLAY" ]; then
-    warn "/etc overlay not mounted."
-    exit 0
+    warn "/etc overlay disabled by kernel cmdline."
+    return 0
 fi
-prepare_etc_overlay
-mount_etc_overlay
+
+if prepare_etc_overlay; then
+    if mount_etc_overlay; then
+        return 0
+    fi
+fi
+
+warn "Mounting $upperdir failed: Compile the kernel with CONFIG_OVERLAY_FS!"
+warn "*** Dropping you to a shell; the system will continue"
+warn "*** when you leave the shell."
+emergency_shell
