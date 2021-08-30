@@ -49,17 +49,18 @@ prepare_etc_overlay() {
     local dir=
 
     # upper dir contains persistent data, create it only if it doesn't exist
+    info "Preparing /etc overlay { $overlaydir $upperdir $workdir }"
     dir="$upperdir"
-    if ! [ -d "$dir" ]; then
-        echo "Creating overlay upper directory '$dir'"
+    if [ ! -d "$dir" ]; then
+        info "Creating overlay upper directory '$dir'"
         rm -fr "$dir"
-        mkdir -p "$dir"
+        mkdir -pv "$dir"
     fi
 
     # work dir must exist and be empty
-    dir="$workdir"
-    rm -fr "$dir"
-    mkdir -p "$dir"
+    info "Clearing overlay work directory $workdir"
+    rm -fr "$workdir"
+    mkdir -pv "$workdir"
 }
 
 mount_etc_overlay() {
@@ -72,7 +73,7 @@ mount_etc_overlay() {
     local upperdir="${sysroot}${overlaydir}/upper"
     local workdir="${sysroot}${overlaydir}/work"
 
-    info "Mounting $upperdir"
+    info "Mounting overlay $upperdir on $lowerdir ($workdir)"
     mount -v \
         -t overlay \
         -o lowerdir=$lowerdir,upperdir=$upperdir,workdir=$workdir \

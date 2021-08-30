@@ -42,11 +42,13 @@ initialize_var_lib_modules() {
     local orig=$NEWROOT@datadir@/factory/$moddir
     local dest=$NEWROOT/$moddir
 
+    info "Checking modules source and destination ($orig; $dest)"
     [ -e "$dest" ] && return 0
     [ -d "$orig" ] || return 0
 
     info "Creating module directory '$dest'"
     mkdir -p "$(dirname "$dest")"
+    info "Copying $orig to $dest"
     cp -a "$orig" "$dest"
     return 0
 }
