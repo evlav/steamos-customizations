@@ -85,12 +85,14 @@ mount_etc_overlay() {
         warn "*** when you leave the shell."
         emergency_shell
     fi
+
+    return 0
 }
 
 NOOVERLAY=$(getarg 'rd.steamos.nooverlay=')
 if [ -n "$NOOVERLAY" ]; then
-    warn "/etc overlay not mounted."
-    exit 0
+    warn "/etc overlay disabled by kernel cmdline."
+    return 0
 fi
 prepare_etc_overlay
 mount_etc_overlay
