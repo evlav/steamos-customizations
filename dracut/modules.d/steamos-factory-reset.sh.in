@@ -19,41 +19,67 @@
 FACTORY_RESET_STAMPFILE=@factory_reset_stampfile@
 SYMLINKS_DIR=@udev_symlinks_absdir@
 GRUB_CONFIG_RELPATH=@grub_config_relpath@
-EFI_A_DEVICE=$SYMLINKS_DIR/all/efi-A
-EFI_B_DEVICE=$SYMLINKS_DIR/all/efi-B
-EFI_DEV_DEVICE=$SYMLINKS_DIR/all/efi-dev
-VAR_A_DEVICE=$SYMLINKS_DIR/all/var-A
-VAR_B_DEVICE=$SYMLINKS_DIR/all/var-B
-VAR_DEV_DEVICE=$SYMLINKS_DIR/all/var-dev
-HOME_DEVICE=$SYMLINKS_DIR/all/home
 
 . /lib/dracut-lib.sh
+# when testing outside the initrd the base lib file is here:
+# . /usr/lib/dracut/modules.d/99base/dracut-lib.sh
 
+# remove the second stage bootloader config from
+# the given image efi partition ()
 reset_efi() {
-    mkdir -p /efi
+    local efimount=/efi-scrub
+    mkdir -p $efimount
     for device in "$@"; do
         [ -b "$device" ] || continue
 
-        echo "Removing $GRUB_CONFIG_RELPATH on device $device"
-        mount "$device" /efi
-        rm -f "/efi/$GRUB_CONFIG_RELPATH"
-        umount /efi
+        info "Removing $GRUB_CONFIG_RELPATH on device $device"
+        mount "$device" $efimount
+        rm -f "$efimount/$GRUB_CONFIG_RELPATH"
+        umount -f $efimount
     done
 }
 
+cache_mount_params()
+{
+    local target=$1;
+    local dev mnt fs opts etc;
+
+    mount_dev=;
+    mount_opt=;
+    mount_dir=;
+
+    if [ ! -e "$target" ]; then return 1; fi
+
+    while read dev mnt fs opts etc; do
+        if [ "$target" = "$dev" ] || [ "$mnt" = "$target" ]; then
+            mount_dev="$dev";
+            mount_opt="$opts";
+            mount_dir="$mnt";
+            return 0;
+        fi
+    done < /proc/mounts;
+
+    return 1;
+}
+
 reset_device_ext4() {
-    local device=$1
+    local device=$1; shift;
+    local label=$1;  shift;
     local opts=(-qF)
-    local label=
     local features=
     local tmp=
+    local mt_point=
+    local mt_opts=
 
     device=$(readlink -f "$device")
     if ! [ -b "$device" ]; then
         return
     fi
 
-    if ismounted "$device"; then
+    if cache_mount_params "$device"; then
+        mt_point="$mount_dir";
+        mt_opts="$mount_opt";
+        warn "Unmounting $device from $mt_point ($mt_opts)"
         umount -v "$device"
     fi
 
@@ -61,28 +87,87 @@ reset_device_ext4() {
         umount -v -f "$device"
     fi
 
-    label=$(e2label "$device")
+    # no cached label, read from fs:
+    if [ -z "$label" ]; then
+        label=$(e2label "$device")
+    fi
+
     if [ "$label" ]; then
         opts+=(-L "$label")
     fi
 
-    read -r -a features < <(tune2fs -l "$device" | sed -n 's/^Filesystem features:\s*//p')
-    for tmp in "${features[@]}"; do
-        if [ "$tmp" = "casefold" ]; then
-            opts+=(-O casefold)
-            break
-        fi
-    done
+    # copy the important fs opts explicitly (currently just casefold):
+    # no cached opts, read them from the filesystem:
+    if [ -z "$*" ]; then
+        read -r -a features < <(tune2fs -l "$device" | sed -n 's/^Filesystem features:\s*//p')
+        for tmp in "${features[@]}"; do
+            if [ "$tmp" = "casefold" ]; then
+                opts+=(-O casefold)
+                break
+            fi
+        done
+    else # use cached opts from FACTORY_RESET_STAMPFILE
+        for tmp in $@; do
+            if [ "$tmp" = "casefold" ]; then
+                opts+=(-O casefold)
+                break
+            fi
+        done
+    fi
 
-    echo "Making ext4 filesystem on device $device (options: ${opts[*]})"
+    info "Making ext4 filesystem on device $device (options: ${opts[*]})"
     mkfs.ext4 "${opts[@]}" "$device"
+    if [ -n "$mt_point" ]; then
+        warn "Remounting fresh fs on $device at $mt_point ($mt_opts)";
+        mount ${mt_opts:+-o} $mt_opts "$device" "$mt_point"
+    fi
 }
 
-[ -e $FACTORY_RESET_STAMPFILE ] || return 0
+info "Pre factory reset check mount output:"
+info "$(mount)"
 
-warn "A factory reset was required, let's execute"
-reset_efi "$EFI_A_DEVICE" "$EFI_B_DEVICE" "$EFI_DEV_DEVICE" 2>&1 | vinfo
-reset_device_ext4 "$VAR_A_DEVICE" 2>&1 | vinfo
-reset_device_ext4 "$VAR_B_DEVICE" 2>&1 | vinfo
-reset_device_ext4 "$VAR_DEV_DEVICE" 2>&1 | vinfo
-reset_device_ext4 "$HOME_DEVICE"  2>&1 | vinfo
+cleanup_esp=0
+if [ ! -d /esp/efi ]; then
+    dev=$(readlink -f $SYMLINKS_DIR/all/esp);
+    info "Checking ESP partition $dev"
+    if ! ismounted $dev; then
+        info "Mounting $dev at /esp"
+        mkdir -p /esp
+        mount $dev /esp
+        cleanup_esp=1
+    fi
+fi
+
+if [ ! -e $FACTORY_RESET_STAMPFILE ]; then
+    if [ $cleanup_esp = "1" ]; then umount /esp; fi
+    return 0;
+fi
+
+info "A factory reset has been requested."
+# make sure we bail out if the reset fails at any stage
+set -e
+while read type instance dev opts;
+do
+    case $type in
+        ESP) true; ;;
+        EFI)
+            info "Resetting bootloader config on $dev ($instance)";
+            reset_efi $dev;
+            ;;
+        VAR|HOME)
+            info "Formatting data partition $dev ($instance)"
+            reset_device_ext4 $dev "${instance##*/}" "$opts";
+            ;;
+        *)
+            warn "Unknown SteamOS reset partition type $type ($instance, $dev)";
+            ;;
+    esac;
+done < $FACTORY_RESET_STAMPFILE;
+set +e
+
+# clean up _only_ if we succeeded.
+rm -f $FACTORY_RESET_STAMPFILE;
+info "Unmounting /esp"
+if [ $cleanup_esp = "1" ]; then umount /esp; fi
+rmdir /efi-scrub || true;
+

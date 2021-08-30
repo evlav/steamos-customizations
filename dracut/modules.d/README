@@ -15,11 +15,11 @@ rd.steamos.nooverlay
 Here's a brief description of the hooks:
 steamos-udev-rules.sh		(pre-mount)
 	Create udev rules for SteamOS partitions.
+steamos-factory-reset.sh	(pre-pivot)
+        Reset user data partitions to factory state.
 steamos-etc-overlay.sh		(pre-pivot)
 	Mount a writable /etc overlay.
 steamos-var-lib-modules.sh	(pre-pivot)
 	Initialize /var/lib/modules from factory.
 steamos-emergency.sh		(pre-pivot)
 	Setup things for troubleshooting.
-steamos-factory-reset.sh	(shutdown)
-	Format data partitions.

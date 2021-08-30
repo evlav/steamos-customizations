@@ -1,0 +1,39 @@
+#!/bin/bash
+# -*- mode: sh; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
+# vim: et sts=4 sw=4
+
+#  SPDX-License-Identifier: LGPL-2.1+
+#
+#  Copyright © 2021 Collabora Ltd.
+#  Copyright © 2021 Valve Corporation.
+#
+#  This file is part of steamos-customizations.
+#
+#  steamos-customizations is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU Lesser General Public License as
+#  published by the Free Software Foundation; either version 2.1 of the License,
+#  or (at your option) any later version.
+
+set -u
+
+SYMLINKS_DIR=/dev/disk/by-partsets
+HOME_DEVICE=$SYMLINKS_DIR/all/home
+ESP_DEVICE=$SYMLINKS_DIR/all/esp
+dev=
+opts=
+
+echo ESP $ESP_DEVICE $(readlink -f $ESP_DEVICE)
+
+for dev in $SYMLINKS_DIR/all/efi-*;
+do
+    echo EFI $dev $(readlink -f $dev)
+done
+
+for dev in $SYMLINKS_DIR/all/var-*;
+do
+    opts=$(tune2fs -l "$dev" | sed -n 's/^Filesystem features:\s*//p')
+    echo VAR $dev $(readlink -f $dev) "$opts"
+done
+
+opts=$(tune2fs -l "$HOME_DEVICE" | sed -n 's/^Filesystem features:\s*//p')
+echo HOME $HOME_DEVICE $(readlink -f $HOME_DEVICE) "$opts"

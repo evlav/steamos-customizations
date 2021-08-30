@@ -37,8 +37,8 @@ usage() {
     echo
     echo "Factory reset of SteamOS, wipe out the data partitions."
     echo
-    echo "This script only configures the system to jump into the initrd"
-    echo "on shutdown, and reboot. The work is done in the initrd."
+    echo "This script records the partitions to be reset in $FACTORY_RESET_STAMPFILE"
+    echo "On reboot the initrd scrubs them and does a first-boot setup."
     echo
 
     exit $status
@@ -85,5 +85,5 @@ if ! ask "Do you want to continue?"; then
 fi
 
 touch /run/initramfs/.need_shutdown
-touch $FACTORY_RESET_STAMPFILE
+steamos-factory-reset-config > $FACTORY_RESET_STAMPFILE
 reboot

@@ -66,7 +66,7 @@ PARTSETS_RELDIR := $(STEAMOS_RELPATH)/partsets
 ROOTHASH_RELPATH := $(STEAMOS_RELPATH)/roothash
 
 # Factory reset stampfile
-FACTORY_RESET_STAMPFILE := /run/steamos/factory-reset
+FACTORY_RESET_STAMPFILE := /esp/efi/steamos/factory-reset
 
 # Directory for the /etc overlay
 ETC_OVERLAY_ABSDIR := /var/lib/overlays/etc

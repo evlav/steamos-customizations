@@ -130,7 +130,7 @@ do
         fi
 
         touch /run/initramfs/.need_shutdown
-        touch @factory_reset_stampfile@
+        steamos-factory-reset-config > /esp/efi/steamos/factory-reset
     elif [[ "$1" =~ ^--update$ ]] || [[ "$1" =~ ^--(update|reboot)-other$ ]]
     then
         touch "/run/steamos/${1:2}"
