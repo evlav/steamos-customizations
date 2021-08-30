@@ -42,6 +42,7 @@ initialize_var_lib_modules() {
     local orig=$NEWROOT@datadir@/factory/$moddir
     local dest=$NEWROOT/$moddir
 
+    info "Checking modules source and destination ($orig; $dest)"
     [ -e "$dest" ] && return 0
     [ -d "$orig" ] || return 0
 
