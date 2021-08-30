@@ -20,6 +20,7 @@ set -u
 # Helpers
 
 fail() { echo >&2 "$@"; exit 1; }
+warn() { echo >&2 "$@"; }
 
 usage() {
     local status=${1-2}
@@ -65,10 +66,12 @@ done
 # Get UUIDs for root and var partitions
 
 ROOTUUID=$(findmnt -no uuid /)
+set +e
 VARUUID=$(findmnt -no uuid /var)
+set -e
 
 [ "$ROOTUUID" ] || fail "Failed to get root fs uuid"
-[ "$VARUUID"  ] || fail "Failed to get var fs uuid"
+[ "$VARUUID"  ] || warn "Failed to get var fs uuid"
 
 # Generate the grub early config
 
