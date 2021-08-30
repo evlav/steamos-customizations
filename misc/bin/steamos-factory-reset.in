@@ -19,7 +19,7 @@ set -u
 
 FORCE=0 # --force
 
-FACTORY_RESET_STAMPFILE=@factory_reset_stampfile@
+FACTORY_RESET_CONFIG_DIR=@factory_reset_config_dir@
 
 [ -e @libdir@/steamos/steamos-partitions-lib ] && \
     . @libdir@/steamos/steamos-partitions-lib  || \
@@ -37,8 +37,9 @@ usage() {
     echo
     echo "Factory reset of SteamOS, wipe out the data partitions."
     echo
-    echo "This script only configures the system to jump into the initrd"
-    echo "on shutdown, and reboot. The work is done in the initrd."
+    echo "This script records the partitions to be reset in:"
+    echo "  $FACTORY_RESET_CONFIG_DIR"
+    echo "On reboot the initrd scrubs them and does a first-boot setup."
     echo
 
     exit $status
@@ -84,6 +85,6 @@ if ! ask "Do you want to continue?"; then
     exit 0
 fi
 
-touch /run/initramfs/.need_shutdown
-touch $FACTORY_RESET_STAMPFILE
-reboot
+if steamos-factory-reset-config "$FACTORY_RESET_CONFIG_DIR"; then
+    reboot
+fi

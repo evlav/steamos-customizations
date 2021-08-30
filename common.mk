@@ -65,8 +65,8 @@ PARTSETS_RELDIR := $(STEAMOS_RELPATH)/partsets
 # Roothash file (relative to the efi mountpoint)
 ROOTHASH_RELPATH := $(STEAMOS_RELPATH)/roothash
 
-# Factory reset stampfile
-FACTORY_RESET_STAMPFILE := /run/steamos/factory-reset
+# Factory reset config
+FACTORY_RESET_CONFIG_DIR := /esp/efi/steamos/factory-reset
 
 # Directory for the /etc overlay
 ETC_OVERLAY_ABSDIR := /var/lib/overlays/etc
@@ -95,7 +95,7 @@ UDEV_SYMLINKS_ABSDIR := /dev/$(UDEV_SYMLINKS_RELDIR)
 	  -e 's;@bootconf_relpath@;$(BOOTCONF_RELPATH);g' \
 	  -e 's;@roothash_relpath@;$(ROOTHASH_RELPATH);g' \
 	  -e 's;@partsets_reldir@;$(PARTSETS_RELDIR);g' \
-	  -e 's;@factory_reset_stampfile@;$(FACTORY_RESET_STAMPFILE);g' \
+	  -e 's;@factory_reset_config_dir@;$(FACTORY_RESET_CONFIG_DIR);g' \
 	  -e 's;@etc_overlay_absdir@;$(ETC_OVERLAY_ABSDIR);g' \
 	  -e 's;@offload_absdir@;$(OFFLOAD_ABSDIR);g' \
 	  -e 's;@udev_symlinks_reldir@;$(UDEV_SYMLINKS_RELDIR);g' \

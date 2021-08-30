@@ -16,73 +16,247 @@
 
 # Perform a factory reset
 
-FACTORY_RESET_STAMPFILE=@factory_reset_stampfile@
+FACTORY_RESET_CONFIG_DIR=@factory_reset_config_dir@
 SYMLINKS_DIR=@udev_symlinks_absdir@
 GRUB_CONFIG_RELPATH=@grub_config_relpath@
-EFI_A_DEVICE=$SYMLINKS_DIR/all/efi-A
-EFI_B_DEVICE=$SYMLINKS_DIR/all/efi-B
-EFI_DEV_DEVICE=$SYMLINKS_DIR/all/efi-dev
-VAR_A_DEVICE=$SYMLINKS_DIR/all/var-A
-VAR_B_DEVICE=$SYMLINKS_DIR/all/var-B
-VAR_DEV_DEVICE=$SYMLINKS_DIR/all/var-dev
-HOME_DEVICE=$SYMLINKS_DIR/all/home
+
+# We're going to mount the efi partitions we want to scrub
+# here so that in the worst case (ie this breaks), we won't
+# leave the OS dealing with the wrong partition mounted at /efi
+efi_reset_mount=/efi-scrub
+
+# used to return information from cache_mount_params
+mount_dev=
+mount_opt=
+mount_dir=
 
 . /lib/dracut-lib.sh
+# when testing outside the initrd the base lib file is here:
+# . /usr/lib/dracut/modules.d/99base/dracut-lib.sh
 
+# remove the second stage bootloader config from
+# the given image efi partition ()
 reset_efi() {
-    mkdir -p /efi
+    mkdir -p $efi_reset_mount
     for device in "$@"; do
         [ -b "$device" ] || continue
 
-        echo "Removing $GRUB_CONFIG_RELPATH on device $device"
-        mount "$device" /efi
-        rm -f "/efi/$GRUB_CONFIG_RELPATH"
-        umount /efi
+        info "Removing $GRUB_CONFIG_RELPATH on device $device"
+        mount "$device" $efi_reset_mount
+        rm -f "$efi_reset_mount/$GRUB_CONFIG_RELPATH"
+        umount -f $efi_reset_mount
     done
+}
+
+# harvest the device, mount point and mount opts of a mounted partition
+# given either the device or the mount point as a parameter
+cache_mount_params()
+{
+    local target=$1
+    local dev mnt fs opts etc
+
+    mount_dev=
+    mount_opt=
+    mount_dir=
+
+    if [ ! -e "$target" ]; then
+        return 1
+    fi
+
+    while read dev mnt fs opts etc; do
+        if [ "$target" = "$dev" ] || [ "$target" = "$mnt" ]; then
+            mount_dev="$dev"
+            mount_opt="$opts"
+            mount_dir="$mnt"
+            return 0
+        fi
+    done < /proc/mounts
+
+    return 1
 }
 
 reset_device_ext4() {
     local device=$1
+    local label=$2
+    local fs_opts="${@:3}"
     local opts=(-qF)
-    local label=
     local features=
     local tmp=
+    local mt_point=
+    local mt_opts=
 
     device=$(readlink -f "$device")
+    # not considering it an error if a device we were meant to wipe does not exist
     if ! [ -b "$device" ]; then
-        return
+        return 0
     fi
 
-    if ismounted "$device"; then
+    # can't have the device mounted while we reformat it
+    # but we do want to save the mount opts if it is mounted
+    if cache_mount_params "$device"; then
+        mt_point="$mount_dir"
+        mt_opts="$mount_opt"
+        warn "Unmounting $device from $mt_point ($mt_opts)"
         umount -v "$device"
     fi
 
+    # try harder if it's still mounted
     if ismounted "$device"; then
         umount -v -f "$device"
     fi
+    
+    if ismounted "$device"; then
+        warn "Could not unmount $device from $mt_point"
+        return 1
+    fi
 
-    label=$(e2label "$device")
+    # no cached label, read from fs:
+    if [ -z "$label" ]; then
+        label=$(e2label "$device")
+    fi
+
     if [ "$label" ]; then
         opts+=(-L "$label")
     fi
 
-    read -r -a features < <(tune2fs -l "$device" | sed -n 's/^Filesystem features:\s*//p')
-    for tmp in "${features[@]}"; do
-        if [ "$tmp" = "casefold" ]; then
-            opts+=(-O casefold)
+    # copy the important fs opts explicitly (currently just casefold):
+    # no cached opts, read them from the filesystem:
+    if [ -z "$fs_opts" ]; then
+        read -r -a features < <(tune2fs -l "$device" | sed -n 's/^Filesystem features:\s*//p')
+        for tmp in "${features[@]}"; do
+            if [ "$tmp" = "casefold" ]; then
+                opts+=(-O casefold)
+                break
+            fi
+        done
+    else # use cached opts from FACTORY_RESET_CONFIG_DIR
+        for tmp in $fs_opts; do
+            if [ "$tmp" = "casefold" ]; then
+                opts+=(-O casefold)
+                break
+            fi
+        done
+    fi
+
+    info "Making ext4 filesystem on device $device (options: ${opts[*]})"
+    mkfs.ext4 "${opts[@]}" "$device"
+    if [ -n "$mt_point" ]; then
+        warn "Remounting fresh fs on $device at $mt_point ($mt_opts)"
+        mount ${mt_opts:+-o} $mt_opts "$device" "$mt_point"
+    fi
+}
+
+cleanup_esp=0
+if [ ! -d /esp/efi ]; then
+    dev=$(readlink -f $SYMLINKS_DIR/all/esp)
+    info "Checking ESP partition $dev"
+    if ! ismounted $dev; then
+        info "Mounting $dev at /esp"
+        mkdir -p /esp
+        mount $dev /esp
+        cleanup_esp=1
+    fi
+fi
+
+# 1 or more config files in FACTORY_RESET_CONFIG_DIR means we have work to do
+want_reset=0
+if [ -d $FACTORY_RESET_CONFIG_DIR ]; then
+    for cfg in $FACTORY_RESET_CONFIG_DIR/*.cfg; do
+        if [ -e "$cfg" ]; then
+            want_reset=1
             break
         fi
     done
+fi
 
-    echo "Making ext4 filesystem on device $device (options: ${opts[*]})"
-    mkfs.ext4 "${opts[@]}" "$device"
-}
+if [ $want_reset -ne 1 ]; then
+    if [ $cleanup_esp = "1" ]; then
+        umount /esp
+    fi
+    return 0
+fi
 
-[ -e $FACTORY_RESET_STAMPFILE ] || return 0
+info "A factory reset has been requested."
+# Make sure we bail out if the reset fails at any stage
+# we do this to make sure the reset will be re-attempted
+# or resumed if it does not complete here (possibly because
+# the user got bored and leaned on the power button)
 
-warn "A factory reset was required, let's execute"
-reset_efi "$EFI_A_DEVICE" "$EFI_B_DEVICE" "$EFI_DEV_DEVICE" 2>&1 | vinfo
-reset_device_ext4 "$VAR_A_DEVICE" 2>&1 | vinfo
-reset_device_ext4 "$VAR_B_DEVICE" 2>&1 | vinfo
-reset_device_ext4 "$VAR_DEV_DEVICE" 2>&1 | vinfo
-reset_device_ext4 "$HOME_DEVICE"  2>&1 | vinfo
+# There is a small chance of a reset loop occurring if the reset cannot complete
+# for fundamental reasons (unable to format filesystem and so forth) BUT
+#
+# a) the device is probably hosed anyway if this happens
+#
+# b) we care more (for now) about doing a genuine reset to stop
+#    leaking private data / things worth actual €£$¥ to the next owner
+#    than we do about [hopefully] unlikely reset loops
+
+# efi resets are fast enough that we can do them synchronously:
+for cfg in $FACTORY_RESET_CONFIG_DIR/efi-*.cfg; do
+    [ -r $cfg ] || continue
+
+    while read type instance dev opts; do
+        case $type in
+            EFI)
+                info "Resetting bootloader config on $dev ($instance)"
+                reset_efi $dev && rm -f $cfg
+                ;;
+            *)
+                warn "Unexpected SteamOS reset efi part type $type ($instance, $dev)"
+                ;;
+        esac
+    done < $cfg
+done
+
+# var and home resets can take longer so we want to do them in parallel
+# _but_ we must wait for them to finish as we have to release all fds
+# before the pivot to the real sysroot happens:
+declare -a WAIT_PIDS=()
+declare -A RESET_DEV
+for cfg in $FACTORY_RESET_CONFIG_DIR/*.cfg; do
+    [ -r $cfg ] || continue
+
+    while read type instance dev opts; do
+        case $type in
+            EFI)
+                # If a synchronous reset above failed, we may still have efi cfgs
+                true
+                ;;
+            VAR|HOME)
+                name="${instance##*/}"
+                # these are slow so we want them done in parallel and async
+                # BUT we need to wait until they're all done before proceeding
+                info "Formatting data partition $dev ($instance)"
+                (reset_device_ext4 $dev "$name" "$opts" && rm -f "$cfg") &
+                RESET_PID=$!
+                WAIT_PIDS+=($RESET_PID)
+                RESET_DEV[$RESET_PID]="$dev $name"
+                ;;
+            *)
+                warn "Unexpected SteamOS reset type $type ($instance, $dev)"
+                ;;
+        esac
+    done < $cfg
+done
+
+while true; do
+    wait -f -p WAITED_FOR -n
+    rc=$?
+    if [ $rc -eq 127 ]; then
+        # nothing left to wait for.
+        break;
+    elif [ $rc -ne 0 ]; then
+        warn "Reset of ${RESET_DEV[$WAITED_FOR]} failed, factory reset incomplete"
+    else
+        info "Reset of ${RESET_DEV[$WAITED_FOR]} complete"
+    fi
+done
+
+info "Unmounting /esp"
+if [ $cleanup_esp = "1" ]; then
+    umount /esp
+fi
+
+# stray unused mountpoint is untidy but not worth signalling an error:
+rmdir $efi_reset_mount || true
+
