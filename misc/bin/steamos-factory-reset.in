@@ -84,6 +84,5 @@ if ! ask "Do you want to continue?"; then
     exit 0
 fi
 
-touch /run/initramfs/.need_shutdown
 steamos-factory-reset-config > $FACTORY_RESET_STAMPFILE
 reboot
