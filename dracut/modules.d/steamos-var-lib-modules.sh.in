@@ -47,7 +47,23 @@ initialize_var_lib_modules() {
 
     info "Creating module directory '$dest'"
     mkdir -p "$(dirname "$dest")"
-    cp -a "$orig" "$dest"
+
+    # purge any half copied content or leftovers
+    rm -rf "$dest".new
+
+    info "Copying $orig to $dest.new"
+    if cp -a "$orig" "$dest".new; then
+        info "Copy successful, installing to $dest"
+        mv "$dest".new "$dest"
+        return 0
+    fi
+
+    warn "Could not install kernel modules to $dest, system may need rescue"
+    return 1
 }
 
-initialize_var_lib_modules
+if initialize_var_lib_modules; then
+    return 0
+fi
+
+emergency_shell
