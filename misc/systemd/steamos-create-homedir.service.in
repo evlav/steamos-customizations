@@ -8,7 +8,7 @@
 #  or (at your option) any later version.
 
 [Unit]
-Description=Create home directory for UID 1000 after factory reset
+Description=Create UID 1000 homedir on first boot/after factory reset
 Before=systemd-user-sessions.service
 
 [Service]
