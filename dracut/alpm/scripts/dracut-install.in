@@ -59,6 +59,7 @@ for pkgbase in "${!kern[@]}"; do
     dracut --force --hostonly --persistent-policy by-partuuid "/boot/initramfs-$pkgbase.img" "${kern[$pkgbase]}"
     # Create a symlink as per https://github.com/dracutdevs/dracut/pull/1434
     # Otherwise dracut-initramfs-restore.sh will fail and thus our shutdown hooks/factory-reset
+    # NOTE: should be part of Arch - https://bugs.archlinux.org/task/72185
     ln -sf "/boot/initramfs-$pkgbase.img" "/usr/lib/modules/${kern[$pkgbase]}/initrd"
     dracut --force --no-hostonly --persistent-policy by-partuuid "/boot/initramfs-$pkgbase-fallback.img" "${kern[$pkgbase]}"
 done
