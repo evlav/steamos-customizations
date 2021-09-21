@@ -13,6 +13,11 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+# NOTE: this script is essentially open-coding the mkhomedir_helper utility
+# with additional cp/install on top. The latter are workarounds for the bad
+# separation that we currently have - for example:
+# - kupdate-notifier is provided by one package, its config in another.
+
 set -e
 set -u
 
