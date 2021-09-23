@@ -37,15 +37,18 @@ mount_dir=
 # remove the second stage bootloader config from
 # the given image efi partition ()
 reset_efi() {
-    mkdir -p $efi_reset_mount
-    for device in "$@"; do
-        [ -b "$device" ] || continue
+    # NOTE: this needs to be disabled until we have solved 2 problems:
+    # - making it possible to update the grub configs for all images from the
+    #   the currently booted image (currently broken for readonly images)
+    # - making said update(s) atomic and fast
 
-        info "Removing $GRUB_CONFIG_RELPATH on device $device"
-        mount "$device" $efi_reset_mount
-        rm -f "$efi_reset_mount/$GRUB_CONFIG_RELPATH"
-        umount -f $efi_reset_mount
-    done
+    return 0
+
+    # ftr thse are the steps we need to take:
+    # mount "$device" on $efi_reset_mount
+    # generate "$efi_reset_mount/$GRUB_CONFIG_RELPATH".new
+    #   probably requires a chroot
+    # replace "$efi_reset_mount/$GRUB_CONFIG_RELPATH"
 }
 
 # harvest the device, mount point and mount opts of a mounted partition
