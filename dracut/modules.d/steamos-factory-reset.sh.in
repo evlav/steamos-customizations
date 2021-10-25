@@ -20,11 +20,6 @@ declare -r FACTORY_RESET_CONFIG_DIR=@factory_reset_config_dir@
 declare -r SYMLINKS_DIR=@udev_symlinks_absdir@
 declare -r GRUB_CONFIG_RELPATH=@grub_config_relpath@
 
-# We're going to mount the efi partitions we want to scrub
-# here so that in the worst case (ie this breaks), we won't
-# leave the OS dealing with the wrong partition mounted at /efi
-efi_reset_mount=/efi-scrub
-
 # used to return information from cache_mount_params
 mount_dev=
 mount_opt=
@@ -37,6 +32,11 @@ mount_dir=
 # remove the second stage bootloader config from
 # the given image efi partition ()
 reset_efi() {
+    # We're going to mount the efi partitions we want to scrub
+    # here so that in the worst case (ie this breaks), we won't
+    # leave the OS dealing with the wrong partition mounted at /efi
+    local -r efi_reset_mount=/efi-scrub
+
     # NOTE: this needs to be disabled until we have solved 2 problems:
     # - making it possible to update the grub configs for all images from the
     #   the currently booted image (currently broken for readonly images)
@@ -49,6 +49,9 @@ reset_efi() {
     # generate "$efi_reset_mount/$GRUB_CONFIG_RELPATH".new
     #   probably requires a chroot
     # replace "$efi_reset_mount/$GRUB_CONFIG_RELPATH"
+
+    # stray unused mountpoint is untidy but not worth signalling an error:
+    rmdir $efi_reset_mount || true
 }
 
 # harvest the device, mount point and mount opts of a mounted partition
@@ -259,7 +262,3 @@ info "Unmounting /esp"
 if [ $cleanup_esp = "1" ]; then
     umount /esp
 fi
-
-# stray unused mountpoint is untidy but not worth signalling an error:
-rmdir $efi_reset_mount || true
-
