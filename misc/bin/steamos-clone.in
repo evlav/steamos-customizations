@@ -474,6 +474,9 @@ for partlabel in $ALL_PARTLABELS; do
     fi
 done
 
+# Disable reserved blocks on the home parition, as requested by Valve.
+tune2fs -m 0 $(get_device_by_partlabel $dstdisk home)
+
 partprobe $DEVICE_OUT
 udevadm trigger $DEVICE_OUT
 udevadm settle
