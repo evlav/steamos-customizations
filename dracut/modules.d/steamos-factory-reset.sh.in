@@ -16,9 +16,9 @@
 
 # Perform a factory reset
 
-FACTORY_RESET_CONFIG_DIR=@factory_reset_config_dir@
-SYMLINKS_DIR=@udev_symlinks_absdir@
-GRUB_CONFIG_RELPATH=@grub_config_relpath@
+declare -r FACTORY_RESET_CONFIG_DIR=@factory_reset_config_dir@
+declare -r SYMLINKS_DIR=@udev_symlinks_absdir@
+declare -r GRUB_CONFIG_RELPATH=@grub_config_relpath@
 
 # We're going to mount the efi partitions we want to scrub
 # here so that in the worst case (ie this breaks), we won't
