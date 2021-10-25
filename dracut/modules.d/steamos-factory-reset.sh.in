@@ -52,7 +52,7 @@ reset_efi() {
 reset_device_ext4() {
     local device=$1
     local label=$2
-    local fs_opts="${@:3}"
+    local fs_opts=(${@:3})
     local opts=(-qF)
     local features=
     local tmp=
@@ -98,24 +98,19 @@ reset_device_ext4() {
         opts+=(-L "$label")
     fi
 
-    # copy the important fs opts explicitly (currently just casefold):
-    # no cached opts, read them from the filesystem:
-    if [ -z "$fs_opts" ]; then
-        read -r -a features < <(tune2fs -l "$device" | sed -n 's/^Filesystem features:\s*//p')
-        for tmp in "${features[@]}"; do
-            if [ "$tmp" = "casefold" ]; then
-                opts+=(-O casefold)
-                break
-            fi
-        done
-    else # use cached opts from FACTORY_RESET_CONFIG_DIR
-        for tmp in $fs_opts; do
-            if [ "$tmp" = "casefold" ]; then
-                opts+=(-O casefold)
-                break
-            fi
-        done
+    # use cached opts from FACTORY_RESET_CONFIG_DIR, alternatively read them
+    # from the filesystem
+    if [ ${#fs_opts[@]} -eq 0 ]; then
+        read -r -a fs_opts < <(tune2fs -l "$device" | sed -n 's/^Filesystem features:\s*//p')
     fi
+
+    # copy the important fs opts explicitly (currently just casefold):
+    for tmp in "${features[@]}"; do
+        if [ "$tmp" = "casefold" ]; then
+            opts+=(-O casefold)
+            break
+        fi
+    done
 
     info "Making ext4 filesystem on device $device (options: ${opts[*]})"
     mkfs.ext4 "${opts[@]}" "$device"
