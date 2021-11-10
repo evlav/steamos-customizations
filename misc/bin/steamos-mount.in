@@ -237,7 +237,7 @@ then
     done
     if [[ ! "${novar:-}" ]]
     then
-        for i in /var/cache/pacman /var/lib/docker /var/lib/flatpak /var/log /var/tmp
+        for i in /var/cache/pacman /var/lib/docker /var/lib/flatpak /var/lib/systemd/coredump /var/log /var/tmp
         do
             mount --bind "$mnt/home/.steamos/offload$i" "$mnt$i"
         done
