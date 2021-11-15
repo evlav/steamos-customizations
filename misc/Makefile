@@ -7,6 +7,7 @@ LIBRARIES_EXEC_IN := $(wildcard libexec/*.in)
 LIBRARIES_EXEC := $(patsubst %.in,%,$(LIBRARIES_EXEC_IN))
 COMPLETIONS := $(wildcard completions/*)
 REPART_CONFIG := $(wildcard repart.d/*.conf)
+SYSCTL_CONFIG := sysctl.d/10-kernel-panic.conf
 SDDM_CONFIG := sddm.conf.d/steamos.conf
 PROFILE_CONFIG := profile.d/steamos.sh
 SUDOERS_CONFIG := sudoers.d/no-fqdn
@@ -34,6 +35,8 @@ install: all
 	ln -sfv steamos-mount $(DESTDIR)$(completionsdir)/mount.steamos
 	install -d $(DESTDIR)$(libdir)/repart.d
 	install -m 0644 $(REPART_CONFIG) $(DESTDIR)$(libdir)/repart.d
+	install -d $(DESTDIR)$(libdir)/sysctl.d/
+	install -m 0644 $(SYSCTL_CONFIG) $(DESTDIR)$(libdir)/sysctl.d/
 	install -d $(DESTDIR)$(libdir)/sddm/sddm.conf.d/
 	install -m 0644 $(SDDM_CONFIG) $(DESTDIR)$(libdir)/sddm/sddm.conf.d
 	install -d $(DESTDIR)$(sysconfdir)/profile.d
