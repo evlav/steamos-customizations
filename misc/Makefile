@@ -9,6 +9,7 @@ COMPLETIONS := $(wildcard completions/*)
 REPART_CONFIG := $(wildcard repart.d/*.conf)
 SYSCTL_CONFIG := sysctl.d/10-kernel-panic.conf
 SDDM_CONFIG := sddm.conf.d/steamos.conf
+LODIND_CONFIG := journald.conf.d/system-max-use.conf
 PROFILE_CONFIG := profile.d/steamos.sh
 SUDOERS_CONFIG := sudoers.d/no-fqdn
 XORG_CONFIG := xorg.conf.d/10-steamos-virtualdisplaysize.conf
@@ -39,6 +40,8 @@ install: all
 	install -m 0644 $(SYSCTL_CONFIG) $(DESTDIR)$(libdir)/sysctl.d/
 	install -d $(DESTDIR)$(libdir)/sddm/sddm.conf.d/
 	install -m 0644 $(SDDM_CONFIG) $(DESTDIR)$(libdir)/sddm/sddm.conf.d
+	install -d $(DESTDIR)$(libdir)/systemd/journald.conf.d/
+	install -m 0644 $(LODIND_CONFIG) $(DESTDIR)$(libdir)/systemd/journald.conf.d/
 	install -d $(DESTDIR)$(sysconfdir)/profile.d
 	install -m 0644 $(PROFILE_CONFIG) $(DESTDIR)$(sysconfdir)/profile.d
 	install -d $(DESTDIR)$(sysconfdir)/sudoers.d
