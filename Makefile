@@ -25,9 +25,13 @@ SUBDIRS :=		\
 
 ALL_TARGETS     := $(patsubst %,all-%,$(SUBDIRS))
 INSTALL_TARGETS := $(patsubst %,install-%,$(SUBDIRS))
+CLEAN_TARGETS   := $(patsubst %,clean-%,$(SUBDIRS))
 
 .PHONY: all
 all: $(ALL_TARGETS)
+
+.PHONY: clean
+clean: $(CLEAN_TARGETS)
 
 .PHONY: install
 install: $(INSTALL_TARGETS)
@@ -48,3 +52,6 @@ all-%:
 install-%:
 	$(MAKE) -C $* install
 
+.PHONY: clean-%
+clean-%:
+	$(MAKE) -C $* clean

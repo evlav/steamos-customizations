@@ -11,6 +11,7 @@ SERVICES_IN := $(wildcard systemd/*.service.in)
 SERVICES := $(patsubst %.in,%,$(SERVICES_IN))
 MOUNTS := $(wildcard systemd/*.mount)
 UNITS := $(SERVICES) $(MOUNTS)
+CLEANABLE := $(GRUB_SCRIPTS) $(LIBRARIES_EXEC)
 
 all: $(BINARIES) $(LIBRARIES_EXEC) $(GRUB_SCRIPTS) $(SERVICES)
 

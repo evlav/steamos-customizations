@@ -110,6 +110,15 @@ UDEV_SYMLINKS_ABSDIR := /dev/$(UDEV_SYMLINKS_RELDIR)
 	  false; \
 	fi
 
+clean:
+	@echo checking $(BINARIES) $(SERVICES) $(CLEANABLE)
+	@for x in $(BINARIES) $(SERVICES) $(CLEANABLE);  \
+	 do 			\
+	     if [ -f $$x.in ];  \
+	     then  		\
+	         rm -vf $$x;    \
+	     fi;                \
+	 done
 
 # -------- Functions -------- #
 

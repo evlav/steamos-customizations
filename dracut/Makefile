@@ -10,8 +10,9 @@ COMPLETIONS := $(wildcard completions/*)
 MODULES_IN := $(wildcard modules.d/*.sh.in)
 MODULES := $(patsubst %.in,%,$(MODULES_IN))
 README := modules.d/README
+CLEANABLE := $(ALPM_HOOKS) $(ALPM_SCRIPTS) $(MODULES)
 
-all: $(ALPM_SCRIPTS) $(ALPM_HOOKS) $(BINARIES) $(MODULES)
+all: $(BINARIES) $(ALPM_SCRIPTS) $(ALPM_HOOKS) $(MODULES)
 
 install: all
 	install -d $(DESTDIR)$(sbindir)
