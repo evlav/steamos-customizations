@@ -100,7 +100,7 @@ do
     cfgs=()
     if [[ -e "$MOUNTDIR/SteamOS/conf/${image_ident}.conf" ]]
     then
-        mapfile -t cfgs <"$MOUNTDIR/SteamOS/${image_ident}.conf"
+        mapfile -t cfgs <"$MOUNTDIR/SteamOS/conf/${image_ident}.conf"
     fi
 
     # FIXME: Small delay to avoid umount exiting with EBUSY
