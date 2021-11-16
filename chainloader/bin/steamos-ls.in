@@ -72,7 +72,9 @@ for dev in  "${espdev[@]}"
 do
     read -r path parttype partuuid partlabel <<<"$dev"
     [[ "${parttype:-}" == $esp_parttype ]] || continue
+    [[ "${partlabel:-}" == esp ]] || continue
     esp_path=$path
+    break
 done
 
 mapfile -t devices < <(lsblk --noheadings --output $lsblk_cols "${opts[@]}" "$@")
