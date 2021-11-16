@@ -93,6 +93,7 @@ UDEV_SYMLINKS_ABSDIR := /dev/$(UDEV_SYMLINKS_RELDIR)
 	  -e 's;@steamos_all_partlabels@;$(STEAMOS_ALL_PARTLABELS);g' \
 	  -e 's;@grub_binary_relpath@;$(GRUB_BINARY_RELPATH);g' \
 	  -e 's;@grub_config_relpath@;$(GRUB_CONFIG_RELPATH);g' \
+	  -e 's;@steamos_relpath@;$(STEAMOS_RELPATH);g' \
 	  -e 's;@bootconf_reldir@;$(BOOTCONF_RELDIR);g' \
 	  -e 's;@bootconf_oldpath@;$(BOOTCONF_OLDPATH);g' \
 	  -e 's;@roothash_relpath@;$(ROOTHASH_RELPATH);g' \
