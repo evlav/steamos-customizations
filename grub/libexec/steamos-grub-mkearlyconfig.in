@@ -88,9 +88,14 @@ set prefix=$prefix
 EOF
 fi
 
+##
+## JUPITER: /var/boot support is currently disabled, and there's a bug with it here, so drop /var from the search path
+##  https://gitlab.steamos.cloud/jupiter/tasks/-/issues/329
+##
+
 cat << EOF
 set cfg=
-for uuid in $VARUUID $ROOTUUID; do
+for uuid in $ROOTUUID; do
     search --fs-uuid --no-floppy --set=altroot \$uuid
     if [ -d (\$altroot)/boot/grub ]; then
         set root=\$altroot
