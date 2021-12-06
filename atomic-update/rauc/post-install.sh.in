@@ -103,7 +103,8 @@ configure_other_efi() {
 log "Configuring the 'other' efi partition"
 
 EFI_DEVICE_OTHER=$(realpath $SYMLINKS_DIR/other/efi)
-[ -b "$EFI_DEVICE_OTHER" ] || fail "Other efi device '$EFI_DEVICE_OTHER' not found"
+[ -b "$EFI_DEVICE_OTHER" ] || \
+    fail "Other efi device '$EFI_DEVICE_OTHER' not found"
 
 mount "$EFI_DEVICE_OTHER" /mnt
 configure_other_efi /mnt || \
@@ -181,7 +182,8 @@ sync_var_mountpoints() {
 log "Syncing the var partitions from 'self' to 'other'"
 
 VAR_DEVICE_OTHER=$(realpath $SYMLINKS_DIR/other/var)
-[ -b "$VAR_DEVICE_OTHER" ] || fail "Other var device '$VAR_DEVICE_OTHER' not found"
+[ -b "$VAR_DEVICE_OTHER" ] || \
+    fail "Other var device '$VAR_DEVICE_OTHER' not found"
 
 reformat_device_ext4 "$VAR_DEVICE_OTHER" || \
     err "Failed to reformat other var partition"
