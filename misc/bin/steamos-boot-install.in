@@ -52,6 +52,8 @@ done
 
 if [[ ! "${no_bootloaders:-}" ]]
 then
+    local ident=$(steamos-bootconf this-image)
+
     steamcl-install
     if mountpoint -q /boot
     then
@@ -60,12 +62,19 @@ then
         echo "Warning: Skipping installation artifacts to /boot!" >&2
         grub-mkimage
     fi
-    if [[ ! -e /efi/@bootconf_relpath@ ]]
+
+    if [[ ! -e /efi/@steamos_relpath@ ]]
     then
-        mkdir -p /efi/SteamOS
-        steamos-bootconf >/efi/@bootconf_relpath@
+        mkdir -p /efi/@steamos_relpath@
+    fi
+
+    if [[ ! -e /esp/@bootconf_reldir@/${ident}.conf ]]
+    then
+        mkdir -p /esp/@bootconf_reldir@
+        steamos-bootconf >/esp/@bootconf_reldir@/${ident}.conf
     fi
 fi
+
 if [[ ! "${no_kernel:-}" ]]
 then
     mapfile -t moduledirs < <(ls -1d /usr/lib/steamos/modules/* 2>/dev/null)

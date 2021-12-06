@@ -16,7 +16,7 @@
 
 set -eu;
 
-args=("--output-to" "input" "/efi/@bootconf_relpath@")
+args=()
 case "${1:-}" in
     halt|poweroff) mode="shutdown";;
     reboot)        mode="reboot";;
@@ -36,9 +36,10 @@ done
 
 if [[ "${mode:-}" ]]
 then
-    args+=("--mode" "$mode")
+    args+=("set-mode" "$mode")
 fi
 
+mount /esp
 mount /efi
-trap "umount /efi" 0
+trap "umount /esp; umount /efi" 0
 steamos-bootconf "${args[@]}"

@@ -25,7 +25,8 @@ FORCE=0          # --force
 GROW_LAST=1      # --grow-last=
 FACTORY_RESET=0  # --factory-reset=
 
-BOOTCONF_RELPATH=@bootconf_relpath@
+BOOTCONF_OLDPATH=@bootconf_oldpath@
+BOOTCONF_RELDIR=@bootconf_reldir@
 PARTSETS_RELDIR=@partsets_reldir@
 GRUB_BINARY_RELPATH=@grub_binary_relpath@
 GRUB_CONFIG_RELPATH=@grub_config_relpath@
@@ -314,6 +315,32 @@ cleanup_var() {
     rmdir $mntpoint
 }
 
+setup_esp() {
+    local disk=$1
+    local id=$2
+    local espdev=$(get_device_by_partlabel $disk esp)
+    local espmnt=
+    local confdir=
+
+    if ! [ "$espdev" ]; then
+        log "Could not find partlabel '$partlabel' on disk '$disk'"
+        return 1
+    fi
+
+    espmnt=$(mktemp -d)
+    mount $espdev $espmnt
+
+    # reset the bootconf file:
+    confdir=$espmnt/$BOOTCONF_RELDIR
+    bootconf=$confdir/$id.conf
+    mkdir -p $confdir
+    echo -n > $bootconf
+    steamos-bootconf --conf-dir $confdir --image $id config --set title $id
+
+    umount $espmnt
+    rmdir $espmnt
+}
+
 setup_efi() {
 
     # Setup efi partition, a subtle process...
@@ -345,13 +372,13 @@ setup_efi() {
     mntpoint=$(mktemp -d)
     mount $efidev $mntpoint
 
-    # reset the bootconf file, only if it exists already
-
-    bootconf=$mntpoint/$BOOTCONF_RELPATH
+    # erase the bootconf file at the old location:
+    # the new location is on the ESP
+    bootconf=$mntpoint/$BOOTCONF_OLDPATH
     if [ -e $bootconf ]; then
         rm -f $bootconf
-        steamos-bootconf > $bootconf
     fi
+    setup_esp $disk $self
 
     # replace the partition definitions, only if it exists already
 

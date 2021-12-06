@@ -57,7 +57,8 @@ GRUB_CONFIG_RELPATH := $(GRUB_RELPATH)/grub.cfg
 STEAMOS_RELPATH := SteamOS
 
 # Bootconf file (relative to the efi mountpoint)
-BOOTCONF_RELPATH := $(STEAMOS_RELPATH)/bootconf
+BOOTCONF_OLDPATH := $(STEAMOS_RELPATH)/bootconf
+BOOTCONF_RELDIR  := $(STEAMOS_RELPATH)/conf
 
 # Partition sets dir (relative to the efi mountpoint)
 PARTSETS_RELDIR := $(STEAMOS_RELPATH)/partsets
@@ -92,7 +93,8 @@ UDEV_SYMLINKS_ABSDIR := /dev/$(UDEV_SYMLINKS_RELDIR)
 	  -e 's;@steamos_all_partlabels@;$(STEAMOS_ALL_PARTLABELS);g' \
 	  -e 's;@grub_binary_relpath@;$(GRUB_BINARY_RELPATH);g' \
 	  -e 's;@grub_config_relpath@;$(GRUB_CONFIG_RELPATH);g' \
-	  -e 's;@bootconf_relpath@;$(BOOTCONF_RELPATH);g' \
+	  -e 's;@bootconf_reldir@;$(BOOTCONF_RELDIR);g' \
+	  -e 's;@bootconf_oldpath@;$(BOOTCONF_OLDPATH);g' \
 	  -e 's;@roothash_relpath@;$(ROOTHASH_RELPATH);g' \
 	  -e 's;@partsets_reldir@;$(PARTSETS_RELDIR);g' \
 	  -e 's;@factory_reset_config_dir@;$(FACTORY_RESET_CONFIG_DIR);g' \

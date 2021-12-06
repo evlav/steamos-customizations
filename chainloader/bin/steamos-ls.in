@@ -17,6 +17,10 @@
 set -e
 set -u
 
+declare -r esp_parttype=c12a7328-f81f-11d2-ba4b-00a0c93ec93b
+declare -r efi_parttype=ebd0a0a2-b9e5-4433-87c0-68b6b72699c7
+declare -r lsblk_cols=PATH,PARTTYPE,PARTUUID,PARTLABEL
+
 MOUNTDIR="${MOUNTDIR:-/mnt}"
 OUTPUTS=("path" "partuuid" "partlabel" "label" "boot-requested-at" "boot-other"
          "boot-other-disabled" "boot-attempts" "boot-count" "boot-time"
@@ -61,23 +65,42 @@ do
     shift
 done
 
-mapfile -t devices < <(lsblk --noheadings --output PATH,PARTTYPE,PARTUUID,PARTLABEL "${opts[@]}" "$@")
+
+esp_path=
+mapfile -t espdev < <(lsblk --noheadings --output $lsblk_cols)
+for dev in  "${espdev[@]}"
+do
+    read -r path parttype partuuid partlabel <<<"$dev"
+    [[ "${parttype:-}" == $esp_parttype ]] || continue
+    esp_path=$path
+done
+
+mapfile -t devices < <(lsblk --noheadings --output $lsblk_cols "${opts[@]}" "$@")
 for dev in "${devices[@]}"
 do
     read -r path parttype partuuid partlabel <<<"$dev"
-    [[ "${parttype:-}" == "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" ]] || continue
+    [[ "${parttype:-}" == $efi_parttype ]] || continue
 
-    if ! mount -oro "$path" /mnt
+    image_ident=
+    case $partlabel in
+        efi-*)
+            image_ident=${partlabel#efi-};
+            ;;
+    esac
+
+    [[ -n "${image_ident}" ]] || continue;
+
+    if ! mount -oro "$esp_path" ${MOUNTDIR}
     then
         echo "Warning: $path: No such mountable device" >&2
         continue
     fi
-    trap 'umount /mnt' 0
+    trap "umount ${MOUNTDIR}" 0
 
     cfgs=()
-    if [[ -e "$MOUNTDIR/SteamOS/bootconf" ]]
+    if [[ -e "$MOUNTDIR/SteamOS/conf/${image_ident}.conf" ]]
     then
-        mapfile -t cfgs <"$MOUNTDIR/SteamOS/bootconf"
+        mapfile -t cfgs <"$MOUNTDIR/SteamOS/${image_ident}.conf"
     fi
 
     # FIXME: Small delay to avoid umount exiting with EBUSY

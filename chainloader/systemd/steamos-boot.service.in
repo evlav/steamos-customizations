@@ -19,7 +19,7 @@ Before=shutdown.target
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=@bindir@/steamos-bootconf --mode booted --output-to input /efi/@bootconf_relpath@
+ExecStart=@bindir@/steamos-bootconf set-mode booted
 
 [Install]
 WantedBy=graphical.target steamos-update-os.target

@@ -20,7 +20,7 @@ set -u
 ERR=0 # the error code returned by this script
 
 SYMLINKS_DIR=@udev_symlinks_absdir@
-BOOTCONF_RELPATH=@bootconf_relpath@
+BOOTCONF_RELDIR=@bootconf_reldir@
 PARTSETS_RELDIR=@partsets_reldir@
 ROOTHASH_RELPATH=@roothash_relpath@
 
@@ -57,22 +57,14 @@ rm -f $ACTIVE_TIMERS
 configure_other_efi() {
     local efi=$1
     local bootconf=
+    local confdir=
     local partsets=
     local roothash=
     local title=
+    local ident=
     local self_partsets=
 
-    bootconf=$efi/$BOOTCONF_RELPATH
-    if ! [ -e "$bootconf" ]; then
-        log "Initializing 'other' efi bootconf: '$bootconf'"
-        mkdir -p "$(dirname "$bootconf")"
-        steamos-bootconf > "$bootconf"
-        title="$(findmnt --noheadings --output PARTLABEL "$efi")"
-        if [ "${title:-}" ]; then
-            steamos-bootconf --output-to input "$bootconf" --set title "${title#*-}"
-        fi
-    fi
-
+    # bootconf needs the partset data now so set it up first:
     partsets=$efi/$PARTSETS_RELDIR
     if ! [ -e "$partsets" ]; then
         self_partsets="/efi/$PARTSETS_RELDIR"
@@ -85,6 +77,20 @@ configure_other_efi() {
         if [ -e "$self_partsets/dev" ]; then
             cp "$self_partsets/dev" "$partsets/dev"
         fi
+    fi
+
+    title="$(findmnt --noheadings --output PARTLABEL "$efi")"
+    ident=${title##*-}
+    confdir=/esp/$BOOTCONF_RELDIR
+    bootconf=$confdir/${ident}.conf
+
+    if ! [ -e "$bootconf" ]; then
+        log "Initializing 'other' esp bootconf: '$bootconf'"
+        mkdir -p "$confdir"
+        echo -n > "$bootconf"
+        steamos-bootconf --conf-dir "$confdir" \
+                         --image "$ident" \
+                         config --set title "$ident"
     fi
 
     roothash=$efi/$ROOTHASH_RELPATH
