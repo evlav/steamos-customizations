@@ -72,6 +72,8 @@ for dev in  "${espdev[@]}"
 do
     read -r path parttype partuuid partlabel <<<"$dev"
     [[ "${parttype:-}" == $esp_parttype ]] || continue
+    # We need this check in case there are other OSes installed with
+    # esp_parttype tagged partitions of their own:
     [[ "${partlabel:-}" == esp ]] || continue
     esp_path=$path
     break
