@@ -128,7 +128,7 @@ cd $WORKDIR
 # Create the early config, pack it in a memdisk
 
 MEMDISK=grub-memdisk.tar
-MODULES=(search search_fs_uuid ext2 fat part_gpt configfile test echo sleep)
+MODULES=(search search_fs_uuid ext2 btrfs fat part_gpt configfile test echo sleep)
 
 prefix=${PREFIX:-} \
 @libexecdir@/steamos/steamos-grub-mkearlyconfig > grub.cfg

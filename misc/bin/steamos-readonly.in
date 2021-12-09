@@ -18,6 +18,9 @@ set -e
 set -u
 set -o pipefail
 
+# default and future guess
+fstype=btrfs
+
 usage() {
     cat <<EOF
 Usage: ${0##*/} enable|disable|status
@@ -26,13 +29,26 @@ Enable or disable read-only on the current running SteamOS.
 EOF
 }
 
-read_write() {
+# mark root partition writable
+read_write_extfs() {
     tune2fs -O ^read-only "$1"
     mount -o remount,rw /
     sync /
 }
+read_write_btrfs() {
+    btrfs property set / ro false
+}
+read_write() {
+    read_write_$fstype "$@"
+}
 
-read_only() {
+#
+# mark root partition read-only
+read_only_btrfs() {
+    sync /
+    btrfs property set / ro true
+}
+read_only_extfs() {
     if tune2fs -l "$1" | grep -q '^Filesystem features: .*read-only.*$'
     then
         echo "Warning: The rootfs is already read-only!" >&2
@@ -44,17 +60,11 @@ read_only() {
     mount -o remount,ro /
     tune2fs -O read-only "$1"
 }
-
-toggle() {
-    if status "$@" 2>/dev/null
-    then
-        read_write "$@"
-    else
-        read_only "$@"
-    fi
+read_only() {
+    read_only_$fstype "$@"
 }
 
-status() {
+status_extfs() {
     local filesystem_is_readonly
     local device_is_readonly
     local roothash
@@ -66,6 +76,29 @@ status() {
     else
         echo "disabled"
         return 1
+    fi
+}
+status_btrfs() {
+    prop_val=$(btrfs property get / ro)
+    if [[ $prop_val = "ro=true" ]]
+    then
+        echo "enabled"
+    else
+        echo "disabled"
+        return 1
+    fi
+}
+status() {
+    status_$fstype "$@"
+}
+
+
+toggle() {
+    if status "$@" 2>/dev/null
+    then
+        read_write "$@"
+    else
+        read_only "$@"
     fi
 }
 
@@ -83,6 +116,24 @@ shell() {
 
     "${SHELL:-/bin/sh}" "$@"
 }
+
+# determine file system type and set the fstype variable used above
+get_fstype() {
+    declare $(findmnt -fnP --output FSTYPE /)
+    case "$FSTYPE" in
+    \"ext4\")
+        fstype=extfs
+        ;;
+    \"btrfs\")
+        fstype=btrfs
+        ;;
+    *)
+        echo "Unrecognized root filesystem type $FSTYPE"
+        exit 1
+    esac
+}
+
+get_fstype
 
 case "${1:-}" in
     disable)
