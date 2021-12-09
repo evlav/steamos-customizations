@@ -374,14 +374,6 @@ setup_efi() {
     mntpoint=$(mktemp -d)
     mount $efidev $mntpoint
 
-    # erase the bootconf file at the old location:
-    # the new location is on the ESP
-    bootconf=$mntpoint/$BOOTCONF_OLDPATH
-    if [ -e $bootconf ]; then
-        rm -f $bootconf
-    fi
-    setup_esp $disk $self
-
     # replace the partition definitions, only if it exists already
 
     partsets=$mntpoint/$PARTSETS_RELDIR
@@ -389,6 +381,15 @@ setup_efi() {
         rm -fr $partsets
         steamos-chroot --disk $disk --partset $self -- \
             steamos-partsets /efi/$PARTSETS_RELDIR
+    fi
+
+    setup_esp $disk $self
+
+    # erase the bootconf file at the old location:
+    # the new location is on the ESP
+    bootconf=$mntpoint/$BOOTCONF_OLDPATH
+    if [ -e $bootconf ]; then
+        rm -f $bootconf
     fi
 
     # re-install the grub bootloader, only if it exists already
