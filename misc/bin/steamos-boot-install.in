@@ -52,7 +52,7 @@ done
 
 if [[ ! "${no_bootloaders:-}" ]]
 then
-    local ident=$(steamos-bootconf this-image)
+    typeset ident=$(steamos-bootconf this-image)
 
     steamcl-install
     if mountpoint -q /boot

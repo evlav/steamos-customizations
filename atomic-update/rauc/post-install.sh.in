@@ -87,9 +87,7 @@ configure_other_efi() {
     if ! [ -e "$bootconf" ]; then
         log "Initializing 'other' esp bootconf: '$bootconf'"
         mkdir -p "$confdir"
-        steamos-bootconf create --conf-dir "$confdir" \
-                         --image "$ident" \
-                         config --set title "$ident"
+        steamos-bootconf create --conf-dir "$confdir" --image "$ident" --set title "$ident"
     fi
 
     roothash=$efi/$ROOTHASH_RELPATH
