@@ -56,6 +56,8 @@ rm -f $ACTIVE_TIMERS
 
 configure_other_efi() {
     local efi=$1
+    local keep_slot=$2
+    local update_slot=$3
     local bootconf=
     local confdir=
     local partsets=
@@ -71,16 +73,21 @@ configure_other_efi() {
         log "Initializing 'other' efi partsets: '$self_partsets' -> '$partsets'"
         mkdir -p "$partsets"
         cp "$self_partsets/all"    "$partsets/"
-        cp "$self_partsets/other"  "$partsets/self"   # swapped!
-        cp "$self_partsets/self"   "$partsets/other"  # swapped!
         cp "$self_partsets/shared" "$partsets/"
+
+        # the updated slot partset info goes into self,
+        # and the preserved slot info goes into other
+        # we could just swap self and other, but we want to support
+        # updates while the dev slot is booted as well as A/B:
+        cp "$self_partsets/$update_slot"  "$partsets/self"
+        cp "$self_partsets/$keep_slot"    "$partsets/other"
+
         if [ -e "$self_partsets/dev" ]; then
             cp "$self_partsets/dev" "$partsets/dev"
         fi
     fi
 
-    title="$(findmnt --noheadings --output PARTLABEL "$efi")"
-    ident=${title##*-}
+    ident=$update_slot
     confdir=/esp/$BOOTCONF_RELDIR
     bootconf=$confdir/${ident}.conf
 
@@ -99,14 +106,53 @@ configure_other_efi() {
     fi
 }
 
-log "Configuring the 'other' efi partition"
+log "Detecting 'other' efi partition"
 
-EFI_DEVICE_OTHER=$(realpath $SYMLINKS_DIR/other/efi)
+declare -r BOOTED_SLOT=$(steamos-botconf this-image)
+PRESERVED_SLOT=
+UPDATED_SLOT=
+
+log "Booted into slot $BOOTED_SLOT"
+
+case $BOOTED_SLOT in
+    A)
+        PRESERVED_SLOT=A
+        UPDATED_SLOT=B
+        EFI_DEVICE_OTHER=$(realpath $SYMLINKS_DIR/other/efi)
+        ;;
+    B)
+        PRESERVED_SLOT=B
+        UPDATED_SLOT=A
+        EFI_DEVICE_OTHER=$(realpath $SYMLINKS_DIR/other/efi)
+        ;;
+    *)
+        while read valid slot x
+        do
+            case $valid$slot in
+                +A)
+                    UPDATED_SLOT=B
+                    PRESERVED_SLOT=A
+                    ;;
+                +B)
+                    UPDATED_SLOT=A
+                    PRESERVED_SLOT=B
+                    ;;
+            esac
+        done < <(steamos-bootconf list-images)
+        EFI_DEVICE_OTHER=$(realpath $SYMLINKS_DIR/$UPDATED_SLOT/efi)
+        ;;
+esac
+
+log "Update slot candidate is $UPDATED_SLOT"
+
+log "Configuring the 'other' efi partition $EFI_DEVICE_OTHER " \
+    "($PRESERVED_SLOT -> $UPDATED_SLOT)"
+
 [ -b "$EFI_DEVICE_OTHER" ] || \
     fail "Other efi device '$EFI_DEVICE_OTHER' not found"
 
 mount "$EFI_DEVICE_OTHER" /mnt
-configure_other_efi /mnt || \
+configure_other_efi /mnt $PRESERVED_SLOT $UPDATED_SLOT || \
     err "Failed to configure the 'other' efi"
 umount /mnt
 
@@ -180,17 +226,42 @@ sync_var_mountpoints() {
 
 log "Syncing the var partitions from 'self' to 'other'"
 
-VAR_DEVICE_OTHER=$(realpath $SYMLINKS_DIR/other/var)
+VAR_DEVICE_OTHER=$(realpath $SYMLINKS_DIR/$UPDATED_SLOT/var)
+VAR_DEVICE_FROM=
+VAR_FROM=
+case $BOOTED_SLOT in
+    A|B)
+        VAR_FROM=/var
+        ;;
+    dev)
+        mkdir -p /tmp/from-var
+        VAR_DEVICE_FROM=$(realpath $SYMLINKS_DIR/$PRESERVED_SLOT/var)
+        VAR_FROM=/tmp/from-var
+        ;;
+esac
+
 [ -b "$VAR_DEVICE_OTHER" ] || \
     fail "Other var device '$VAR_DEVICE_OTHER' not found"
+
+if [ -n "$VAR_DEVICE_FROM" ]
+then
+    [ -b "$VAR_DEVICE_FROM" ] ||
+        fail "Source var device '$VAR_DEVICE_FROM' not found"
+    mount "$VAR_DEVICE_FROM" "$VAR_FROM"
+fi
 
 reformat_device_ext4 "$VAR_DEVICE_OTHER" || \
     err "Failed to reformat other var partition"
 
 mount "$VAR_DEVICE_OTHER" /mnt
-sync_var_mountpoints /var /mnt || \
+sync_var_mountpoints "$VAR_FROM" /mnt || \
     err "Failed to sync var partitions"
 umount /mnt
+
+if [ -n "$VAR_DEVICE_FROM" ]
+then
+    umount "$VAR_FROM"
+fi
 
 #
 # Handle the bootloaders
@@ -198,7 +269,7 @@ umount /mnt
 
 log "Installing the bootloaders"
 
-steamos-chroot --partset other -- steamos-boot-install --no-kernel || \
+steamos-chroot --partset $UPDATED_SLOT -- steamos-boot-install --no-kernel || \
     err "Failed to install bootloaders"
 
 exit $ERR
