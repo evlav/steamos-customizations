@@ -108,7 +108,7 @@ configure_other_efi() {
 
 log "Detecting 'other' efi partition"
 
-declare -r BOOTED_SLOT=$(steamos-botconf this-image)
+declare -r BOOTED_SLOT=$(steamos-bootconf this-image)
 PRESERVED_SLOT=
 UPDATED_SLOT=
 
