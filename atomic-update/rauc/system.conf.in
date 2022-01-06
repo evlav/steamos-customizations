@@ -15,21 +15,22 @@ pre-install=@libdir@/rauc/pre-install.sh
 post-install=@libdir@/rauc/post-install.sh
 
 [slot.rootfs.0]
-bootname=self
-device=@udev_symlinks_absdir@/self/rootfs
+bootname=A
+device=@udev_symlinks_absdir@/A/rootfs
 type=raw
 
 [slot.verity.0]
-device=@udev_symlinks_absdir@/self/verity
+device=@udev_symlinks_absdir@/A/verity
 parent=rootfs.0
 type=raw
 
 [slot.rootfs.1]
-bootname=other
-device=@udev_symlinks_absdir@/other/rootfs
+bootname=B
+device=@udev_symlinks_absdir@/B/rootfs
 type=raw
 
 [slot.verity.1]
-device=@udev_symlinks_absdir@/other/verity
+device=@udev_symlinks_absdir@/B/verity
 parent=rootfs.1
 type=raw
+

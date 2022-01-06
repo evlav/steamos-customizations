@@ -17,27 +17,139 @@
 set -e
 set -u
 
-case "$1" in
+current_image=
+target_image=
+
+set_current_image ()
+{
+    local name=
+
+    if [ -n "$current_image" ]
+    then
+        return
+    fi
+
+    name=$(steamos-bootconf this-image)
+    case $name in
+        A|B)
+            true
+            ;;
+        *)
+            # we don't actually consider dev a valid rauc image
+            # even if it's the booted one: picjk the highest priority
+            # non-dev image as the primary:
+            while read valid slot x
+            do
+                case $slot in
+                    A|B)
+                        name=$slot
+                    ;;
+                esac
+            done < <(steamos-bootconf list-images)
+            ;;
+    esac
+
+    current_image=$name
+}
+
+set_target_image ()
+{
+    case ${1:-} in
+        self)
+            set_current_image
+            target_image="$current_image"
+            ;;
+        A|B)
+            target_image="$1"
+            ;;
+        *)
+            echo "Invalid target image $1" >&2
+            exit 22
+    esac
+}
+
+case ${1:-} in
 get-primary)
-    echo "self"
-    ;;
-set-primary)
-    if [[ "$2" != self ]]
+    set_current_image
+
+    image=$(steamos-bootconf selected-image)
+
+    if [ "$image" = dev ]
     then
-        touch /run/steamos/reboot-other
+        image=$current_image
     fi
-    ;;
-get-state)
-    if [[ "$2" == self ]]
+
+    if [ -n "$image" ]
     then
-        echo good
+        echo "$image"
+    elif [ -n "$current_image" ]
+    then
+        echo "$current_image"
     else
-        echo bad
+        exit 1
     fi
-	;;
-set-state)
-    true
     ;;
+
+set-primary)
+    set_target_image "${2:-}"
+    steamos-bootconf --image "$target_image" set-mode reboot
+    ;;
+
+get-state)
+    tries=
+    invalid=
+
+    set_target_image "${2:-}"
+
+    while read key val x
+    do
+        case $key in
+            boot-attempts:) tries=$val; ;;
+            image-invalid:) invalid=$val; ;;
+        esac
+    done < <(steamos-bootconf --image "$target_image" \
+                              config --get boot-attempts --get image-invalid)
+
+    # If we retrieved no data:
+    if [ -z "$tries" ] || [ -z "$invalid" ]
+    then
+        echo "Missing boot configuration for $target_image" >&2
+        exit 1
+    fi
+
+    # 1 or more unsuccessful/incomplete boot attempts
+    # or the image is flagged invalid for some reason:
+    if [ ${tries:-} -ge 1 ] || [ ${invalid:-0} -gt 0 ]
+    then
+        echo bad
+    else
+        echo good
+    fi
+    ;;
+
+set-state)
+    set_target_image "${2:-}"
+
+    case ${3:-} in
+        good)
+            # clears boot-other and update, sets boot-requested-at
+            steamos-bootconf --image "$target_image" set-mode reboot \
+                             --set image-invalid 0
+            ;;
+        bad)
+            boot_to=
+            # clears update, sets boot-other and boot-requested-at
+            steamos-bootconf --image "$target_image" set-mode reboot-other \
+                             --set image-invalid 1
+
+            ;;
+        *)
+            echo "Bad image state value '${3:-}' { good; bad }" >&2
+            exit 22
+            ;;
+    esac
+    ;;
+
 *)
     echo "${1:-(nil)}: Invalid argument" >&2
     exit 127
