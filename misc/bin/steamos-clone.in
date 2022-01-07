@@ -337,8 +337,7 @@ setup_esp() {
     confdir=$espmnt/$BOOTCONF_RELDIR
     bootconf=$confdir/$id.conf
     mkdir -p $confdir
-    steamos-bootconf create --conf-dir $confdir --image $id
-    steamos-bootconf config --conf-dir $confdir --image $id --set title $id
+    steamos-bootconf create --conf-dir $confdir --image $id --set title $id
 
     umount $espmnt
     rmdir $espmnt
