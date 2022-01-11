@@ -31,13 +31,11 @@ set_current_image ()
 
     name=$(steamos-bootconf this-image)
     case $name in
-        A|B)
+        A|B|dev)
             true
             ;;
         *)
-            # we don't actually consider dev a valid rauc image
-            # even if it's the booted one: picjk the highest priority
-            # non-dev image as the primary:
+            # unexpected image: pick highest prio well-known name as primary
             while read valid slot x
             do
                 case $slot in
@@ -59,7 +57,7 @@ set_target_image ()
             set_current_image
             target_image="$current_image"
             ;;
-        A|B)
+        A|B|dev)
             target_image="$1"
             ;;
         *)
