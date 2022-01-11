@@ -8,6 +8,8 @@ path=/etc/rauc/keyring.pem
 
 [casync]
 tmppath=/tmp
+install-args=--seed /run/steamos-atomupd/rootfs.caibx --config /etc/desync/config.json --in-place --error-retry 20
+use-desync=true
 
 [handlers]
 bootloader-custom-backend=@libdir@/rauc/bootloader-custom-backend.sh
