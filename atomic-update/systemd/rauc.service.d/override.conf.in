@@ -9,4 +9,4 @@
 
 [Service]
 ExecStart=
-ExecStart=/usr/bin/rauc --mount=/run/rauc --override-boot-slot=self service
+ExecStart=/usr/lib/rauc/rauc-override.sh
