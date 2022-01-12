@@ -19,6 +19,7 @@ SUBDIRS :=		\
 	grub		\
 	misc		\
 	offload		\
+	pipewire	\
 	plymouth	\
 	settings-importer \
 	swap
