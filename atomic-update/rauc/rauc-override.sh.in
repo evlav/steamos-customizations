@@ -1,0 +1,4 @@
+#!/bin/bash
+
+this_image=$(steamos-bootconf this-image)
+exec /usr/bin/rauc --mount=/run/rauc --override-boot-slot=$this_image service

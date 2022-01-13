@@ -34,3 +34,8 @@ device=@udev_symlinks_absdir@/B/verity
 parent=rootfs.1
 type=raw
 
+[slot.rootfs.2]
+bootname=dev
+device=@udev_symlinks_absdir@/dev/rootfs
+type=raw
+readonly=true
