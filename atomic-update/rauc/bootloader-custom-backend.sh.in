@@ -66,6 +66,11 @@ set_target_image ()
     esac
 }
 
+ensure_exists()
+{
+    steamos-bootconf config --image "${1}" || steamos-bootconf create --image "${1}" ||:
+}
+
 case ${1:-} in
 get-primary)
     set_current_image
@@ -90,6 +95,7 @@ get-primary)
 
 set-primary)
     set_target_image "${2:-}"
+    ensure_exists "${target_image}"
     steamos-bootconf --image "$target_image" set-mode reboot
     ;;
 
@@ -127,6 +133,7 @@ get-state)
 
 set-state)
     set_target_image "${2:-}"
+    ensure_exists "${target_image}"
 
     case ${3:-} in
         good)
