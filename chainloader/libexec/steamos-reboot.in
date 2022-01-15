@@ -18,7 +18,6 @@ set -eu;
 
 # FIXME - get rid of basically all of this
 
-args=()
 case "${1:-}" in
     halt|poweroff) mode="shutdown";;
     reboot)        mode="reboot";;
@@ -28,18 +27,10 @@ case "${1:-}" in
         ;;
 esac
 
-for i in update update-other reboot-other
-do
-    [ -f "/run/steamos/$i" ] || continue
-
-    mode="$i"
-    break
-done
-
-if [[ ${mode:-} == reboot-other ]]
+if [[ -f "/run/steamos/reboot-other" ]]
 then
         mount /esp
         mount /efi
         trap "umount /esp; umount /efi" 0
-        steamos-bootconf set-mode "${args[@]}"
+        steamos-bootconf set-mode reboot-other
 fi
