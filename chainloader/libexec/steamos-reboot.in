@@ -16,6 +16,8 @@
 
 set -eu;
 
+# FIXME - get rid of basically all of this
+
 args=()
 case "${1:-}" in
     halt|poweroff) mode="shutdown";;
@@ -34,12 +36,10 @@ do
     break
 done
 
-if [[ "${mode:-}" ]]
+if [[ ${mode:-} == reboot-other ]]
 then
-    args+=("set-mode" "$mode")
+        mount /esp
+        mount /efi
+        trap "umount /esp; umount /efi" 0
+        steamos-bootconf set-mode "${args[@]}"
 fi
-
-mount /esp
-mount /efi
-trap "umount /esp; umount /efi" 0
-steamos-bootconf "${args[@]}"
