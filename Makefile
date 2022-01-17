@@ -18,6 +18,7 @@ SUBDIRS :=		\
 	glx		\
 	grub		\
 	misc		\
+	NetworkManager	\
 	offload		\
 	pipewire	\
 	plymouth	\
