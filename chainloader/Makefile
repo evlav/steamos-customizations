@@ -2,8 +2,6 @@ include ../common.mk
 
 BINARIES_IN := $(wildcard bin/*.in)
 BINARIES := $(patsubst %.in,%,$(BINARIES_IN))
-LIBRARIES_EXEC_IN := $(wildcard libexec/*.in)
-LIBRARIES_EXEC := $(patsubst %.in,%,$(LIBRARIES_EXEC_IN))
 # This setuid wrapper exposes a limited subset of steamos-bootconf's
 # functionality to unprivileged callers: specifically the set-mode
 # actions used to configure the well-known boot requests such as:
@@ -25,8 +23,6 @@ install: all
 	for i in steamos-halt steamos-poweroff; do \
 		ln -sfv steamos-reboot $(DESTDIR)$(sbindir)/$$i; \
 	done
-	install -d $(DESTDIR)$(libexecdir)/steamos
-	install -m 0755 $(LIBRARIES_EXEC) $(DESTDIR)$(libexecdir)/steamos
 	install -m 4755 $(SUIDBINS) $(DESTDIR)$(sbindir)
 	install -d $(DESTDIR)$(completionsdir)
 	install -m 0644 $(COMPLETIONS) $(DESTDIR)$(completionsdir)

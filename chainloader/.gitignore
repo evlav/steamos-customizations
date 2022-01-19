@@ -1,3 +1,2 @@
 bin/steamos-reboot
-libexec/steamos-reboot
 systemd/*.service
