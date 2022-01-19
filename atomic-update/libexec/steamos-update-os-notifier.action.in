@@ -46,8 +46,11 @@ online-updates)
     ;;
 offline-updates)
     qdbus org.kde.LogoutPrompt /LogoutPrompt promptReboot
-    touch /run/steamos/update-other
-    "$SHELL" -c 'sleep "$((30+5))"; rm -f /run/steamos/update-other' &
+    @sbindir@/steamos-set-bootmode update-other
+    # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    # There used to be a sleep 35 sec then remove the update request here
+    # I don't think we need or want it. Reinstate if you know better.
+    # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     ;;
 *)
     if [[ ! "$1" ]]; then
