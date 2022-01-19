@@ -45,9 +45,6 @@ fi
 echo "Creating homedir $homedir for UID $uid"
 install -d -m 700 "$homedir"
 find /etc/skel -maxdepth 1 -mindepth 1 -exec cp -vPax {} "$homedir" \;
-if [[ -e /root/.netrc ]]; then
-    install -m 0600 /root/.netrc "$homedir/.netrc"
-fi
 cp -vPax @datadir@/pixmaps/steamos.png "$homedir/.face.icon"
 install -d -m755 "$homedir/Desktop"
 for i in @datadir@/applications/steam.desktop @datadir@/applications/steamos-install{,-devel}.desktop
