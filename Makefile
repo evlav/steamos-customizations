@@ -36,11 +36,11 @@ clean: $(CLEAN_TARGETS)
 
 .PHONY: install
 install: $(INSTALL_TARGETS)
-	# Make sure that all variables were substituted
+# Make sure that all variables were substituted
 	@if [ "$(DESTDIR)" ]; then \
-	  if grep -rq '@[[:alnum:]_]*@' "$(DESTDIR)"; then \
+	  if grep -rq '@[[:alnum:]_]\+@' "$(DESTDIR)"; then \
 	    echo >&2 "Substitution error!!!"; \
-	    grep -rHn '@[[:alnum:]_]*@' "$(DESTDIR)"; \
+	    grep -rHn '@[[:alnum:]_]\+@' "$(DESTDIR)"; \
 	    exit 1; \
 	  fi; \
 	fi
