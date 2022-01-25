@@ -22,6 +22,7 @@ SUBDIRS :=		\
 	pipewire	\
 	plymouth	\
 	settings-importer \
+	sudo		\
 	swap
 
 ALL_TARGETS     := $(patsubst %,all-%,$(SUBDIRS))
