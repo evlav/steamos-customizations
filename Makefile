@@ -20,6 +20,7 @@ SUBDIRS :=		\
 	misc		\
 	NetworkManager	\
 	offload		\
+	pacman		\
 	plymouth	\
 	settings-importer \
 	swap
