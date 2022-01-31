@@ -52,7 +52,19 @@ done
 
 if [[ ! "${no_bootloaders:-}" ]]
 then
-    local ident=$(steamos-bootconf this-image)
+    typeset ident=$(steamos-bootconf this-image)
+    # fallback if there are no bootconfs in /esp, so we can't determine our image name
+    if [[ -z ${ident} ]]
+    then
+        rootdsk=$(findmnt --noheadings -o PARTLABEL / )
+        ident=${rootdsk#rootfs-}
+    fi
+
+    if [[ -z ${ident} ]]
+    then
+        echo "Failed to determine new boot identifier"
+        exit 1
+    fi
 
     steamcl-install
     if mountpoint -q /boot
@@ -70,8 +82,9 @@ then
 
     if [[ ! -e /esp/@bootconf_reldir@/${ident}.conf ]]
     then
+        echo "Initializing boot configuration at /esp/@bootconf_reldir@ for ${ident}"
         mkdir -p /esp/@bootconf_reldir@
-        steamos-bootconf >/esp/@bootconf_reldir@/${ident}.conf
+        steamos-bootconf --conf-dir /esp/@bootconf_reldir@ create --image ${ident}
     fi
 fi
 

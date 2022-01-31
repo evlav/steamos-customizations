@@ -94,9 +94,7 @@ configure_other_efi() {
     if ! [ -e "$bootconf" ]; then
         log "Initializing 'other' esp bootconf: '$bootconf'"
         mkdir -p "$confdir"
-        steamos-bootconf create --conf-dir "$confdir" \
-                         --image "$ident" \
-                         config --set title "$ident"
+        steamos-bootconf create --conf-dir "$confdir" --image "$ident" --set title "$ident"
     fi
 
     roothash=$efi/$ROOTHASH_RELPATH
@@ -271,5 +269,9 @@ log "Installing the bootloaders"
 
 steamos-chroot --partset $UPDATED_SLOT -- steamos-boot-install --no-kernel || \
     err "Failed to install bootloaders"
+
+# Mark the new partition valid, otherwise it will not boot
+# (note; you can't call rauc status mark-good here)
+(( $ERR == 0 )) && steamos-bootconf config --image $UPDATED_SLOT --set image-invalid 0
 
 exit $ERR
