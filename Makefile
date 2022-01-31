@@ -21,6 +21,7 @@ SUBDIRS :=		\
 	misc		\
 	NetworkManager	\
 	offload		\
+	pacman		\
 	plymouth	\
 	settings-importer \
 	sudo		\
