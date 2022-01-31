@@ -130,9 +130,10 @@ do
         fi
 
         steamos-factory-reset-config @factory_reset_config_dir@
+        @sbindir@/steamos-set-bootmode reboot
     elif [[ "$1" =~ ^--update$ ]] || [[ "$1" =~ ^--(update|reboot)-other$ ]]
     then
-        touch "/run/steamos/${1:2}"
+        @sbindir@/steamos-set-bootmode ${1:2}
     elif [[ "$1" =~ ^--next$ ]]
     then
         shift

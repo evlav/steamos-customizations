@@ -41,7 +41,7 @@ update_now() {
 }
 
 update_after_reboot() {
-    touch /run/steamos/update-other
+    /usr/sbin/steamos-set-bootmode update-other
     echo "Reboot to start the update of SteamOS." >&2
 }
 

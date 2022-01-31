@@ -119,6 +119,7 @@ clean:
 	         rm -vf $$x;    \
 	     fi;                \
 	 done
+	@for x in $(SUIDBINS); do rm -vf $(SUIDBINS); done
 
 # -------- Functions -------- #
 
