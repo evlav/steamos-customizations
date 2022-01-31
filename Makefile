@@ -21,7 +21,6 @@ SUBDIRS :=		\
 	misc		\
 	NetworkManager	\
 	offload		\
-	pipewire	\
 	plymouth	\
 	settings-importer \
 	sudo		\
