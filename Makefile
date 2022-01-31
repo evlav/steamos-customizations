@@ -13,6 +13,7 @@ $(info "DESTDIR: $(DESTDIR)")
 SUBDIRS :=		\
 	atomic-update	\
 	chainloader	\
+	desync		\
 	dracut		\
 	gpd-quirks	\
 	glx		\
