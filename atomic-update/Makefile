@@ -10,7 +10,8 @@ RAUC_CONFIG_IN := rauc/system.conf.in
 RAUC_CONFIG :=  $(patsubst %.in,%,$(RAUC_CONFIG_IN))
 RAUC_HOOKS_IN := $(wildcard rauc/*.sh.in)
 RAUC_HOOKS := $(patsubst %.in,%,$(RAUC_HOOKS_IN))
-STEAMOS_ATOMUPD_CONFIG := steamos-atomupd/client.conf
+STEAMOS_ATOMUPD_CONFIG_IN := steamos-atomupd/client.conf.in
+STEAMOS_ATOMUPD_CONFIG := $(patsubst %.in,%,$(STEAMOS_ATOMUPD_CONFIG_IN))
 SERVICES_IN := $(wildcard systemd/*.service.in)
 SERVICES := $(patsubst %.in,%,$(SERVICES_IN))
 SERVICES_OVERRIDE_IN := $(wildcard systemd/*/override.conf.in)
@@ -20,9 +21,9 @@ TMPFILES := $(patsubst %.in,%,$(TMPFILES_IN))
 APPLICATIONS_IN := $(wildcard applications/*.in)
 APPLICATIONS := $(patsubst %.in,%,$(APPLICATIONS_IN))
 TARGETS := $(wildcard systemd/*.target)
-CLEANABLE := $(APPLICATIONS) $(LIBRARIES_EXEC) $(DATA) $(RAUC_CONFIG) $(SERVICES_OVERRIDE)
+CLEANABLE := $(APPLICATIONS) $(LIBRARIES_EXEC) $(DATA) $(RAUC_CONFIG) $(SERVICES_OVERRIDE) $(STEAMOS_ATOMUPD_CONFIG)
 
-all: $(APPLICATIONS) $(DATA) $(LIBRARIES_EXEC) $(RAUC_CONFIG) $(RAUC_HOOKS) $(SERVICES) $(SERVICES_OVERRIDE) $(TMPFILES)
+all: $(APPLICATIONS) $(DATA) $(LIBRARIES_EXEC) $(RAUC_CONFIG) $(RAUC_HOOKS) $(SERVICES) $(SERVICES_OVERRIDE) $(TMPFILES) $(STEAMOS_ATOMUPD_CONFIG)
 
 install: all
 	install -d $(DESTDIR)$(sbindir)

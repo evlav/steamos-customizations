@@ -81,6 +81,12 @@ UDEV_SYMLINKS_RELDIR := disk/by-partsets
 # Directory where partition symlinks are created
 UDEV_SYMLINKS_ABSDIR := /dev/$(UDEV_SYMLINKS_RELDIR)
 
+# URL to query for updates in atomupd -- maps to QueryUrl in client.conf
+ATOMUPD_QUERY_URL := https://atomupd.steamos.cloud/updates
+
+# URL to query for updates in atomupd -- maps to ImagesUrl in client.conf
+ATOMUPD_IMAGES_URL := https://images.steamos.cloud/steamos-holo
+
 %: %.in
 	@echo "Substituting @variables@ in $<"
 	@sed \
@@ -103,6 +109,8 @@ UDEV_SYMLINKS_ABSDIR := /dev/$(UDEV_SYMLINKS_RELDIR)
 	  -e 's;@offload_absdir@;$(OFFLOAD_ABSDIR);g' \
 	  -e 's;@udev_symlinks_reldir@;$(UDEV_SYMLINKS_RELDIR);g' \
 	  -e 's;@udev_symlinks_absdir@;$(UDEV_SYMLINKS_ABSDIR);g' \
+	  -e 's;@atomupd_query_url@;$(ATOMUPD_QUERY_URL);g' \
+	  -e 's;@atomupd_images_url@;$(ATOMUPD_IMAGES_URL);g' \
 	  $< > $@
 	@if grep -q '@[[:alnum:]_]*@' $@; then \
 	  echo >&2 "Substitution error!!!"; \
