@@ -1,8 +1,6 @@
 include ../common.mk
 
-DESYNC_CONFIG_IN := desync/config.json.in
-DESYNC_CONFIG := $(patsubst %.in,%,$(DESYNC_CONFIG_IN))
-CLEANABLE := $(DESYNC_CONFIG)
+DESYNC_CONFIG := $(wildcard desync/*)
 
 all: $(DESYNC_CONFIG)
 

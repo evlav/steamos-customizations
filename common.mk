@@ -84,12 +84,8 @@ UDEV_SYMLINKS_ABSDIR := /dev/$(UDEV_SYMLINKS_RELDIR)
 # URL to query for updates in atomupd -- maps to QueryUrl in client.conf
 ATOMUPD_QUERY_URL := https://atomupd.steamos.cloud/updates
 
-# URL to query for updates in atomupd -- maps to ImagesUrl in client.conf and
-# is used in Desync config.json
+# URL to query for updates in atomupd -- maps to ImagesUrl in client.conf
 ATOMUPD_IMAGES_URL := https://images.steamos.cloud/steamos-holo
-
-# HTTP authentication for updates in atomupd -- used in Desync config.json
-ATOMUPD_IMAGES_HTTP_AUTH := Basic aG9sby1pbWFnZS0yMDIxOjg4OTEyMzNjLWE3NDEtNGEwZS1hNDhhLTU2OTUwMzU0MmYxYQ==
 
 %: %.in
 	@echo "Substituting @variables@ in $<"
@@ -115,7 +111,6 @@ ATOMUPD_IMAGES_HTTP_AUTH := Basic aG9sby1pbWFnZS0yMDIxOjg4OTEyMzNjLWE3NDEtNGEwZS
 	  -e 's;@udev_symlinks_absdir@;$(UDEV_SYMLINKS_ABSDIR);g' \
 	  -e 's;@atomupd_query_url@;$(ATOMUPD_QUERY_URL);g' \
 	  -e 's;@atomupd_images_url@;$(ATOMUPD_IMAGES_URL);g' \
-	  -e 's;@atomupd_images_http_auth@;$(ATOMUPD_IMAGES_HTTP_AUTH);g' \
 	  $< > $@
 	@if grep -q '@[[:alnum:]_]*@' $@; then \
 	  echo >&2 "Substitution error!!!"; \

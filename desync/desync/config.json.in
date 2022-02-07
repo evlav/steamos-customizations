@@ -1,8 +1,0 @@
-{
-  "store-options": {
-    "@atomupd_images_url@/*/*/": {
-      "http-auth": "@atomupd_images_http_auth@"
-    }
-  }
-}
-
