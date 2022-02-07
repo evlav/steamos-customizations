@@ -1,5 +1,4 @@
 bin/steamos-boot-install
-bin/steamos-bootloaders-install
 bin/steamos-chroot
 bin/steamos-clone
 bin/steamos-factory-reset

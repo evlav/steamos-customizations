@@ -27,4 +27,4 @@ _steamos-boot-install()
 
     COMPREPLY=($(compgen -W "--roothash --no-bootloaders" "--no-kernel" -- "$cur"))
 } &&
-complete -F _steamos-boot-install steamos-boot-install steamos-bootloaders-install
+complete -F _steamos-boot-install steamos-boot-install
