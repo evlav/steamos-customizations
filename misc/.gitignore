@@ -2,8 +2,10 @@ bin/steamos-boot-install
 bin/steamos-chroot
 bin/steamos-clone
 bin/steamos-factory-reset
+bin/steamos-factory-reset-config
 bin/steamos-mount
 bin/steamos-partsets
+bin/steamos-readonly
 bin/steamos-verity
 libexec/steamos-create-homedir
 libexec/steamos-partsets-generator
