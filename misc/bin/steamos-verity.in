@@ -102,6 +102,7 @@ status() {
         return
     fi
 
+    # XXX: this seems off
     if [[ ! "${roothash:-}" ]] && [[ ! "${filesystem_is_readonly:-}" ]]
     then
         echo "disabled"
