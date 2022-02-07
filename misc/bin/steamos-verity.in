@@ -36,15 +36,14 @@ blockinfo() {
 }
 
 read_write() {
-    tune2fs -O ^read-only "$1"
+    steamos-readonly disable
+
     if grep -q '^/dev/mapper/root / ' /proc/mounts
     then
         echo "Warning: The rootfs is still read-only!" >&2
         echo "         Reboot to complete setup." >&2
         return
     fi
-
-    mount -o remount,rw /
     rm -f /efi/@roothash_relpath@
     sync /
 }
@@ -59,9 +58,8 @@ read_only() {
 
     mapfile -t rootfs < <(blockinfo "$1")
 
-    sync /
-    mount -o remount,ro /
-    tune2fs -O read-only "${rootfs[0]}"
+    steamos-readonly enable
+
     veritysetup format --data-block-size "${rootfs[6]}" --hash-block-size "${rootfs[6]}" "$@" | \
         tee /dev/stderr | \
         sed -n 's,^Root hash:[[:blank:]]\+\([[:xdigit:]]\{64\}\)$,\1,p' >/efi/@roothash_relpath@
@@ -79,7 +77,7 @@ status() {
         device_is_readonly=yes
     fi
 
-    if tune2fs -l "$1" | grep -q '^Filesystem features: .*read-only.*$'
+    if steamos-readonly status >/dev/null
     then
         filesystem_is_readonly=yes
     fi
