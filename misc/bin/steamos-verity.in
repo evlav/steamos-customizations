@@ -28,17 +28,6 @@ Enable or disable the block level verification on the current running SteamOS.
 EOF
 }
 
-blockinfo() {
-    eval "$(blkid "$1" | sed 's,^\(.*\): ,export DEVNAME="\1" ,')"
-    echo "$DEVNAME"
-    echo "${UUID:-}"
-    echo "${PARTLABEL:-}"
-    echo "${PARTUUID:-}"
-    echo "${TYPE:-}"
-    echo "${LABEL:-}"
-    echo "${BLOCK_SIZE:-}"
-}
-
 mapper_root_mounted() {
     grep -q '^/dev/mapper/root / ' /proc/mounts
 }
@@ -64,11 +53,11 @@ read_only() {
         return
     fi
 
-    mapfile -t rootfs < <(blockinfo "$ROOTDEV")
+    local block_size=$(blkid -o value -s BLOCK_SIZE "$ROOTDEV")
 
     steamos-readonly enable
 
-    veritysetup format --data-block-size "${rootfs[6]}" --hash-block-size "${rootfs[6]}" \
+    veritysetup format --data-block-size "$block_size" --hash-block-size "$block_size" \
         "$ROOTDEV" "$VERITYDEV" | \
         tee /dev/stderr | \
         sed -n 's,^Root hash:[[:blank:]]\+\([[:xdigit:]]\{64\}\)$,\1,p' > "$HASHFILE"
