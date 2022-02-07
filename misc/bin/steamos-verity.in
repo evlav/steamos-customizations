@@ -113,17 +113,10 @@ status() {
         return 1
     fi
 
-    if [[ "${device_is_readonly:-}" ]]
-    then
-        device_is_readonly=no
-    fi
-
-    if [[ "${filesystem_is_readonly:-}" ]]
-    then
-        filesystem_is_readonly=no
-    fi
-
-    echo "unknown (device-is-read-only: $device_is_readonly, filesystem-is-read-only: $filesystem_is_readonly, roothash: ${roothash:-none})"
+    echo "unknown"
+    echo "- device-is-read-only: ${device_is_readonly:-no}"
+    echo "- filesystem-is-read-only: ${filesystem_is_readonly:-no}"
+    echo "- roothash: ${roothash:-none}"
     return 1
 }
 
