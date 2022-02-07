@@ -39,10 +39,14 @@ blockinfo() {
     echo "${BLOCK_SIZE:-}"
 }
 
+mapper_root_mounted() {
+    grep -q '^/dev/mapper/root / ' /proc/mounts
+}
+
 read_write() {
     steamos-readonly disable
 
-    if grep -q '^/dev/mapper/root / ' /proc/mounts
+    if mapper_root_mounted
     then
         echo "Warning: The rootfs is still read-only!" >&2
         echo "         Reboot to complete setup." >&2
@@ -53,7 +57,7 @@ read_write() {
 }
 
 read_only() {
-    if grep -q '^/dev/mapper/root / ' /proc/mounts
+    if mapper_root_mounted
     then
         echo "Warning: The rootfs is already read-only!" >&2
         echo "         Nothing is performed." >&2
@@ -77,7 +81,7 @@ status() {
     local device_is_readonly
     local roothash
 
-    if grep -q '^/dev/mapper/root / ' /proc/mounts
+    if mapper_root_mounted
     then
         device_is_readonly=yes
     fi
