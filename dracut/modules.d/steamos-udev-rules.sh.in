@@ -32,7 +32,7 @@ get_chainedloader_device() {
         exit 0
     fi
 
-    IFS=, mapfile -t cfgs < <(FS=, steamos-ls --output boot-requested-at,boot-other,boot-other-disabled,image-invalid,path "$@" | sort -r)
+    IFS=, mapfile -t cfgs < <(FS=, steamos-ls --output boot-requested-at,boot-other,boot-other-disabled,image-invalid,path | sort -r)
     for i in "${cfgs[@]}"
     do
         local boot_requested_at
