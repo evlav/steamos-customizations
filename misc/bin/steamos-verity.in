@@ -16,6 +16,10 @@
 
 set -euo pipefail
 
+declare -r ROOTDEV=@udev_symlinks_absdir@/self/rootfs
+declare -r VERITYDEV=@udev_symlinks_absdir@/self/verity
+declare -r HASHFILE=/efi/@roothash_relpath@
+
 usage() {
     cat <<EOF
 Usage: ${0##*/} enable|disable|status|verify
@@ -44,7 +48,7 @@ read_write() {
         echo "         Reboot to complete setup." >&2
         return
     fi
-    rm -f /efi/@roothash_relpath@
+    rm -f "$HASHFILE"
     sync /
 }
 
@@ -56,13 +60,14 @@ read_only() {
         return
     fi
 
-    mapfile -t rootfs < <(blockinfo "$1")
+    mapfile -t rootfs < <(blockinfo "$ROOTDEV")
 
     steamos-readonly enable
 
-    veritysetup format --data-block-size "${rootfs[6]}" --hash-block-size "${rootfs[6]}" "$@" | \
+    veritysetup format --data-block-size "${rootfs[6]}" --hash-block-size "${rootfs[6]}" \
+        "$ROOTDEV" "$VERITYDEV" | \
         tee /dev/stderr | \
-        sed -n 's,^Root hash:[[:blank:]]\+\([[:xdigit:]]\{64\}\)$,\1,p' >/efi/@roothash_relpath@
+        sed -n 's,^Root hash:[[:blank:]]\+\([[:xdigit:]]\{64\}\)$,\1,p' > "$HASHFILE"
 
     echo "Reboot to complete setup." >&2
 }
@@ -82,9 +87,9 @@ status() {
         filesystem_is_readonly=yes
     fi
 
-    if [[ -e /efi/@roothash_relpath@ ]]
+    if [[ -e "$HASHFILE" ]]
     then
-        roothash="$(cat /efi/@roothash_relpath@)"
+        roothash="$(cat $HASHFILE)"
     fi
 
     if [[ "${roothash:-}" ]] && [[ "${device_is_readonly:-}" ]] && [[ "${filesystem_is_readonly:-}" ]]
@@ -118,12 +123,12 @@ status() {
 }
 
 verify() {
-    if [[ ! -e /efi/@roothash_relpath@ ]]
+    if [[ ! -e "$HASHFILE" ]]
     then
         return 1
     fi
 
-    veritysetup verify "$@" "$(cat /efi/@roothash_relpath@)"
+    veritysetup verify "$ROOTDEV" "$VERITYDEV" "$(cat $HASHFILE)"
 }
 
 # Ideally status will be root-free, alas steamos-readonly status
@@ -135,16 +140,16 @@ fi
 
 case "${1:-}" in
     disable)
-        read_write @udev_symlinks_absdir@/self/rootfs
+        read_write
         ;;
     enable)
-        read_only @udev_symlinks_absdir@/self/rootfs @udev_symlinks_absdir@/self/verity
+        read_only
         ;;
     status)
-        status @udev_symlinks_absdir@/self/rootfs
+        status
         ;;
     verify)
-        verify @udev_symlinks_absdir@/self/rootfs @udev_symlinks_absdir@/self/verity
+        verify
         ;;
     *)
         usage
