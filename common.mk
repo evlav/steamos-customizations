@@ -87,6 +87,10 @@ ATOMUPD_QUERY_URL := https://atomupd.steamos.cloud/updates
 # URL to query for updates in atomupd -- maps to ImagesUrl in client.conf
 ATOMUPD_IMAGES_URL := https://images.steamos.cloud/steamos-holo
 
+# URL to query for updates in atomuud from static .json files -- maps to MetaUrl in client.conf
+# For now use the same url as images so .json files will be on the same server as the images themselves
+ATOMUPD_META_URL := https://images.steamos.cloud/steamos-holo
+
 %: %.in
 	@echo "Substituting @variables@ in $<"
 	@sed \
@@ -111,6 +115,7 @@ ATOMUPD_IMAGES_URL := https://images.steamos.cloud/steamos-holo
 	  -e 's;@udev_symlinks_absdir@;$(UDEV_SYMLINKS_ABSDIR);g' \
 	  -e 's;@atomupd_query_url@;$(ATOMUPD_QUERY_URL);g' \
 	  -e 's;@atomupd_images_url@;$(ATOMUPD_IMAGES_URL);g' \
+          -e 's;@atomupd_meta_url@;$(ATOMUPD_META_URL);g' \
 	  $< > $@
 	@if grep -q '@[[:alnum:]_]*@' $@; then \
 	  echo >&2 "Substitution error!!!"; \
