@@ -217,6 +217,7 @@ sync_var_mountpoints() {
         --exclude="/lib/dkms/" \
         --exclude="/lib/modules/" \
         --exclude="/lib/pacman/" \
+        --exclude="/lib/NetworkManager/" \
         --exclude="/lost+found/" \
         "$src/" "$dst/"
     fsfreeze -u "$src"
@@ -262,12 +263,12 @@ then
 fi
 
 #
-# Handle the bootloaders
+# Handle the bootloaders and network configuration
 #
 
 log "Installing the bootloaders"
 
-steamos-chroot --partset $UPDATED_SLOT -- steamos-boot-install --no-kernel || \
+steamos-chroot --partset $UPDATED_SLOT -- steamos-finalize-install --no-kernel || \
     err "Failed to install bootloaders"
 
 # Mark the new partition valid, otherwise it will not boot

@@ -1,0 +1,187 @@
+#!/bin/bash
+# -*- mode: sh; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
+# vim: et sts=4 sw=4
+
+#  SPDX-License-Identifier: LGPL-2.1+
+#
+#  Copyright ©2022 Valve Corporation.
+#
+#  This file is part of steamos-customizations.
+#
+#  steamos-customizations is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU Lesser General Public License as
+#  published by the Free Software Foundation; either version 2.1 of the License,
+#  or (at your option) any later version.
+
+set -e
+set -o pipefail
+set -u
+
+function usage
+{
+    cat <<EOF
+Usage: ${0##*/} [--roothash=HASH] [--no-bootloaders] [--no-kernel] [--no-migrate]
+
+Perform post-update migration steps before marking the new installation ready.
+Install boot artifacts on your device.
+EOF
+}
+
+# Install boot artifacts
+function install_bootloaders
+{
+    if [[ ! "${no_bootloaders:-}" ]]
+    then
+        typeset ident
+        ident=$(steamos-bootconf this-image)
+        # fallback if there are no bootconfs in /esp, so we can't determine our image name
+        if [[ -z ${ident} ]]
+        then
+            rootdsk=$(findmnt --noheadings -o PARTLABEL / )
+            ident=${rootdsk#rootfs-}
+        fi
+
+        if [[ -z ${ident} ]]
+        then
+            echo "Failed to determine new boot identifier"
+            exit 1
+        fi
+
+        steamcl-install
+        if mountpoint -q /boot
+        then
+            grub-install
+        else
+            echo "Warning: Skipping installation artifacts to /boot!" >&2
+            grub-mkimage
+        fi
+
+        if [[ ! -e /efi/@steamos_relpath@ ]]
+        then
+            mkdir -p /efi/@steamos_relpath@
+        fi
+
+        if [[ ! -e /esp/@bootconf_reldir@/${ident}.conf ]]
+        then
+            echo "Initializing boot configuration at /esp/@bootconf_reldir@ for ${ident}"
+            mkdir -p /esp/@bootconf_reldir@
+            steamos-bootconf --conf-dir /esp/@bootconf_reldir@ create --image ${ident}
+        fi
+    fi
+
+    if [[ ! "${no_kernel:-}" ]]
+    then
+        mapfile -t moduledirs < <(ls -1d /usr/lib/steamos/modules/* 2>/dev/null)
+        for moduledir in "${moduledirs[@]}"
+        do
+            if ! read -r pkgbase > /dev/null 2>&1 < "$moduledir/pkgbase"
+            then
+                # if the kernel has no pkgbase, we skip it
+                continue
+            fi
+
+            kver="${moduledir##*/}"
+            install -Dm644 "@datadir@/factory/var/lib/modules/$kver/vmlinuz" "/boot/vmlinuz-$pkgbase"
+            mkdir -p "/var/lib/modules/$kver"
+            cp -a "@datadir@/factory/var/lib/modules/$kver" "/var/lib/modules/"
+            dracut --force --hostonly "/boot/initramfs-$pkgbase.img" "$kver"
+            dracut --force --no-hostonly "/boot/initramfs-$pkgbase-fallback.img" "$kver"
+        done
+    fi
+    if [[ "${roothash:-}" ]]
+    then
+        mkdir -p /efi/SteamOS
+        echo "$roothash" >/efi/@roothash_relpath@
+    fi
+    mapfile -t linux < <(ls -1 /boot/vmlinuz-* 2>/dev/null)
+    if [[ "${#linux[*]}" -eq 0 ]]
+    then
+        echo "Warning: /boot: No such vmlinuz!" >&2
+    fi
+    mapfile -t initramfs < <(ls -1 /boot/initramfs-*.img 2>/dev/null)
+    if [[ "${#initramfs[*]}" -eq 0 ]]
+    then
+        echo "Warning: /boot: No such initramfs!" >&2
+    fi
+    mapfile -t modules < <(ls -d1 /usr/lib/modules/* 2>/dev/null)
+    if [[ "${#modules[*]}" -eq 0 ]]
+    then
+        echo "Warning: /usr/lib/modules: No such modules!" >&2
+    fi
+    update-grub
+}
+
+function in_chroot
+{
+    local proc_root;
+    local root;
+    if ! proc_root="$(stat --printf "%d %i" /proc/1/root/ 2>/dev/null)" || ! root="$(stat --printf "%d %i" / 2>/dev/null)"; then
+        return 1;
+    fi;
+    test "$proc_root" != "$root"
+}
+
+# Migrate configuration before booting new image.
+# Currently:
+#   Convert wifi system connections to a form that iwd can handle
+#
+function migrate_network
+{
+    # remove properties used by NetworkManager that are not permitted by iwd:
+    for f in $(grep -l '^type=wifi' /var/lib/overlays/etc/upper/NetworkManager/system-connections/*.nmconnection ||: )
+    do
+        sed -i 's/^\(mac-address\|interface-name\|permissions\|bssid\)=.*//' "$f" ||:
+    done
+
+    # when converting from early OS builds, we may not have masked out NetworkManager ephemeral files
+    rm -f /var/lib/NetworkManager/*
+}
+
+while [[ "$#" -ne 0 ]]
+do
+    if [[ "$1" =~ ^(-h|--help)$ ]]
+    then
+        usage
+        exit
+    elif [[ "$1" =~ ^(--roothash)$ ]]
+    then
+        shift
+        roothash="$1"
+    elif [[ "$1" =~ ^(--no-bootloaders)$ ]]
+    then
+        no_bootloaders=1
+    elif [[ "$1" =~ ^(--no-kernel)$ ]]
+    then
+        no_kernel=1
+    elif [[ "$1" =~ ^(--no-boot-install)$ ]]
+    then
+        no_boot_install=1
+    elif [[ "$1" =~ ^(--no-migrate)$ ]]
+    then
+        no_migrate=1
+    elif [[ "$1" =~ ^(-f|--force)$ ]]
+    then
+        force_migrate=1
+    else
+        usage
+        echo "$1: Too many arguments" >&2
+        exit 1
+    fi
+    shift
+done
+
+if [[ ! ${no_migrate:-} ]]
+then
+    if in_chroot || [[ ${force_migrate:-} ]]
+    then
+        migrate_network
+    else
+        echo "Skipping configuration migration steps as this is not running in a chroot."
+    fi
+fi
+
+if [[ ! ${no_boot_install:-} ]]
+then
+    install_bootloaders   
+fi
+
