@@ -13,18 +13,14 @@ $(info "DESTDIR: $(DESTDIR)")
 SUBDIRS :=		\
 	atomic-update	\
 	chainloader	\
-	desync		\
 	dracut		\
 	gpd-quirks	\
 	glx		\
 	grub		\
 	misc		\
-	NetworkManager	\
 	offload		\
-	pacman		\
 	plymouth	\
 	settings-importer \
-	sudo		\
 	swap
 
 ALL_TARGETS     := $(patsubst %,all-%,$(SUBDIRS))
