@@ -82,11 +82,11 @@ UDEV_SYMLINKS_RELDIR := disk/by-partsets
 UDEV_SYMLINKS_ABSDIR := /dev/$(UDEV_SYMLINKS_RELDIR)
 
 # URL to query for updates in atomupd -- maps to ImagesUrl in client.conf
-ATOMUPD_IMAGES_URL := https://images.steamos.cloud/steamos-holo
+ATOMUPD_IMAGES_URL := https://atomupd-images.steamos.cloud/steamos-holo
 
 # URL to query for updates in atomuud from static .json files -- maps to MetaUrl in client.conf
 # For now use the same url as images so .json files will be on the same server as the images themselves
-ATOMUPD_META_URL := https://images.steamos.cloud/steamos-holo
+ATOMUPD_META_URL := https://atomupd.steamos.cloud/meta
 
 %: %.in
 	@echo "Substituting @variables@ in $<"
