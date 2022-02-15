@@ -120,12 +120,17 @@ if [ -z "$EFI" ]; then
     exit 0
 fi
 
-info "Mounting $EFI with -o ro"
-EFI="$(expand_dev "$EFI")"
-mount -o ro "$EFI" /mnt 2>&1 | vinfo
+efidev="$(expand_dev "$EFI")"
+
+info "Waiting for device ${efidev}"
+wait_for_dev "${efidev}"
+
+info "Mounting ${EFI##*=} with -o ro"
+mount -o ro "${efidev}" /mnt 2>&1 | vinfo
+
 trap "if ismounted /mnt; then umount /mnt; fi" 0
 if ! ismounted /mnt; then
-    warn "Mounting $EFI failed!"
+    warn "Mounting $efidev failed!"
     warn "*** Dropping you to a shell; the system will continue"
     warn "*** when you leave the shell."
     emergency_shell
