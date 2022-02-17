@@ -1,3 +1,4 @@
 [Server]
+QueryUrl = @atomupd_query_url@
 ImagesUrl = @atomupd_images_url@
 MetaUrl = @atomupd_meta_url@
