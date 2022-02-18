@@ -4,7 +4,7 @@
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2019-2020 Collabora Ltd.
+#  Copyright © 2019-2022 Collabora Ltd.
 #  Copyright © 2019-2020 Valve Corporation.
 #
 #  This file is part of steamos-customizations.
@@ -23,6 +23,32 @@ set -u
 
 log () { echo >&2 "$@"; }
 fail() { echo >&2 "Error:" "$@"; exit 1; }
+
+SYMLINKS_DIR=/dev/disk/by-partsets
+
+#
+# Ensure that the UUID of the update is different from the current rootfs
+#
+
+# `steamos-image-recipes` is expected to include a UUID text file inside the
+# RAUC bundle
+uuid_path="${RAUC_BUNDLE_MOUNT_POINT}/UUID"
+
+if [[ -f "${uuid_path}" ]]; then
+    target_uuid=$(<${uuid_path})
+
+    this_image=$(steamos-bootconf this-image)
+    root_uuid=$(blkid -o value -s UUID ${SYMLINKS_DIR}/${this_image}/rootfs)
+
+    log "Current image rootfs UUID: $root_uuid"
+    log "Target image rootfs UUID: $target_uuid"
+
+    if [[ ${root_uuid} == ${target_uuid} ]]; then
+        fail "Cannot install an image with the same rootfs UUID as the current active one"
+    fi
+else
+    log "Trying to install an update that doesn't provide its UUID, trying to continue anyway"
+fi
 
 #
 # Disable all systemd timers
