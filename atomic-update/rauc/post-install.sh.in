@@ -267,8 +267,10 @@ fi
 #
 
 log "Installing the bootloaders"
-
+# any newer image should have finalize-install but a downgrade may be missing it;
+# if so look for an older post-install script
 steamos-chroot --partset $UPDATED_SLOT -- steamos-finalize-install --no-kernel || \
+    steamos-chroot --partset $UPDATED_SLOT -- steamos-boot-install --no-kernel || \
     err "Failed to install bootloaders"
 
 # Mark the new partition valid, otherwise it will not boot

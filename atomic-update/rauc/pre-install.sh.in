@@ -32,11 +32,14 @@ SYMLINKS_DIR=/dev/disk/by-partsets
 
 # `steamos-image-recipes` is expected to include a UUID text file inside the
 # RAUC bundle
-uuid_path="${RAUC_BUNDLE_MOUNT_POINT}/UUID"
+target_uuid=
+if [[ -f ${RAUC_BUNDLE_MOUNT_POINT}/UUID ]]; then
+    target_uuid=$(<"${RAUC_BUNDLE_MOUNT_POINT}/UUID}")
+elif [[ -f ${RAUC_BUNDLE_MOUNT_POINT}/rootfs.img ]]; then
+    target_uuid=$(blkid -o value -s UUID ${RAUC_BUNDLE_MOUNT_POINT}/rootfs.img)
+fi
 
-if [[ -f "${uuid_path}" ]]; then
-    target_uuid=$(<${uuid_path})
-
+if [[ ${target_uuid} ]]; then
     this_image=$(steamos-bootconf this-image)
     root_uuid=$(blkid -o value -s UUID ${SYMLINKS_DIR}/${this_image}/rootfs)
 
