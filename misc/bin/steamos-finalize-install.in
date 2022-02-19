@@ -128,9 +128,12 @@ function in_chroot
 function migrate_network
 {
     # remove properties used by NetworkManager that are not permitted by iwd:
-    for f in $(grep -l '^type=wifi' /var/lib/overlays/etc/upper/NetworkManager/system-connections/*.nmconnection ||: )
+    find /var/lib/overlays/etc/upper/NetworkManager/system-connections/ -type f -name \*.nmconnection -print0 | while read -r -d $'\0' file;
     do
-        sed -i 's/^\(mac-address\|interface-name\|permissions\|bssid\)=.*//' "$f" ||:
+        if grep -q '^type=wifi' "$file"
+        then
+            sed -i 's/^\(mac-address\|interface-name\|permissions\|bssid\)=.*//' "$file" ||:
+        fi
     done
 
     # when converting from early OS builds, we may not have masked out NetworkManager ephemeral files
