@@ -34,7 +34,7 @@ SYMLINKS_DIR=/dev/disk/by-partsets
 # RAUC bundle
 target_uuid=
 if [[ -f ${RAUC_BUNDLE_MOUNT_POINT}/UUID ]]; then
-    target_uuid=$(<"${RAUC_BUNDLE_MOUNT_POINT}/UUID}")
+    target_uuid=$(<"${RAUC_BUNDLE_MOUNT_POINT}/UUID")
 elif [[ -f ${RAUC_BUNDLE_MOUNT_POINT}/rootfs.img ]]; then
     target_uuid=$(blkid -o value -s UUID ${RAUC_BUNDLE_MOUNT_POINT}/rootfs.img)
 fi
