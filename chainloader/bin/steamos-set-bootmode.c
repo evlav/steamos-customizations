@@ -1,3 +1,5 @@
+// vim: et sts=4 sw=4
+
 // ============================================================================
 // SPDX-License-Identifier: LGPL-2.1+
 
@@ -28,12 +30,12 @@
 // steam and the plasma UI to request those update modes safely.
 
 static char *const allowed_mode[] = {
-      "shutdown",
-      "update",
-      "update-other",
-      "reboot",
-      "reboot-other",
-      NULL,
+    "shutdown",
+    "update",
+    "update-other",
+    "reboot",
+    "reboot-other",
+    NULL,
 };
 
 static int set_mode (const char *const self, char *const mode)
