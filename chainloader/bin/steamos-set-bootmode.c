@@ -36,7 +36,7 @@ static char *const allowed_mode[] = {
       NULL,
 };
 
-static void set_mode (char *const mode)
+static void set_mode (const char *const self, char *const mode)
 {
     char *const argv[] = {
         BINDIR "/steamos-bootconf",
@@ -45,6 +45,12 @@ static void set_mode (char *const mode)
         NULL
     };
     int e = 0;
+
+    if (geteuid() != 0)
+    {
+        fprintf( stderr, "%s should be setuid root\n", self );
+        exit( EPERM );
+    }
 
     execv(argv[0], argv);
     e = errno;
@@ -65,21 +71,13 @@ static void usage (int status)
 
 int main (int argc, char **argv)
 {
-    uid_t euid = geteuid();
-
-    if( euid != 0 )
-    {
-        fprintf( stderr, "%s should be setuid root\n", argv[0] );
-        exit( EPERM );
-    }
-
     if( argc < 2 )
         usage( EINVAL );
 
     for( int m = 0; allowed_mode[m] != NULL; m++ )
     {
         if( strcmp( allowed_mode[m], argv[1] ) == 0 )
-            set_mode( allowed_mode[m] );
+            set_mode( argv[0], allowed_mode[m] );
     }
 
     usage( EINVAL );
