@@ -27,22 +27,26 @@
 // reboot reboot-other update (for example). This allows things like
 // steam and the plasma UI to request those update modes safely.
 
-static const char *allowed_mode[] =
-  {
+static char *const allowed_mode[] = {
       "shutdown",
       "update",
       "update-other",
       "reboot",
       "reboot-other",
       NULL,
-  };
+};
 
-static void set_mode (const char *mode)
+static void set_mode (char *const mode)
 {
+    char *const argv[] = {
+        BINDIR "/steamos-bootconf",
+        "set-mode",
+        mode,
+        NULL
+    };
     int e = 0;
 
-    execlp( "steamos-bootconf",
-            "steamos-bootconf", "set-mode", mode, (char *)NULL );
+    execv(argv[0], argv);
     e = errno;
     perror( "could not execute 'steamos-bootconf'" );
     exit( e );
