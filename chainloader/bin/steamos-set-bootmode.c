@@ -71,7 +71,7 @@ static void usage (int status)
 
 int main (int argc, char **argv)
 {
-    if( argc < 2 )
+    if( argc != 2 )
         usage( EINVAL );
 
     for( int m = 0; allowed_mode[m] != NULL; m++ )
