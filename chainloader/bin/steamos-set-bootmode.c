@@ -36,7 +36,7 @@ static char *const allowed_mode[] = {
       NULL,
 };
 
-static void set_mode (const char *const self, char *const mode)
+static int set_mode (const char *const self, char *const mode)
 {
     char *const argv[] = {
         BINDIR "/steamos-bootconf",
@@ -49,16 +49,16 @@ static void set_mode (const char *const self, char *const mode)
     if (geteuid() != 0)
     {
         fprintf( stderr, "%s should be setuid root\n", self );
-        exit( EPERM );
+        return EPERM;
     }
 
     execv(argv[0], argv);
     e = errno;
     perror( "could not execute 'steamos-bootconf'" );
-    exit( e );
+    return e;
 }
 
-static void usage (int status)
+static int usage (void)
 {
     fprintf( stderr, "%s <", program_invocation_short_name );
 
@@ -66,21 +66,19 @@ static void usage (int status)
         fprintf( stderr, "%s%s", m == 0 ? "" : "|", allowed_mode[m] );
 
     fprintf( stderr, ">\n" );
-    exit( status );
+    return EINVAL;
 }
 
 int main (int argc, char **argv)
 {
     if( argc != 2 )
-        usage( EINVAL );
+        return usage();
 
     for( int m = 0; allowed_mode[m] != NULL; m++ )
     {
         if( strcmp( allowed_mode[m], argv[1] ) == 0 )
-            set_mode( argv[0], allowed_mode[m] );
+            return set_mode( argv[0], allowed_mode[m] );
     }
 
-    usage( EINVAL );
-
-    return 0;
+    return usage();
 }
