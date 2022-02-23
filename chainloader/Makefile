@@ -15,7 +15,7 @@ SERVICES := $(patsubst %.in,%,$(SERVICES_IN))
 all: $(BINARIES) $(LIBRARIES_EXEC) $(SERVICES) $(SUIDBINS)
 
 bin/steamos-set-bootmode: bin/steamos-set-bootmode.c
-	$(CC) $^ -DBINDIR=\"$(bindir)\" -o $@
+	$(CC) -Wall -Wextra $^ -DBINDIR=\"$(bindir)\" -o $@
 
 install: all
 	install -d $(DESTDIR)$(sbindir)

@@ -65,7 +65,6 @@ static void usage (int status)
 
 int main (int argc, char **argv)
 {
-    int done = 0;
     uid_t euid = geteuid();
 
     if( euid != 0 )
