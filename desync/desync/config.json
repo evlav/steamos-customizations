@@ -1,10 +1,12 @@
 {
   "store-options": {
     "https://steamdeck-images.steamos.cloud/steamdeck/*/*/": {
-      "http-auth": "Basic anVwaXRlci1pbWFnZS0yMDIxOmU1NGZlN2YwLTc1NmUtNDZlMS05MGQyLTc4NDNjZGEwYWMwMQ=="
+      "http-auth": "Basic anVwaXRlci1pbWFnZS0yMDIxOmU1NGZlN2YwLTc1NmUtNDZlMS05MGQyLTc4NDNjZGEwYWMwMQ==",
+      "error-retry-base-interval": 1000000000
     },
     "https://images.steamos.cloud/steamos-holo/*/*/*/": {
-      "http-auth": "Basic aG9sby1pbWFnZS0yMDIxOjg4OTEyMzNjLWE3NDEtNGEwZS1hNDhhLTU2OTUwMzU0MmYxYQ=="
+      "http-auth": "Basic aG9sby1pbWFnZS0yMDIxOjg4OTEyMzNjLWE3NDEtNGEwZS1hNDhhLTU2OTUwMzU0MmYxYQ==",
+      "error-retry-base-interval": 1000000000
     }
   }
 }
