@@ -33,8 +33,8 @@ die() { logger -p daemon.error "$*"; exit 1; }
 on_err() { die "Failed to migrate OOBE user data, some stale data may exist in '$old_home'"; }
 trap on_err ERR
 
-# Shouldn't have been invoked if $old_home isn't here
-[[ -d $old_home ]] || die "'$old_home' does not exist, nothing to migrate"
+# Shouldn't have been invoked if $old_home isn't here or is a symlink.
+[[ -d $old_home && ! -L $old_home ]] || die "'$old_home' does not exist or is not a folder, nothing to migrate"
 
 # We only want to do opinionated things to $old_home if it is owned by $MIGRATE_USERID, but $MIGRATE_USERID is no longer
 # named $MIGRATE_USERNAME.  Otherwise we'd delete random things if you renamed your user doorstop, or made a new user
@@ -72,6 +72,12 @@ cp -rv /etc/skel/. "$old_home"/
 rm -rf "$old_home"/Desktop
 
 # Do this as the final step such that interruptions just retry.
+sync
 mv -v "$old_home" "$new_home"
+
+# Create an old->new symlink.  This is a fallback for cases where the old home directory is still referenced, but
+# shouldn't really be in use.  This part is less-indempotent.
+ln -sv "$new_home" ./"$MIGRATE_USERNAME"
+sync
 
 info "Successfully migrated $old_home -> $new_home"

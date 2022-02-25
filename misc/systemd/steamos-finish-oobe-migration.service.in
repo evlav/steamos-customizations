@@ -14,7 +14,7 @@ Description=Finish migration from OOBE build
 After=sysinit.target
 # We don't want anything that will start user sessions to happen before we fix the /home/ folder
 Before=multi-user.target
-ConditionPathExists=/home/doorstop
+ConditionPathIsDirectory=/home/doorstop
 
 [Service]
 Type=oneshot
