@@ -77,7 +77,7 @@ mv -v "$old_home" "$new_home"
 
 # Create an old->new symlink.  This is a fallback for cases where the old home directory is still referenced, but
 # shouldn't really be in use.  This part is less-indempotent.
-ln -sv "$new_home" ./"$MIGRATE_USERNAME"
+ln -sv ./"$new_username" "$old_home"
 sync
 
 info "Successfully migrated $old_home -> $new_home"
