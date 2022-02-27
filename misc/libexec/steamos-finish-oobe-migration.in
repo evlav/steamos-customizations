@@ -68,8 +68,8 @@ fi
 # First, we want to re-acquire anything in /etc/skel, rather than the skeleton that was copied in OOBE
 cp -rv /etc/skel/. "$old_home"/
 
-# The OOBE dropped things on the desktop we don't want
-rm -rf "$old_home"/Desktop
+# The OOBE dropped a debug shortcut on the default desktop that shouldn't be there.
+rm -rf "${old_home}/Desktop/RTST Validation.desktop"
 
 # Do this as the final step such that interruptions just retry.
 sync
