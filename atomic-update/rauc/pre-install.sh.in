@@ -68,3 +68,10 @@ while read -r service _; do
     systemctl stop "$service" >/dev/null
     echo "$service"
 done > "$ACTIVE_TIMERS"
+
+#
+# Set the current partition as the primary, because we want to ensure that the
+# "other" partition doesn't get chosen until the update is successfully applied
+#
+
+steamos-bootconf set-mode reboot
