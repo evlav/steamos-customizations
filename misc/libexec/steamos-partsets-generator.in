@@ -25,11 +25,15 @@ udev_rules() {
 #
 EOF
 
+    # ignore the "other" partitions, so they don't know up in dolphin
+    local udisks
+    [ "$partset" = "other" ] && udisks=1 || udisks=0
+
     # must be after 60-persistent-storage.rules
     while read -r name partuuid
     do
         cat <<EOF
-ENV{ID_PART_ENTRY_SCHEME}=="gpt", ENV{ID_PART_ENTRY_UUID}=="$partuuid", SYMLINK+="@udev_symlinks_reldir@/$partset/$name"
+ENV{ID_PART_ENTRY_SCHEME}=="gpt", ENV{ID_PART_ENTRY_UUID}=="$partuuid", SYMLINK+="@udev_symlinks_reldir@/$partset/$name", ENV{UDISKS_IGNORE}="$udisks"
 EOF
     done <"$1"
 }
