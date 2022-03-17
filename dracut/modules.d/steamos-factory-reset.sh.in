@@ -4,8 +4,8 @@
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2019-2021 Collabora Ltd.
-#  Copyright © 2019-2021 Valve Corporation.
+#  Copyright © 2019-2022 Collabora Ltd.
+#  Copyright © 2019-2022 Valve Corporation.
 #
 #  This file is part of steamos-customizations.
 #
@@ -15,35 +15,137 @@
 #  (at your option) any later version.
 
 # Perform a factory reset
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> X <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+# NOTE: This is never a complete nuke-the-site-from-orbit reset
+# a) we boot from /esp, so we can't really fix it as we
+#    have nothing to fix it _from_
+# b) likewise we don't reset the root fses as we haven't got a source
+#    for a vanilla rootfs image
+#
+# The recovery tool/reset tool _does_ have vanilla data sources for those,
+# so it is able to reset them.
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> X <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 declare -r FACTORY_RESET_CONFIG_DIR=@factory_reset_config_dir@
 declare -r SYMLINKS_DIR=@udev_symlinks_absdir@
 declare -r GRUB_CONFIG_RELPATH=@grub_config_relpath@
+declare -i want_reset=0
 
 . /lib/dracut-lib.sh
-# when testing outside the initrd the base lib file is here:
-# . /usr/lib/dracut/modules.d/99base/dracut-lib.sh
+. /lib/steamos-grubconfig.sh
 
-# remove the second stage bootloader config from
-# the given image efi partition ()
+# when testing outside the initrd the base lib files are here:
+# . /usr/lib/dracut/modules.d/99base/dracut-lib.sh
+# . /usr/lib/dracut/modules.d/60steamos/steamos-grubconfig.sh
+
+get_fs_uuid () {
+    local -r dev=${1:-}
+    local uuid=$(lsblk -l -n -d -o UUID $dev)
+
+    echo "$uuid"
+}
+
+# These are the steps we need to take:
+# a) get the fs uuid for the root fs
+# b) mount "$device" on $efi_reset_mount
+# c) generate new grub config at a staging location on $efi_reset_mount
+# d) move the staged config to the real location if c succeeded
 reset_efi() {
+    local -r dev=${1:-}
+    local -r path=${2:-}
+    local -r img=${path##*/efi-}
+    local -r rdev=/dev/disk/by-partsets/$img/rootfs
+    local -r rootfs_uuid=$(get_fs_uuid $rdev)
+    local -r default_kernel=/boot/vmlinuz-linux-neptune
+    local -r default_initrd=/boot/initramfs-linux-neptune.img
+    local kernel=
+    local initrd=
+    local ucode=
+    local rdev_mount=
+
+    info "Checking $img root device $rdev (fsuuid: $rootfs_uuid)"
+    if ! ismounted $rdev; then
+        rdev_mount=$(mktemp -d)
+        info "Mounting rootfs $img to check for kernel"
+        mount -o ro $rdev $rdev_mount
+    fi
+
+    local finfo=
+    local maybe=
+    # pick an actual kernel image from the rootfs
+    while read maybe; do
+        finfo=$(file -bL $rdev_mount/$maybe)
+        info "Checking /$maybe: $finfo"
+        case $finfo in
+            *kernel*executable*[Ii]mage*)
+                kernel=/$maybe
+                info "Found kernel $kernel"
+                break
+                ;;
+        esac
+    done < <(cd $rdev_mount && ls -1r boot/vmlin*)
+
+    # find the initramfs and ucode images
+    while read maybe; do
+        info "Checking /$maybe"
+        case $maybe in
+            *-ucode.img)
+                [ "$ucode" ] && continue;
+                ucode=/$maybe
+                info "Found ucode $ucode"
+                ;;
+            *.img)
+                [ "$initrd" ] && continue;
+                initrd=/$maybe
+                info "Found initrd $initrd"
+                ;;
+        esac
+        [ "$ucode" ] && [ "$initrd" ] && break
+    done < <(cd $rdev_mount && ls -1r boot/*.img)
+
+    if [ "$rdev_mount" ]; then
+        sleep 3
+        info "Unmounting rootfs $img"
+        umount -f $rdev_mount
+    fi
+
     # We're going to mount the efi partitions we want to scrub
     # here so that in the worst case (ie this breaks), we won't
     # leave the OS dealing with the wrong partition mounted at /efi
-    local -r efi_reset_mount=/efi-scrub
+    local -r efi_reset_mount=$(mktemp -d)
+    mkdir -p $efi_reset_mount
 
-    # NOTE: this needs to be disabled until we have solved 2 problems:
-    # - making it possible to update the grub configs for all images from the
-    #   the currently booted image (currently broken for readonly images)
-    # - making said update(s) atomic and fast
+    # Note: when regenerating an /efi partition we need to know
+    # the fs uuid (NOT the partition uuid or partition type uuid)
+    # of the related rootfs
 
-    return 0
+    local grubcfg=$efi_reset_mount/$GRUB_CONFIG_RELPATH
+    if [ "$rootfs_uuid" ]; then
+        mount $dev $efi_reset_mount
+        info "Regenerating bootloader cfg with $fsuuid $kernel $initrd $ucode"
 
-    # ftr thse are the steps we need to take:
-    # mount "$device" on $efi_reset_mount
-    # generate "$efi_reset_mount/$GRUB_CONFIG_RELPATH".new
-    #   probably requires a chroot
-    # replace "$efi_reset_mount/$GRUB_CONFIG_RELPATH"
+        if [ ! "$kernel" ] || [ ! "$initrd" ]; then
+            info "Kernel ($kernel) or initrd ($initrd) missing"
+            info "Image $img may not be bootable (not necessarily a problem)"
+        fi
+
+        print_grub_config \
+            "$rootfs_uuid"  \
+            ${kernel:-$default_kernel} \
+            ${initrd:-$default_initrd} \
+            "${ucode:-}" > $grubcfg.new
+
+        if [ $? -eq 0 ]; then
+            mv $grubcfg.new $grubcfg
+        else
+            warn "Failed to make new config for fs $rootfs_uuid at $grubcfg"
+            warn "kernel: $kernel; initrd: $initrd${ucode:+ + }$ucode"
+        fi
+        sleep 3
+        umount -f $efi_reset_mount
+    else
+        info "No root fs found for image $img, cannot reset bootloader"
+    fi
 
     # stray unused mountpoint is untidy but not worth signalling an error:
     rmdir $efi_reset_mount || true
@@ -136,8 +238,6 @@ if [ ! -d /esp/efi ]; then
     fi
 fi
 
-# 1 or more config files in FACTORY_RESET_CONFIG_DIR means we have work to do
-want_reset=0
 if [ -d $FACTORY_RESET_CONFIG_DIR ]; then
     for cfg in $FACTORY_RESET_CONFIG_DIR/*.cfg; do
         if [ -e "$cfg" ]; then
@@ -146,6 +246,29 @@ if [ -d $FACTORY_RESET_CONFIG_DIR ]; then
         fi
     done
 fi
+
+# the bootloader can't generate the reset manifest for us, but it is now
+# allowed to request a factory reset via the kernel command line:
+if [ $want_reset -eq 0 ]
+then
+    want_reset=$(getarg 'steamos.factory-reset=')
+    if [ "$want_reset" -gt 0 ]
+    then
+        steamos-factory-reset-config
+    fi
+fi
+
+# leave dev partitions alone - they're not present on consumer-mode
+# devices and they're a handy place from which to diagnose/fix/test
+# if we're making changes to the factory reset and we make a mess:
+for cfg in $FACTORY_RESET_CONFIG_DIR/*.cfg; do
+    case $cfg in
+        */*-dev.cfg)
+            warn "Ignoring reset for development partition $cfg"
+            rm -v $cfg
+            ;;
+    esac
+done
 
 if [ $want_reset -ne 1 ]; then
     if [ $cleanup_esp = "1" ]; then
@@ -169,39 +292,29 @@ info "A factory reset has been requested."
 #    leaking private data / things worth actual €£$¥ to the next owner
 #    than we do about [hopefully] unlikely reset loops
 
-# efi resets are fast enough that we can do them synchronously:
-for cfg in $FACTORY_RESET_CONFIG_DIR/efi-*.cfg; do
-    [ -r $cfg ] || continue
-
-    while read type instance dev opts; do
-        case $type in
-            EFI)
-                info "Resetting bootloader config on $dev ($instance)"
-                reset_efi $dev && rm -f $cfg
-                ;;
-            *)
-                warn "Unexpected SteamOS reset efi part type $type ($instance, $dev)"
-                ;;
-        esac
-    done < $cfg
-done
-
-# var and home resets can take longer so we want to do them in parallel
-# _but_ we must wait for them to finish as we have to release all fds
-# before the pivot to the real sysroot happens:
+# We want to reset each filesystem in parallel _but_ we must wait for
+# them to finish as we have to release all fds before the pivot to the
+# real sysroot happens:
+# NOTE: the rootfs would need to be reset _before_ the EFI fs if we were
+# handling it, as its fs uuid must be known for the EFI reset - but since
+# we're not touching it everything is parallelisable:
 declare -a WAIT_PIDS=()
 declare -A RESET_DEV
 for cfg in $FACTORY_RESET_CONFIG_DIR/*.cfg; do
     [ -r $cfg ] || continue
 
     while read type instance dev opts; do
+        info "Processing manifest file $cfg (async)"
+        name="${instance##*/}"
         case $type in
             EFI)
-                # If a synchronous reset above failed, we may still have efi cfgs
-                true
+                info "Resetting bootloader config on $dev ($instance)"
+                (reset_efi $dev $instance && rm -f "$cfg") &
+                RESET_PID=$!
+                WAIT_PIDS+=($RESET_PID)
+                RESET_DEV[$RESET_PID]="$dev $name"
                 ;;
             VAR|HOME)
-                name="${instance##*/}"
                 # these are slow so we want them done in parallel and async
                 # BUT we need to wait until they're all done before proceeding
                 info "Formatting data partition $dev ($instance)"
@@ -212,6 +325,7 @@ for cfg in $FACTORY_RESET_CONFIG_DIR/*.cfg; do
                 ;;
             *)
                 warn "Unexpected SteamOS reset type $type ($instance, $dev)"
+                rm -f "$cfg"
                 ;;
         esac
     done < $cfg
