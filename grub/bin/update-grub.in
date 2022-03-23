@@ -28,7 +28,7 @@ usage() {
     echo
     echo "Usage: $(basename $0) [OPTION]"
     echo
-    echo "A wrapper around grub-mkconfig, applying extra magic on top."
+    echo "Run grub-mkconfig and place output at /efi/@grub_config_relpath@"
     echo
     echo "OPTIONS"
     echo
@@ -42,23 +42,6 @@ usage() {
 prepare_grub_to_access_device() {
     set -- prepare_grub_to_access_device "$@"
     "$SHELL" -c '. @datadir@/grub/grub-mkconfig_lib; "$@"' "$0" "$@"
-}
-
-grubcfg() {
-    cat <<EOF
-#
-# Automatically generated file; DO NOT EDIT.
-# ${0##*/} grub.cfg
-#
-
-EOF
-
-    device="$(grub-probe --target=device "$1")"
-    prepare_grub_to_access_device "$device"
-
-    cat <<EOF
-configfile $1
-EOF
 }
 
 parse_args() {
@@ -81,22 +64,16 @@ if [[ "$(id -u)" -ne 0 ]]; then
 fi
 
 CDIR=$(mktemp -d);
-grub-mkconfig -o "$CDIR"/grub.cfg
 
-file=/efi/@grub_config_relpath@
-mkdir -p "${file%/*}"
-
-echo "Installing grub configuration file to /efi..." >&2
-if ! mv "$CDIR"/grub.cfg /boot/grub/grub.cfg 2>/dev/null; then
-    # If we can't move the config file into the non-EFI location
-    # then move it directly to the EFI location and boot from there
-    echo "Warning: /boot/grub/grub.cfg: Read-only file" >&2
+if grub-mkconfig -o "$CDIR"/grub.cfg; then
+    file=/efi/@grub_config_relpath@
+    mkdir -p "${file%/*}"
+    echo "Installing grub configuration file at $file" >&2
     mv "$CDIR"/grub.cfg $file
 else
-    # If we did move the config to the non-EFI location generate
-    # a minimal grub config wrapper that lets the EFI grub binary
-    # read the config from the OS filesystem
-    grubcfg /boot/grub/grub.cfg > $file
+    rc=$?
+    echo "Failed to generate grub configuration at $CDIR/grub.cfg"
+    exit $rc
 fi
 
 rmdir "$CDIR"
