@@ -32,11 +32,12 @@ with how they interact with grub:
  * grub/bin/update-grub
    * EXTERNAL DEPENDENCY /usr/share/grub/grub-mkconfig_lib
    * grub-mkconfig
-     * write to /boot if /boot is rw
-       * prepare\_grub\_to\_access\_device → stub grub config on /efi
-     * write to /efi  if /boot is ro
+     * write grub config to /efi/EFI/SteamOS/grub.cfg
+     * This used to be conditional on whether /boot was ro or rw but
+       the turned out to add complexity & fragility for no gain.
 
  * grub/libexec/steamos-grub-mkearlyconfig
+   * TODO - this may be obsolete, or at least simplifiable now
    * create a stub config for the default location to point to the real config
 
  * grub/libexec/steamos-grub-install
@@ -47,6 +48,7 @@ with how they interact with grub:
 
  * grub/libexec/steamos-grub-mkimage
    * calls steamos-grub-mkearlyconfig
+     * TODO - is the above obsolete now the config is always on /efi?
    * EXTERNAL DEPENDENCY /usr/lib/grub-mkimage
    * writes grub image to /efi by default
 

@@ -14,7 +14,6 @@ Wants=efi.mount
 After=local-fs.target efi.mount
 Before=shutdown.target sysinit.target
 Conflicts=shutdown.target
-ConditionPathExists=|!/boot/grub/grub.cfg
 ConditionPathExists=|!/efi/EFI/SteamOS/grub.cfg
 ConditionPathExists=|!/efi/EFI/SteamOS/grubx64.efi
 
