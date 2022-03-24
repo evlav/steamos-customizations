@@ -13,11 +13,6 @@ Components
 
 Note that these scripts also do other things. We are concerned here only
 with how they interact with grub:
-
- * misc/bin/steamos-clone
-   * clone a SteamOS partset to another disk
-   * steamos-chroot :: grub/libexec/steamos-grub-mkimage (as grub-mkimage)
-   * steamos-chroot :: grub/bin/update-grub
    
  * misc/bin/steamos-finalize-install
    * different mode (obsolete?) if /boot is a mount point
