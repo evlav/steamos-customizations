@@ -67,6 +67,11 @@ function install_bootloaders
             mkdir -p /esp/@bootconf_reldir@
             steamos-bootconf --conf-dir /esp/@bootconf_reldir@ create --image ${ident}
         fi
+
+        # we want to know our buildid
+        . /etc/os-release ||:
+        # mostly just a nice-to-have, but it also resolves a condition where an empty conf doesn't get updated
+        steamos-bootconf --conf-dir /esp/@bootconf_reldir@ config --image ${ident} --set comment "${BUILD_ID:-}"
     fi
 
     if [[ ! "${no_kernel:-}" ]]
