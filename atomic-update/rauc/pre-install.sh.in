@@ -68,3 +68,11 @@ while read -r service _; do
     systemctl stop "$service" >/dev/null
     echo "$service"
 done > "$ACTIVE_TIMERS"
+
+#
+# Ensure that the rootfs is mounted in read-only mode. We use the rootfs
+# as a seed for the update, and having the guarantee that the rootfs is not
+# changing while we are using it, makes the whole update process more reliable
+#
+
+steamos-readonly enable || log "Failed to ensure that rootfs is in RO mode. Trying to continue"
