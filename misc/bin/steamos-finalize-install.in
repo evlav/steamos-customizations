@@ -133,7 +133,8 @@ function in_chroot
 function migrate_network
 {
     # remove properties used by NetworkManager that are not permitted by iwd:
-    find /var/lib/overlays/etc/upper/NetworkManager/system-connections/ -type f -name \*.nmconnection -print0 | while read -r -d $'\0' file;
+    local nm_dir=/var/lib/overlays/etc/upper/NetworkManager/system-connections
+    test -d "$nm_dir" && find "$nm_dir" -type f -name \*.nmconnection -print0 | while read -r -d $'\0' file;
     do
         if grep -q '^type=wifi' "$file"
         then
