@@ -17,6 +17,11 @@
 set -e
 set -o pipefail
 
+# XXX: Disabled! The update-other boot mode is not functional and is, in fact, currently breaking boot configs.
+#      Removing this vector to trigger it until this is revisited.
+#      https://gitlab.steamos.cloud/jupiter/tasks/-/issues/547
+exit 1
+
 opts=()
 if [[ -e /run/steamos-atomupd/manifest.json ]]
 then
