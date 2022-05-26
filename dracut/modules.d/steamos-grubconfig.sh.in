@@ -86,7 +86,7 @@ search --no-floppy --fs-uuid --set=root %rootfs-uuid%
 fi
 
 if loadfont $font ; then
-  set gfxmode=auto
+  set gfxmode=1280x800
   load_video
   insmod gfxterm
   set locale_dir=$prefix/locale
@@ -127,11 +127,21 @@ if [ $grub_platform = efi ]; then
 fi
 ### END /etc/grub.d/00_header ###
 
+### BEGIN /etc/grub.d/05_steamenv ###
+insmod steamenv
+# kernel cmdline flags for quiet vs verbose boot:
+steamenv_quiet="loglevel=3 splash quiet plymouth.ignore-serial-consoles fbcon=vc:4-6"
+steamenv_noisy="loglevel=4 splash=verbose fbcon=nodefer"
+# default if steamenv_init is not called:
+steamenv_verbosity=""
+steamenv_init
+### END /etc/grub.d/05_steamenv ###
+
 ### BEGIN /etc/grub.d/10_linux ###
 function gfxmode {
 	set gfxpayload="${1}"
 }
-set linux_gfx_mode=keep
+set linux_gfx_mode=800x1280
 export linux_gfx_mode
 menuentry 'SteamOS' --class steamos --class gnu-linux --class gnu --class os $menuentry_id_option 'gnulinux-simple-%rootfs-uuid%' {
 	recordfail
@@ -204,6 +214,5 @@ menuentry "System restart" $menuentry_id_option 'system-reboot' {
 	reboot
 }
 ### END /etc/grub.d/99_reboot ###
-
 EOF
 }
