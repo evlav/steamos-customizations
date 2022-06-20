@@ -85,13 +85,24 @@ search --no-floppy --fs-uuid --set=root %rootfs-uuid%
     font="/usr/share/grub/unicode.pf2"
 fi
 
+## start header steamenv sub block
+insmod steamenv
+steamenv_noisy_loader_mode="1280x800"
+steamenv_noisy_kernel_mode="800x1280"
+steamenv_loader_mode=auto
+steamenv_kernel_mode=keep
+steamenv_quiet="loglevel=3 splash quiet plymouth.ignore-serial-consoles fbcon=vc:4-6"
+steamenv_noisy="loglevel=4 splash=verbose fbcon=nodefer"
+steamenv_verbosity=""
+timeout=0
+timeout_style=menu
+steamenv_init
+## end steamenv header sub block
+
 if loadfont $font ; then
-  set gfxmode=1280x800
+  set gfxmode=${steamenv_loader_mode}
   load_video
   insmod gfxterm
-  set locale_dir=$prefix/locale
-  set lang=en_US
-  insmod gettext
 fi
 terminal_input console
 terminal_output gfxterm
@@ -107,41 +118,13 @@ loadfont ($root)/usr/share/grub/themes/breeze/unifont-regular-32.pf2
 insmod png
 set theme=($root)/usr/share/grub/themes/breeze/theme.txt
 export theme
-if [ "${recordfail}" = 1 ] ; then
-  set timeout=0
-else
-  if [ x$feature_timeout_style = xy ] ; then
-    set timeout_style=menu
-    set timeout=0
-  # Fallback normal timeout code in case the timeout_style feature is
-  # unavailable.
-  else
-    set timeout=0
-  fi
-fi
-if [ $grub_platform = efi ]; then
-  set timeout=0
-  if [ x$feature_timeout_style = xy ] ; then
-    set timeout_style=menu
-  fi
-fi
 ### END /etc/grub.d/00_header ###
-
-### BEGIN /etc/grub.d/05_steamenv ###
-insmod steamenv
-# kernel cmdline flags for quiet vs verbose boot:
-steamenv_quiet="loglevel=3 splash quiet plymouth.ignore-serial-consoles fbcon=vc:4-6"
-steamenv_noisy="loglevel=4 splash=verbose fbcon=nodefer"
-# default if steamenv_init is not called:
-steamenv_verbosity=""
-steamenv_init
-### END /etc/grub.d/05_steamenv ###
 
 ### BEGIN /etc/grub.d/10_linux ###
 function gfxmode {
 	set gfxpayload="${1}"
 }
-set linux_gfx_mode=800x1280
+set linux_gfx_mode=${steamenv_kernel_mode}
 export linux_gfx_mode
 menuentry 'SteamOS' --class steamos --class gnu-linux --class gnu --class os $menuentry_id_option 'gnulinux-simple-%rootfs-uuid%' {
 	recordfail
