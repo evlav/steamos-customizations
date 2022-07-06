@@ -1,5 +1,6 @@
 -- HDMI output is always plugged in card 0 (HD_Audio Generic)
 -- We always give higher priority to nodes from that card
+-- Disable suspend timeout for HDMI to remove audio delay after idle
 
 table.insert (alsa_monitor.rules, {
   matches = {
@@ -17,5 +18,7 @@ table.insert (alsa_monitor.rules, {
   apply_properties = {
     ["priority.driver"]        = 900,
     ["priority.session"]       = 900,
+    ["audio.format"]           = "S16LE",
+    ["session.suspend-timeout-seconds"] = 0,
   }
 })
