@@ -18,7 +18,6 @@ table.insert (alsa_monitor.rules, {
   apply_properties = {
     ["priority.driver"]        = 900,
     ["priority.session"]       = 900,
-    ["audio.format"]           = "S16LE",
     ["session.suspend-timeout-seconds"] = 0,
   }
 })
