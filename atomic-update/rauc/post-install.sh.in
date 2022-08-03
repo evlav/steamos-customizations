@@ -23,6 +23,7 @@ SYMLINKS_DIR=@udev_symlinks_absdir@
 BOOTCONF_RELDIR=@bootconf_reldir@
 PARTSETS_RELDIR=@partsets_reldir@
 ROOTHASH_RELPATH=@roothash_relpath@
+RAUC_RUNTIME_DIR=@rauc_runtime_dir@
 
 #
 # Helpers
@@ -38,7 +39,6 @@ fail() { echo >&2 "Error:" "$@"; exit 1; }
 # Re-enable systemd timers
 #
 
-RAUC_RUNTIME_DIR=/run/rauc
 ACTIVE_TIMERS=$RAUC_RUNTIME_DIR/active-timers
 
 if [ -e "$ACTIVE_TIMERS" ]; then

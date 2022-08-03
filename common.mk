@@ -92,6 +92,10 @@ ATOMUPD_IMAGES_URL := https://atomupd-images.steamos.cloud/steamos-holo
 # This is used by steamos-atomupd >= 0.20220216.0 (steamos-atomupd-git >= r197).
 ATOMUPD_META_URL := https://atomupd.steamos.cloud/meta
 
+# Directory where RAUC will mount the update bundle and store its temporary
+# files
+RAUC_RUNTIME_DIR := /run/rauc
+
 %: %.in
 	@echo "Substituting @variables@ in $<"
 	@sed \
@@ -116,7 +120,8 @@ ATOMUPD_META_URL := https://atomupd.steamos.cloud/meta
 	  -e 's;@udev_symlinks_absdir@;$(UDEV_SYMLINKS_ABSDIR);g' \
 	  -e 's;@atomupd_query_url@;$(ATOMUPD_QUERY_URL);g' \
 	  -e 's;@atomupd_images_url@;$(ATOMUPD_IMAGES_URL);g' \
-          -e 's;@atomupd_meta_url@;$(ATOMUPD_META_URL);g' \
+	  -e 's;@atomupd_meta_url@;$(ATOMUPD_META_URL);g' \
+	  -e 's;@rauc_runtime_dir@;$(RAUC_RUNTIME_DIR);g' \
 	  $< > $@
 	@if grep -q '@[[:alnum:]_]*@' $@; then \
 	  echo >&2 "Substitution error!!!"; \

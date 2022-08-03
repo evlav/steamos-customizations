@@ -25,6 +25,7 @@ log () { echo >&2 "$@"; }
 fail() { echo >&2 "Error:" "$@"; exit 1; }
 
 SYMLINKS_DIR=@udev_symlinks_absdir@
+RAUC_RUNTIME_DIR=@rauc_runtime_dir@
 
 #
 # Ensure that the UUID of the update is different from the current rootfs
@@ -57,7 +58,6 @@ fi
 # Disable all systemd timers
 #
 
-RAUC_RUNTIME_DIR=/run/rauc
 [ -d "$RAUC_RUNTIME_DIR" ] || fail "RAUC runtime dir does not exist"
 
 ACTIVE_TIMERS=$RAUC_RUNTIME_DIR/active-timers
