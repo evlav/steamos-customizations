@@ -24,7 +24,7 @@ set -u
 log () { echo >&2 "$@"; }
 fail() { echo >&2 "Error:" "$@"; exit 1; }
 
-SYMLINKS_DIR=/dev/disk/by-partsets
+SYMLINKS_DIR=@udev_symlinks_absdir@
 
 #
 # Ensure that the UUID of the update is different from the current rootfs
