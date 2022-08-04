@@ -96,6 +96,10 @@ ATOMUPD_META_URL := https://atomupd.steamos.cloud/meta
 # files
 RAUC_RUNTIME_DIR := /run/rauc
 
+# File used by RAUC to store the installed update version. This allows us to
+# record that we have a pending reboot to switch to the new image.
+REBOOT_FOR_UPDATE := $(RAUC_RUNTIME_DIR)/reboot_for_update
+
 %: %.in
 	@echo "Substituting @variables@ in $<"
 	@sed \
@@ -122,6 +126,7 @@ RAUC_RUNTIME_DIR := /run/rauc
 	  -e 's;@atomupd_images_url@;$(ATOMUPD_IMAGES_URL);g' \
 	  -e 's;@atomupd_meta_url@;$(ATOMUPD_META_URL);g' \
 	  -e 's;@rauc_runtime_dir@;$(RAUC_RUNTIME_DIR);g' \
+	  -e 's;@reboot_for_update@;$(REBOOT_FOR_UPDATE);g' \
 	  $< > $@
 	@if grep -q '@[[:alnum:]_]*@' $@; then \
 	  echo >&2 "Substitution error!!!"; \
