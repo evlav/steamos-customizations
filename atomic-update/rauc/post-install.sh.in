@@ -260,6 +260,12 @@ reformat_device_ext4 "$VAR_DEVICE_OTHER" || \
 mount "$VAR_DEVICE_OTHER" /mnt
 sync_var_mountpoints "$VAR_FROM" /mnt || \
     err "Failed to sync var partitions"
+# Remove the old rootfs index to ensure that we either have the correct one
+# or that we don't have it at all.
+rm -f /mnt/lib/steamos-atomupd/rootfs.caibx
+mkdir -p /mnt/lib/steamos-atomupd
+cp "$RAUC_BUNDLE_MOUNT_POINT"/rootfs.img.caibx /mnt/lib/steamos-atomupd/rootfs.caibx || \
+    warn "Failed to copy the rootfs seed index file"
 umount /mnt
 
 if [ -n "$VAR_DEVICE_FROM" ]
