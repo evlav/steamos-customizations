@@ -17,8 +17,8 @@
 set -e
 set -u
 
-DISK=       # --disk=
-PARTSET=    # --partset=
+DISK=       # --disk
+PARTSET=    # --partset
 
 SYMLINKS_DIR=@udev_symlinks_absdir@
 
@@ -38,7 +38,7 @@ usage() {
     fi
 
     echo
-    echo "Usage: $(basename $0) [--disk=DISK] --partset=A|B|self|other -- COMMAND"
+    echo "Usage: $(basename $0) [--disk DISK] --partset A|B|self|other -- COMMAND"
     echo
     echo "Run COMMAND in a chroot. The chroot is SteamOS specific, which means"
     echo "that the various SteamOS partitions are mounted within the chroot."
