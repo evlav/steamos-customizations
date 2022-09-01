@@ -1,0 +1,496 @@
+#!/usr/bin/ash
+# -*- mode: sh; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
+# vim: et sts=4 sw=4
+
+#  SPDX-License-Identifier: LGPL-2.1+
+#
+#  Copyright © 2022-2023 Collabora Ltd.
+#  Copyright © 2022-2023 Valve Corporation.
+#
+#  This file is part of steamos-customizations.
+#
+#  steamos-customizations is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU Lesser General Public License as published
+#  by the Free Software Foundation; either version 2.1 of the License, or
+#  (at your option) any later version.
+
+UDEV_SYMLINKS_RELDIR=@udev_symlinks_reldir@
+UDEV_SYMLINKS_DIR=@udev_symlinks_absdir@
+NEWROOT=/new_root
+ETC_OVERLAY_ABSDIR=@etc_overlay_absdir@
+FACTORY_RESET_CONFIG_DIR=@factory_reset_config_dir@
+
+# these are set by steamos_parse_cmdline based on the kernel cmdline:
+steamos_efi=
+steamos_no_var=
+steamos_no_overlay=
+steamos_factory_reset=
+
+emergency_shell () {
+    launch_interactive_shell --exec
+}
+
+downcase () {
+    echo -n "$@" | tr '[:upper:]' '[:lower:]'
+}
+
+find_mount() {
+    local dev query_dev wanted_dev
+
+    query_dev="$1"
+    wanted_dev="$(readlink -e -q "$1")"
+
+    while read -r dev _ || [ -n "$dev" ]; do
+        [ "$dev" = "$wanted_dev" ] && echo "$dev" && return 0
+        [ "$dev" = "$query_dev"  ] && echo "$dev" && return 0
+    done < /proc/mounts
+    return 1
+}
+
+if command -v findmnt > /dev/null; then
+    ismounted() {
+        findmnt "$1" > /dev/null 2>&1
+    }
+else
+    ismounted() {
+        if [ -b "$1" ]; then
+            find_mount "$1" > /dev/null && return 0
+            return 1
+        fi
+
+        while read -r _ m _ || [ -n "$m" ]; do
+            [ "$m" = "$1" ] && return 0
+        done < /proc/mounts
+        return 1
+    }
+fi
+
+
+get_efivar_str() {
+    dd bs=1 skip=4 status=none "if=$1" | \
+        iconv -t ASCII -f UTF-16 | \
+        tr '\0' '\n';
+}
+
+expand_dev() {
+    local dev
+
+    case "$1" in
+    LABEL=*)
+        dev="/dev/disk/by-label/${1#LABEL=}"
+        ;;
+    UUID=*)
+        dev="${1#UUID=}"
+        dev="/dev/disk/by-uuid/$(downcase $dev)"
+        ;;
+    PARTUUID=*)
+        dev="${1#PARTUUID=}"
+        dev="/dev/disk/by-partuuid/$(downcase $dev)"
+        ;;
+    PARTLABEL=*)
+        dev="/dev/disk/by-partlabel/${1#PARTLABEL=}"
+        ;;
+    *)
+        dev="$1"
+        ;;
+    esac
+
+    echo "$dev"
+}
+
+# from dracut : cmdline : 90 : steamos-parse-loaders.sh
+steamos_add_udev_rules_from_efivars () {
+    local partuuid symlink
+
+    # use partuuid in /sys/firmware/efi/efivars/XXXLoaderDevicePartUUID-YYYY
+    # to symlink /dev/xxx to the right partition
+    # eg ChainedLoaderDevicePartUUID-* → /dev/chainedloader
+
+    for i in /sys/firmware/efi/efivars/*LoaderDevicePartUUID-*
+    do
+        [[ -e "$i" ]] || continue
+
+        msg "Processing $i"
+        partuuid="$(get_efivar_str $i)"
+        [[ "$partuuid" ]] || continue
+
+        partuuid="$(downcase $partuuid)"
+        msg "Waiting for /dev/disk/by-partuuid/$partuuid"
+        poll_device "/dev/disk/by-partuuid/$partuuid"
+
+        symlink="${i##*/}"
+        symlink="${symlink%DevicePartUUID-*}"
+        symlink="$(downcase $symlink)"
+
+        msg "Mapping partuuid $partuuid to /dev/$symlink via udev"
+        mkdir -p /run/udev/rules.d
+        cat <<EOF >/run/udev/rules.d/99-$symlink.rules
+ENV{ID_PART_ENTRY_SCHEME}=="gpt", ENV{ID_PART_ENTRY_UUID}=="$partuuid", SYMLINK+="$symlink"
+EOF
+    done
+}
+
+# from dracut : pre-mount : 90 : steamos-udev-rules.sh
+steamos_efi_set_from_dev_tree () {
+    local partuuid
+
+    partuuid="$(lsblk --noheadings --output PARTUUID /dev/chainedloader 2>/dev/null)"
+
+    if [[ "$partuuid" ]]
+    then
+        log_kmsg "EFI partition from /dev/chainedloader is %s" "$partuuid."
+        steamos_efi="PARTUUID=$partuuid"
+        return 0
+    fi
+
+    log_kmsg "ERROR: EFI partition not specified by /dev/chainedloader"
+}
+
+# under dracut we'd just call getarg whenever we needed a command line value
+# but initcpio does things a little differently so we cluster all the fetches
+# here in one callback:
+steamos_parse_cmdline () {
+    local key=$1 value=$2
+
+    case $key in
+        rd.steamos.factory-reset|steamos.factory-reset)
+            steamos_factory_reset="$value"
+            ;;
+        rd.steamos.nooverlay|steamos.nooverlay)
+            steamos_no_overlay="$value"
+            ;;
+        rd.steamos.novar|steamos.novar)
+            steamos_no_var="$value"
+            ;;
+        rd.steamos.efi|steamos.efi)
+            steamos_efi="$value"
+            log_kmsg "EFI partition from kernel cmdline is %s" "$steamos_efi"
+            ;;
+    esac
+
+    return 0
+}
+
+# from dracut : pre-mount : 90 : steamos-udev-rules.sh
+steamos_set_efi_partition () {
+    # this is a fallback, normally we get it from the kernel cmdline:
+    if [ -z "$steamos_efi" ]; then
+        steamos_efi_set_from_dev_tree;
+    fi
+
+    if [ -z "$steamos_efi" ]; then
+        log_kmsg "EFI partition not found"
+    fi
+
+    return 0
+}
+
+# from dracut : pre-mount : 90 : steamos-udev-rules.sh
+steamos_generate_partsets () {
+    local dev=$1
+
+    log_kmsg "Mounting %s on /tmp/efi" "$dev"
+    mkdir -p /tmp/efi
+    trap "if ismounted /tmp/efi; then umount /tmp/efi; fi" 0
+    mount -o ro "$dev" /tmp/efi 2>&1
+
+    log_kmsg "Generating udev rules from %s/*" /tmp/efi/SteamOS/partsets
+    for partset in /tmp/efi/@partsets_reldir@/*; do
+        [ -e "$partset" ] || continue
+        msg "Generating udev rules from $partset"
+        @libexecdir@/steamos/steamos-partsets-generator "$partset"
+    done
+    umount /tmp/efi
+
+    msg "Waiting for /dev/$UDEV_SYMLINKS_RELDIR/self/rootfs"
+    udevadm control --reload-rules
+    # need to 'trigger' or settle will block forever
+    # and the reload above will never take effect:
+    udevadm trigger
+    udevadm settle
+    # wait for the root dev to actually appear:
+    poll_device "/dev/$UDEV_SYMLINKS_RELDIR/self/rootfs"
+}
+
+run_earlyhook() {
+    true;
+}
+
+run_hook() {
+    # This hook runs _before_ the real rootfs is mounted
+    local efi_dev
+    local rdev
+
+    log_kmsg "Adding loader device partuuid symlink via udev"
+    parse_cmdline steamos_parse_cmdline </proc/cmdline
+
+    ######################################################################
+    # from dracut : cmdline : 90 : steamos-parse-loaders.sh
+    msg "Adding loader device partuuid symlink via udev"
+    steamos_add_udev_rules_from_efivars
+
+    log_kmsg "Scanning for EFI partition"
+
+    ######################################################################
+    # from dracut : pre-mount : 90 : steamos-udev-rules.sh
+    msg "Scanning for EFI partition"
+    steamos_set_efi_partition
+
+    if [ -z "$steamos_efi" ]; then
+        return 1
+    fi
+
+    efi_dev=$(expand_dev "$steamos_efi")
+
+    log_kmsg "Waiting for %s" "$efi_dev"
+    poll_device "$efi_dev"
+
+    steamos_generate_partsets "$efi_dev"
+
+    ######################################################################
+    # from dracut : mount : 90 : steamos-root.sh
+    rdev=/dev/$UDEV_SYMLINKS_RELDIR/self/rootfs
+    log_kmsg "Waiting for root device %s" $rdev
+    poll_device $rdev
+
+    msg "Setting root target to /dev/$UDEV_SYMLINKS_RELDIR/self/rootfs"
+    root=$rdev
+    rwopt=rw
+
+    # NOTE: under dracut we explicitly mounted the root target. mkinitcpio will
+    # implicitly attempt to mount whatever 'root' is set to after 'run_hook'
+
+    true;
+}
+
+############################################################################
+
+# from dracut : pre-pivot : 89 : steamos-var.sh
+mount_var() {
+    # can we retire this? I think it's a relic from early development
+    if [ -n "$steamos_no_var" ] && [ "$steamos_no_var" != 0 ]
+    then
+        msg "var mount suppressed by steamos.novar=$steamos_no_var"
+        return 0
+    fi
+
+    # Mount the /var mountpoint
+    log_kmsg "Mounting %s" "/dev/${UDEV_SYMLINKS_RELDIR}/self/var"
+    mount "/dev/${UDEV_SYMLINKS_RELDIR}/self/var" "$NEWROOT/var" 2>&1 
+
+    if ismounted "$NEWROOT/var"; then
+        return 0
+    fi
+
+    # Mount the /var mountpoint using tmpfs
+
+    log_kmsg "Mounting %s failed! Fallback using tmpfs!" "/dev/${UDEV_SYMLINKS_RELDIR}/self/var"
+
+    mount -t tmpfs -o size=512m tmpfs "$NEWROOT/var" 2>&1
+    if ismounted "$NEWROOT/var"; then
+        return 0
+    fi
+
+    log_kmsg "Mounting %s failed! Compile the kernel with CONFIG_TMPFS!" "/dev/${UDEV_SYMLINKS_RELDIR}/self/var"
+    msg "*** Dropping you to a shell"
+    emergency_shell
+}
+
+############################################################################
+sysroot="$NEWROOT"
+
+# from dracut : pre-pivot : 90 : steamos-etc-overlay.sh
+overlaydir="$ETC_OVERLAY_ABSDIR"
+upperdir="${sysroot}${overlaydir}/upper"
+lowerdir="${sysroot}/etc"
+workdir="${sysroot}${overlaydir}/work"
+
+# from dracut : pre-pivot : 90 : steamos-etc-overlay.sh
+prepare_etc_overlay() {
+    # upper dir contains persistent data, create it only if it doesn't exist
+    log_kmsg "Preparing /etc overlay { %s %s %s }" $overlaydir $upperdir $workdir
+    if [ ! -d "$upperdir" ]; then
+        log_kmsg "Creating overlay upper directory '%s'" $upperdir
+        rm -fr "$upperdir"
+        mkdir -p "$upperdir"
+    fi
+
+    # work dir must exist and be empty
+    log_kmsg "Clearing overlay work directory %s" $workdir
+    rm -fr "$workdir"
+    mkdir -p "$workdir"
+}
+
+# from dracut : pre-pivot : 90 : steamos-etc-overlay.sh
+mount_etc_overlay() {
+    local x
+
+    # Mount the /etc overlay
+    log_kmsg "Mounting overlay %s on %s (%s)" $upperdir $lowerdir $workdir
+    mount -v \
+        -t overlay \
+        -o lowerdir=$lowerdir,upperdir=$upperdir,workdir=$workdir \
+        overlay \
+        $lowerdir 2>&1 | while read x; do msg "$x"; done
+
+    if ismounted "$lowerdir"; then
+        return 0
+    fi
+
+    return 1
+}
+
+
+# from dracut : pre-pivot : 90 : steamos-etc-overlay.sh
+setup_etc_overlay ()
+{
+    # can we retire this? I think it's a relic from early development
+    if [ -n "$steamos_no_overlay" ] && [ "$steamos_no_overlay" != 0 ]
+    then
+        msg "etc overlay suppressed by steamos.nooverlay=$steamos_no_overlay"
+        return 0
+    fi
+
+    if prepare_etc_overlay; then
+        if mount_etc_overlay; then
+            return 0
+        fi
+    fi
+
+    log_kmsg "/etc overlay failed"
+    msg "/etc overlay failed - dropping to emergency shell"
+    emergency_shell
+}
+
+############################################################################
+# from dracut : pre-pivot : 90 : steamos-var-lib-modules.sh
+initialize_var_lib_modules() {
+
+    # Create /var/lib/modules from factory
+
+    local moddir=var/lib/modules
+    local orig=$NEWROOT@datadir@/factory/$moddir
+    local dest=$NEWROOT/$moddir
+
+    log_kmsg "Checking modules source and destination (%s, %s)" $orig $dest
+    [ -e "$dest" ] && return 0
+    [ -d "$orig" ] || return 0
+
+    log_kmsg "Creating module directory '%s'" $dest
+    mkdir -p "$(dirname "$dest")"
+
+    # purge any half copied content or leftovers
+    rm -rf "$dest".new
+
+    log_kmsg "Copying %s to %s.new" $orig $dest
+    if cp -a "$orig" "$dest".new; then
+        log_kmsg "Copy successful, installing to %s" $dest
+        mv "$dest".new "$dest"
+        return 0
+    fi
+
+    msg "Could not install kernel modules to $dest, system may need rescue"
+    return 1
+}
+############################################################################
+# from dracut : pre-pivot : 88 : steamos-factory-reset.sh
+factory_reset () {
+    local want_reset=0
+    local sidr
+
+    ########################################################################
+    # mount /esp if it isn't mounted
+    local cleanup_esp=0
+    if [ ! -d /esp/efi ]; then
+        dev=$(readlink -f $UDEV_SYMLINKS_DIR/all/esp)
+        msg "Checking ESP partition $dev"
+        if ! ismounted $dev; then
+            msg "Mounting $dev at /esp"
+            mkdir -p /esp
+            mount $dev /esp
+            cleanup_esp=1
+        fi
+    fi
+
+    ########################################################################
+    # if reset config exists, we want a reset:
+    if [ -d $FACTORY_RESET_CONFIG_DIR ]; then
+        for cfg in $FACTORY_RESET_CONFIG_DIR/*.cfg; do
+            if [ -e "$cfg" ]; then
+                msg "Factory reset request found in $FACTORY_RESET_CONFIG_DIR"
+                want_reset=1
+                break
+            fi
+        done
+    fi
+
+    ########################################################################
+    # if we don't already have a reset config then check to see if
+    # the bootloader asked us to generate one:
+    if [ $want_reset -eq 0 ]; then
+        want_reset=${steamos_factory_reset:-0}
+        if [ -n "$want_reset" ] && [ "$want_reset" != 0 ]; then
+            msg "Factory reset request present in kernel cmdline"
+            want_reset=1
+            steamos-factory-reset-config
+        fi
+    fi
+
+    ########################################################################
+    # partitions belonging to a dev slot don't get scrubbed, ever.
+    # (production deck images should never have a dev slot out of the box):
+    for cfg in $FACTORY_RESET_CONFIG_DIR/*.cfg; do
+        case $cfg in
+            */*-dev.cfg)
+                msg "Ignoring reset for development partition $cfg"
+                rm -v $cfg
+                ;;
+        esac
+    done
+
+    ########################################################################
+    # do the actual reset (would be painful to get piping and async etc done
+    # under ash so invoke a cut down copy of the old dracut script instead:
+    if [ $want_reset -eq 1 ]; then
+        INITRD_FACTORY_RESET=1
+        export INITRD_FACTORY_RESET
+        msg "Calling @libexecdir@/steamos/steamos-initrd-do-reset"
+        @libexecdir@/steamos/steamos-initrd-do-reset | \
+            while read sidr; do msg "$sidr"; done
+    fi
+
+    ########################################################################
+    # unmount /esp if we mounted it
+    if [ $cleanup_esp = "1" ]; then
+        umount /esp
+    fi
+
+    return 0
+}
+
+
+############################################################################
+
+run_latehook () {
+    # This is run after the rootfs is mounted, but before
+    # switch_root is invoked to pivot to it:
+
+    # re-parse the command line (settings from run_hook will have
+    # disappeared by now):
+    parse_cmdline steamos_parse_cmdline </proc/cmdline
+
+    # from dracut : pre-pivot : 88 : steamos-factory-reset.sh
+    factory_reset
+
+    # from dracut : pre-pivot : 89 : steamos-var.sh
+    # from dracut : pre-pivot : 90 : steamos-etc-overlay.sh
+    # from dracut : pre-pivot : 90 : steamos-var-lib-modules.sh
+    if mount_var &&
+       setup_etc_overlay &&
+       initialize_var_lib_modules; then
+        return 0
+    else
+        emergency_shell
+    fi
+}
+

@@ -1,0 +1,37 @@
+#!/bin/bash
+
+STEAMOS_BINARIES=(bash     \
+                  dd       \
+                  findmnt  \
+                  iconv    \
+                  lsblk    \
+                  mkdir    \
+                  mktemp   \
+                  readlink \
+                  tr       \
+                  tune2fs  \
+                  mkfs.ext4 \
+                  steamos-factory-reset-config \
+                  udevadm  )
+
+build() {
+    map add_binary ${STEAMOS_BINARIES[@]}
+
+    map add_file @libexecdir@/steamos/*
+
+    # make iconv work
+    map add_file /usr/lib/gconv/gconv-modules.d/*
+    map add_file /usr/lib/gconv/gconv-modules /usr/lib/gconv/*.so
+    map add_file /usr/lib/locale/locale-archive
+
+    add_runscript
+}
+
+help() {
+    cat <<HELPEOF
+This hook adds the udev daemon to the initramfs, allowing for dynamic loading
+of modules and reliable detection of the root device via tags (e.g. UUID or
+LABEL). Do not remove this hook unless you are using the systemd hook, or you
+know what you're doing.
+HELPEOF
+}

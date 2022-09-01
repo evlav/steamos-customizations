@@ -1,0 +1,9 @@
+PRESETS=('deck')
+
+ALL_microcode=/boot/amd_ucode.img
+
+deck_kver=/boot/vmlinuz-linux-neptune
+deck_config=/etc/mkinitcpio.d/deck.conf
+deck_image=/boot/initramfs-linux-deck.img
+deck_options=
+

@@ -14,6 +14,7 @@ SUBDIRS :=		\
 	atomic-update	\
 	chainloader	\
 	dracut		\
+	mkinitcpio      \
 	gpd-quirks	\
 	glx		\
 	grub		\
