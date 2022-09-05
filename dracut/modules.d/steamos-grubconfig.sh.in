@@ -54,10 +54,6 @@ function savedefault {
     save_env saved_entry
   fi
 }
-function recordfail {
-  set recordfail=1
-  # GRUB lacks write support for btrfs, so recordfail support is disabled.
-}
 function load_video {
   if [ x$feature_all_video_module = xy ]; then
     insmod all_video
@@ -127,7 +123,6 @@ function gfxmode {
 set linux_gfx_mode=${steamenv_kernel_mode}
 export linux_gfx_mode
 menuentry 'SteamOS' --class steamos --class gnu-linux --class gnu --class os $menuentry_id_option 'gnulinux-simple-%rootfs-uuid%' {
-	recordfail
 	load_video
 	gfxmode $linux_gfx_mode
 	insmod steamenv
@@ -142,7 +137,6 @@ menuentry 'SteamOS' --class steamos --class gnu-linux --class gnu --class os $me
 }
 submenu 'Advanced options for SteamOS' $menuentry_id_option 'gnulinux-advanced-%rootfs-uuid%' {
 	menuentry 'SteamOS, with Linux linux-neptune' --class steamos --class gnu-linux --class gnu --class os $menuentry_id_option 'gnulinux-linux-neptune-advanced-%rootfs-uuid%' {
-		recordfail
 		load_video
 		gfxmode $linux_gfx_mode
 		insmod steamenv
