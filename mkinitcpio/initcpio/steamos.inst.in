@@ -17,6 +17,7 @@ STEAMOS_BINARIES=(bash     \
 build() {
     map add_binary ${STEAMOS_BINARIES[@]}
 
+    # steamos helper scripts (eg the partset generator)
     map add_file @libexecdir@/steamos/*
 
     # make iconv work
@@ -28,10 +29,10 @@ build() {
 }
 
 help() {
-    cat <<HELPEOF
-This hook adds the udev daemon to the initramfs, allowing for dynamic loading
-of modules and reliable detection of the root device via tags (e.g. UUID or
-LABEL). Do not remove this hook unless you are using the systemd hook, or you
-know what you're doing.
+    cat <<'HELPEOF'
+This hook implements the early setup for SteamOS:
+ - detection and assembly of the partition set for the chosen SteamOS image
+ - set up of the rw overlays
+ - initialising the module tree on /var/lib/modules on first boot
 HELPEOF
 }
