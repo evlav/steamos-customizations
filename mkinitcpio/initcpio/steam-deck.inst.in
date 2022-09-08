@@ -1,0 +1,43 @@
+#!/bin/bash
+
+cache_deck_module () {
+    # canonicalise the module name to the module path filename
+    # as this is what mkinitcpio uses internally as an identifier:
+    local name=
+    local file=$(modinfo -b "$_optmoduleroot" \
+                         -k $KERNELVERSION \
+                         -F filename "$1" 2>/dev/null)
+    name=${file##*/}
+    name=${name%.ko*}
+
+    add_module "$name"
+    _autodetect_cache["$name"]=1
+}
+
+build() {
+    # DECK_MODULES is a bash array of the minimal module set we want
+    # in our steam-deck initrd (for booting and emergency debugging)
+    # it is typically set in preset file:
+    if (( ${#DECK_MODULES[@]} ))
+    then
+        map cache_deck_module "${DECK_MODULES[@]}"
+    else
+        msg "Warning: steam-deck module invoked but DECK_MODULES unset"
+    fi
+
+    # make sure we can access common filesystems when
+    # we drop to an emergency shell, even if not in config:
+    map cache_deck_module btrfs ext4 ext3 vfat fat exfat overlay
+}
+
+help() {
+    cat <<'HELPEOF'
+This hook specifies the exact set of initrd modules required by the
+steam deck (roughly what mkinitcpio autodetect would do, plus a few
+modules we think would be useful for debugging/testing/vms).
+
+It does this by piggybacking on the same mechanism as autodetect,
+which means that it can be used alongside autodetect even if running
+on a vm during the CI/build process.
+HELPEOF
+}

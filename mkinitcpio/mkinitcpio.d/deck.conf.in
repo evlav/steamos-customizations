@@ -4,14 +4,14 @@
 # run.  Advanced users may wish to specify all system modules
 # in this array.  For instance:
 #     MODULES=(piix ide_disk reiserfs)
-MODULES=(vfat exfat btrfs ext4 overlay)
+MODULES=()
 
 # BINARIES
 # This setting includes any additional binaries a given user may
 # wish into the CPIO image.  This is run last, so it may be used to
 # override the actual binaries included by a given hook
 # BINARIES are dependency parsed, so you may safely ignore libraries
-BINARIES=()
+BINARIES=(/usr/bin/fsck*)
 
 # FILES
 # This setting is similar to BINARIES above, however, files are added
@@ -49,12 +49,32 @@ FILES=()
 #
 ##   NOTE: If you have /usr on a separate partition, you MUST include the
 #    usr, fsck and shutdown hooks.
-HOOKS=(base udev steamos modconf block filesystems keyboard fsck)
 
-# NOTE: you can slim this down a lot if you put autodetect
-# in between steamos and modconf, but that means you have to
-# generate the initrd on an actual deck:
+# NOTE: the steam deck module does manually what the 'autodetect' module does
+# when run on an actual deck to build an intrd, but withou the need to run on
+# an actual device:
+HOOKS=(base udev steamos steam-deck modconf block filesystems keyboard fsck)
 # HOOKS=(base udev steamos autodetect modconf block filesystems keyboard fsck)
+
+# This is used by the steam-deck module to populate the initrd module tree:
+DECK_MODULES=(
+overlay \
+btrfs \
+ext4 \
+vfat \
+exfat \
+blake2b_generic \
+hid-multitouch \
+i8042 \
+mmc_block \
+sdhci-pci \
+usb-storage \
+usbhid \
+virtio_blk \
+xhci-pci \
+xxhash_generic \
+serio-raw \
+)
 
 # COMPRESSION
 # Use this to compress the initramfs image. By default, zstd compression
