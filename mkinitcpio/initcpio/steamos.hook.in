@@ -138,12 +138,12 @@ steamos_efi_set_from_dev_tree () {
 
     if [[ "$partuuid" ]]
     then
-        log_kmsg "EFI partition from /dev/chainedloader is %s" "$partuuid."
+        msg "EFI partition from /dev/chainedloader is $partuuid."
         steamos_efi="PARTUUID=$partuuid"
         return 0
     fi
 
-    log_kmsg "ERROR: EFI partition not specified by /dev/chainedloader"
+    msg "ERROR: EFI partition not specified by /dev/chainedloader"
 }
 
 # under dracut we'd just call getarg whenever we needed a command line value
@@ -164,7 +164,7 @@ steamos_parse_cmdline () {
             ;;
         rd.steamos.efi|steamos.efi)
             steamos_efi="$value"
-            log_kmsg "EFI partition from kernel cmdline is %s" "$steamos_efi"
+            msg "EFI partition from kernel cmdline is $steamos_efi"
             ;;
     esac
 
@@ -179,7 +179,7 @@ steamos_set_efi_partition () {
     fi
 
     if [ -z "$steamos_efi" ]; then
-        log_kmsg "EFI partition not found"
+        msg "EFI partition not found"
     fi
 
     return 0
@@ -189,12 +189,12 @@ steamos_set_efi_partition () {
 steamos_generate_partsets () {
     local dev=$1
 
-    log_kmsg "Mounting %s on /tmp/efi" "$dev"
+    msg "Mounting $dev on /tmp/efi"
     mkdir -p /tmp/efi
     trap "if ismounted /tmp/efi; then umount /tmp/efi; fi" 0
     mount -o ro "$dev" /tmp/efi 2>&1
 
-    log_kmsg "Generating udev rules from %s/*" /tmp/efi/SteamOS/partsets
+    msg "Generating udev rules from /tmp/efi/@partsets_reldir@/*"
     for partset in /tmp/efi/@partsets_reldir@/*; do
         [ -e "$partset" ] || continue
         msg "Generating udev rules from $partset"
@@ -221,15 +221,13 @@ run_hook() {
     local efi_dev
     local rdev
 
-    log_kmsg "Adding loader device partuuid symlink via udev"
+    msg "Adding loader device partuuid symlink via udev"
     parse_cmdline steamos_parse_cmdline </proc/cmdline
 
     ######################################################################
     # from dracut : cmdline : 90 : steamos-parse-loaders.sh
     msg "Adding loader device partuuid symlink via udev"
     steamos_add_udev_rules_from_efivars
-
-    log_kmsg "Scanning for EFI partition"
 
     ######################################################################
     # from dracut : pre-mount : 90 : steamos-udev-rules.sh
@@ -242,7 +240,7 @@ run_hook() {
 
     efi_dev=$(expand_dev "$steamos_efi")
 
-    log_kmsg "Waiting for %s" "$efi_dev"
+    msg "Waiting for ${efi_dev}"
     poll_device "$efi_dev"
 
     steamos_generate_partsets "$efi_dev"
@@ -250,7 +248,7 @@ run_hook() {
     ######################################################################
     # from dracut : mount : 90 : steamos-root.sh
     rdev=/dev/$UDEV_SYMLINKS_RELDIR/self/rootfs
-    log_kmsg "Waiting for root device %s" $rdev
+    msg "Waiting for root device $rdev"
     poll_device $rdev
 
     msg "Setting root target to /dev/$UDEV_SYMLINKS_RELDIR/self/rootfs"
@@ -275,23 +273,24 @@ mount_var() {
     fi
 
     # Mount the /var mountpoint
-    log_kmsg "Mounting %s" "/dev/${UDEV_SYMLINKS_RELDIR}/self/var"
-    mount "/dev/${UDEV_SYMLINKS_RELDIR}/self/var" "$NEWROOT/var" 2>&1 
+    msg "Mounting /dev/${UDEV_SYMLINKS_RELDIR}/self/var"
+    mount "/dev/${UDEV_SYMLINKS_RELDIR}/self/var" "$NEWROOT/var" 2>&1
 
     if ismounted "$NEWROOT/var"; then
         return 0
     fi
 
     # Mount the /var mountpoint using tmpfs
-
-    log_kmsg "Mounting %s failed! Fallback using tmpfs!" "/dev/${UDEV_SYMLINKS_RELDIR}/self/var"
+    msg "Mounting /dev/${UDEV_SYMLINKS_RELDIR}/self/var failed!"
+    msg "Fallback using tmpfs!"
 
     mount -t tmpfs -o size=512m tmpfs "$NEWROOT/var" 2>&1
     if ismounted "$NEWROOT/var"; then
         return 0
     fi
 
-    log_kmsg "Mounting %s failed! Compile the kernel with CONFIG_TMPFS!" "/dev/${UDEV_SYMLINKS_RELDIR}/self/var"
+    msg "Mounting /dev/${UDEV_SYMLINKS_RELDIR}/self/var failed!"
+    msg "Compile the kernel with CONFIG_TMPFS!"
     msg "*** Dropping you to a shell"
     emergency_shell
 }
@@ -308,15 +307,15 @@ workdir="${sysroot}${overlaydir}/work"
 # from dracut : pre-pivot : 90 : steamos-etc-overlay.sh
 prepare_etc_overlay() {
     # upper dir contains persistent data, create it only if it doesn't exist
-    log_kmsg "Preparing /etc overlay { %s %s %s }" $overlaydir $upperdir $workdir
+    msg "Preparing /etc overlay { $overlaydir $upperdir $workdir }"
     if [ ! -d "$upperdir" ]; then
-        log_kmsg "Creating overlay upper directory '%s'" $upperdir
+        msg "Creating overlay upper directory '$upperdir'"
         rm -fr "$upperdir"
         mkdir -p "$upperdir"
     fi
 
     # work dir must exist and be empty
-    log_kmsg "Clearing overlay work directory %s" $workdir
+    msg "Clearing overlay work directory $workdir"
     rm -fr "$workdir"
     mkdir -p "$workdir"
 }
@@ -326,7 +325,7 @@ mount_etc_overlay() {
     local x
 
     # Mount the /etc overlay
-    log_kmsg "Mounting overlay %s on %s (%s)" $upperdir $lowerdir $workdir
+    msg "Mounting overlay $upperdir on $lowerdir ($workdir)"
     mount -v \
         -t overlay \
         -o lowerdir=$lowerdir,upperdir=$upperdir,workdir=$workdir \
@@ -357,7 +356,6 @@ setup_etc_overlay ()
         fi
     fi
 
-    log_kmsg "/etc overlay failed"
     msg "/etc overlay failed - dropping to emergency shell"
     emergency_shell
 }
@@ -372,24 +370,24 @@ initialize_var_lib_modules() {
     local orig=$NEWROOT@datadir@/factory/$moddir
     local dest=$NEWROOT/$moddir
 
-    log_kmsg "Checking modules source and destination (%s, %s)" $orig $dest
+    msg "Checking modules source and destination ($orig, $dest)"
     [ -e "$dest" ] && return 0
     [ -d "$orig" ] || return 0
 
-    log_kmsg "Creating module directory '%s'" $dest
+    msg "Creating module directory '$dest'"
     mkdir -p "$(dirname "$dest")"
 
     # purge any half copied content or leftovers
     rm -rf "$dest".new
 
-    log_kmsg "Copying %s to %s.new" $orig $dest
+    msg "Copying $orig to $dest.new" $orig $dest
     if cp -a "$orig" "$dest".new; then
-        log_kmsg "Copy successful, installing to %s" $dest
+        msg "Copy successful, installing to $dest"
         mv "$dest".new "$dest"
         return 0
     fi
 
-    msg "Could not install kernel modules to $dest, system may need rescue"
+    msg "Could not install modules to $dest, system may need rescue"
     return 1
 }
 ############################################################################
@@ -471,6 +469,15 @@ factory_reset () {
 
 ############################################################################
 
+log_modules ()
+{
+    local module size depcount users x
+    while read module size depcount users x
+    do
+        msg "initrd module $module $depcount $users"
+    done < /proc/modules
+}
+
 run_latehook () {
     # This is run after the rootfs is mounted, but before
     # switch_root is invoked to pivot to it:
@@ -488,8 +495,10 @@ run_latehook () {
     if mount_var &&
        setup_etc_overlay &&
        initialize_var_lib_modules; then
+        log_modules
         return 0
     else
+        log_modules
         emergency_shell
     fi
 }
