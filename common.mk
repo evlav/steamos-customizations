@@ -92,13 +92,15 @@ ATOMUPD_IMAGES_URL := https://atomupd-images.steamos.cloud/steamos-holo
 # This is used by steamos-atomupd >= 0.20220216.0 (steamos-atomupd-git >= r197).
 ATOMUPD_META_URL := https://atomupd.steamos.cloud/meta
 
-# Directory where RAUC will mount the update bundle and store its temporary
-# files
+# Directory where RAUC will mount the update bundle
 RAUC_RUNTIME_DIR := /run/rauc
+
+# Directory where temporary update files will be placed
+STEAMOS_ATOMUPD_RUNTIME_DIR := /run/steamos-atomupd
 
 # File used by RAUC to store the installed update version. This allows us to
 # record that we have a pending reboot to switch to the new image.
-REBOOT_FOR_UPDATE := $(RAUC_RUNTIME_DIR)/reboot_for_update
+REBOOT_FOR_UPDATE := $(STEAMOS_ATOMUPD_RUNTIME_DIR)/reboot_for_update
 
 %: %.in
 	@echo "Substituting @variables@ in $<"
@@ -126,6 +128,7 @@ REBOOT_FOR_UPDATE := $(RAUC_RUNTIME_DIR)/reboot_for_update
 	  -e 's;@atomupd_images_url@;$(ATOMUPD_IMAGES_URL);g' \
 	  -e 's;@atomupd_meta_url@;$(ATOMUPD_META_URL);g' \
 	  -e 's;@rauc_runtime_dir@;$(RAUC_RUNTIME_DIR);g' \
+	  -e 's;@steamos_atomupd_runtime_dir@;$(STEAMOS_ATOMUPD_RUNTIME_DIR);g' \
 	  -e 's;@reboot_for_update@;$(REBOOT_FOR_UPDATE);g' \
 	  $< > $@
 	@if grep -q '@[[:alnum:]_]*@' $@; then \
