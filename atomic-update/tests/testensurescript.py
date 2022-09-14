@@ -52,6 +52,11 @@ class TestScenario:
     result_value: int
 
 test_scenarios = [
+    TestScenario(
+        description ='Missing deck user',
+        scenario_path = './missinguser',
+        result_value = 0
+    ),
 ]
 
 DB_FILES = ['passwd', 'group', 'shadow', 'gshadow']
