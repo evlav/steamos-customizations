@@ -62,6 +62,11 @@ test_scenarios = [
         scenario_path = './renameduser',
         result_value = 0
     ),
+    TestScenario(
+        description = 'Wrong groups',
+        scenario_path = './wronggroups',
+        result_value = 0
+    ),
 ]
 
 DB_FILES = ['passwd', 'group', 'shadow', 'gshadow']
