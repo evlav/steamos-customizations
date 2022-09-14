@@ -192,10 +192,11 @@ def ensure_user_in_groups(username, groups):
     return True
 
 
-if not ensure_user_exists(USERNAME, UID):
-    sys.exit(1)
+if __name__ == '__main__':
+    if not ensure_user_exists(USERNAME, UID):
+        sys.exit(1)
 
-if not ensure_user_in_groups(USERNAME, GROUPS):
-    sys.exit(1)
+    if not ensure_user_in_groups(USERNAME, GROUPS):
+        sys.exit(1)
 
-sys.exit(0)
+    sys.exit(0)
