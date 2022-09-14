@@ -67,6 +67,11 @@ test_scenarios = [
         scenario_path = './wronggroups',
         result_value = 0
     ),
+    TestScenario(
+        description = 'Disabled deck user',
+        scenario_path = './disabled',
+        result_value = 0
+    ),
 ]
 
 DB_FILES = ['passwd', 'group', 'shadow', 'gshadow']
