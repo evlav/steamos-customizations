@@ -57,6 +57,11 @@ test_scenarios = [
         scenario_path = './missinguser',
         result_value = 0
     ),
+    TestScenario(
+        description = 'Renamed deck user',
+        scenario_path = './renameduser',
+        result_value = 0
+    ),
 ]
 
 DB_FILES = ['passwd', 'group', 'shadow', 'gshadow']
