@@ -1,0 +1,51 @@
+# Copyright 2021-2022 Collabora Ltd
+# SPDX-License-Identifier: MIT
+
+stages:
+  - lint
+  - test
+
+default:
+  tags:
+    - docker
+    - linux
+
+.test_template:
+  stage: test
+  needs: []
+  tags:
+    - docker
+    - linux
+  script:
+    - cd atomic-update/tests
+    - /usr/bin/python ./testensurescript.py
+
+.test_archlinux_template:
+  extends: .test_template
+  before_script:
+    - pacman -Syu --needed --noconfirm --noprogressbar
+      python 
+
+test:archlinux:
+  extends: .test_archlinux_template
+  image: archlinux:base-devel
+
+.lint_template:
+  stage: lint
+  needs: [ ]
+  image: archlinux:base-devel
+  before_script:
+    - pacman -Syu --needed --noconfirm --noprogressbar
+      python-flask python-semantic-version python-pylint mypy
+
+lint:pylint:
+  extends: .lint_template
+  script:
+    - pylint --disable=R1732 atomic-update
+
+lint:mypy:
+  extends: .lint_template
+  script:
+    - mypy atomic-update
+
+# vim:set sw=2 sts=2 et:
