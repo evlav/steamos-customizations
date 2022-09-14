@@ -72,6 +72,11 @@ test_scenarios = [
         scenario_path = './disabled',
         result_value = 0
     ),
+    TestScenario(
+        description = 'Wrong UID',
+        scenario_path = './wronguid',
+        result_value = 1
+    ),
 ]
 
 DB_FILES = ['passwd', 'group', 'shadow', 'gshadow']
