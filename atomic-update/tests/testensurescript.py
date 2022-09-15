@@ -22,6 +22,8 @@
 
 ''' Make sure steamos_ensure_deck_user.py works as expected'''
 import re
+
+import os
 import shutil
 import subprocess
 import sys
@@ -35,6 +37,16 @@ sys.path.insert(0, '../bin')
 
 if sys.version_info < (3, 9, 0):
     raise unittest.SkipTest("We need at least Python 3.9 to test the ensure script")
+
+if os.geteuid() != 0:
+    print('This test requires root to run. Execute with sudo or run as root')
+    raise unittest.SkipTest('This test requires root to run, skipping')
+
+if not os.environ.get('ATOMIC_UPDATE_RUN_DESTRUCTIVE_TESTS'):
+    print('To run this use:\n')
+    print('ATOMIC_UPDATE_RUN_DESTRUCTIVE_TESTS=1 python testensurescript.py')
+    raise unittest.SkipTest('This test requires ATOMIC_UPDATE_RUN_DESTRUCTIVE_TESTS to be set,'
+        ' skipping')
 
 data_path = Path(__file__).parent.resolve()
 script_path = data_path / '../bin/steamos_ensure_deck_user.py'

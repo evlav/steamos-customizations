@@ -18,7 +18,7 @@ default:
     - linux
   script:
     - cd atomic-update/tests
-    - /usr/bin/python ./testensurescript.py
+    - ATOMIC_UPDATE_RUN_DESTRUCTIVE_TESTS=1 python -m unittest -v
 
 .test_archlinux_template:
   extends: .test_template
