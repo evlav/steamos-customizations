@@ -144,6 +144,7 @@ prepare_chroot_at() {
     mount "$EFI_DEVICE" $dir/efi
     mount "$ESP_DEVICE" $dir/esp
     mount "$VAR_DEVICE" $dir/var
+    mount -t overlay -o "lowerdir=$dir/etc,upperdir=$dir/var/lib/overlays/etc/upper,workdir=$dir/var/lib/overlays/etc/work" none "$dir/etc"
     if [ -d $dir/var/boot ]; then
         mount --bind $dir/var/boot $dir/boot
     fi
@@ -156,6 +157,7 @@ cleanup_chroot_at() {
     if mountpoint -q $dir/boot; then
         umount $dir/boot || :
     fi
+    umount $dir/etc  || :
     umount $dir/var  || :
     umount $dir/esp  || :
     umount $dir/efi  || :
