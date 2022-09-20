@@ -205,10 +205,6 @@ sync_var_mountpoints() {
     # must be empty on first boot, so that they can be initialized from the
     # factory that is shipped with the rootfs.
     #
-    # We also need to exclude /var/boot, which might contain the initrd that
-    # was rebuilt to include nvidia drivers built by DKMS. Once again, this is
-    # not a state that we want to keep.
-    #
     # Finally we exclude any potential user changes to the RAUC configuration
     # to avoid the risk of breaking the updates by using an unexpected config.
 
@@ -217,7 +213,6 @@ sync_var_mountpoints() {
         --archive \
         --delete \
         --one-file-system \
-        --exclude="/boot/" \
         --exclude="/lib/dkms/" \
         --exclude="/lib/modules/" \
         --exclude="/lib/pacman/" \

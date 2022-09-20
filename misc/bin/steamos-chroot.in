@@ -144,9 +144,6 @@ prepare_chroot_at() {
     mount "$EFI_DEVICE" $dir/efi
     mount "$ESP_DEVICE" $dir/esp
     mount "$VAR_DEVICE" $dir/var
-    if [ -d $dir/var/boot ]; then
-        mount --bind $dir/var/boot $dir/boot
-    fi
 }
 
 cleanup_chroot_at() {
