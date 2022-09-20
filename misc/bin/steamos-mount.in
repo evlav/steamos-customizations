@@ -35,11 +35,10 @@ Options for disk:
                          explicitly specifies partset
  noesp                   no mount /esp
  noefi                   no mount /efi
- novar                   no mount /var (implies nooverlay and noboot)
+ novar                   no mount /var (implies nooverlay)
  nohome                  no mount /home (implies nooffload)
  nooffload               no bind-mount offloaded directories
  nooverlay               no mount overlayed /etc
- noboot                  no bind-mount /boot
 EOF
 }
 
@@ -250,9 +249,4 @@ then
     mount -t overlay -o "lowerdir=$mnt/etc,upperdir=$mnt/var/lib/overlays/etc/upper,workdir=$mnt/var/lib/overlays/etc/work" none "$mnt/etc"
 fi
 
-# Mount boot
-if [[ ! "${novar:-}" ]] && [[ ! "${noboot:-}" ]]
-then
-    mount --bind "$mnt/var/boot" "$mnt/boot"
-fi
 trap - 0
