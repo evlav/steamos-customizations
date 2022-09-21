@@ -25,13 +25,17 @@ do
     partuuid="$(get_efivar_str /dev/stdin <"$i")"
     [[ "$partuuid" ]] || continue
 
+    # XXX: Technically speaking this is not required, although ...
+    #
+    # When using dracut --no-hostonly initrd, the wait_for_dev is completely
+    # unreliable. It will immediatelly return, even when the device in question
+    # is not populated.
+    # At the same time, having a seemingly unused instance here progs its
+    # machinery to actually get the device ready for the actual work, during
+    # mounting.
+    #
+    # In other words - wait_for_dev is unreliable, but we need this hack here or
+    # the mount (in steamos-root.sh.in) will fail.
     partuuid="${partuuid,,}"
     wait_for_dev "/dev/disk/by-partuuid/$partuuid"
-
-    symlink="${i##*/}"
-    symlink="${symlink%DevicePartUUID-*}"
-    symlink="${symlink,,}"
-    cat <<EOF >/etc/udev/rules.d/99-$symlink.rules
-ENV{ID_PART_ENTRY_SCHEME}=="gpt", ENV{ID_PART_ENTRY_UUID}=="$partuuid", SYMLINK+="$symlink"
-EOF
 done

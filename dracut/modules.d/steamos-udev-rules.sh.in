@@ -18,62 +18,6 @@
 
 . /lib/dracut-lib.sh
 
-get_chainedloader_device() {
-    local partuuid
-    local efivar
-    local other
-    local path
-    local dev
-
-    partuuid="$(lsblk --noheadings --output PARTUUID /dev/chainedloader 2>/dev/null)"
-    if [[ "$partuuid" ]]
-    then
-        echo "PARTUUID=$partuuid"
-        exit 0
-    fi
-
-    IFS=, mapfile -t cfgs < <(FS=, steamos-ls --output boot-requested-at,boot-other,boot-other-disabled,image-invalid,path | sort -r)
-    for i in "${cfgs[@]}"
-    do
-        local boot_requested_at
-        local boot_other
-        local boot_other_disabled
-        local image_invalid
-
-        IFS=, read -r boot_requested_at boot_other boot_other_disabled image_invalid path <<<"$i"
-
-        if [[ "$boot_other" -ne 0 ]]
-        then
-            other=1
-            echo "$path has boot-other set, skip it..." >&2
-            continue
-        fi
-
-        if [[ "${other:-0}" -ne 0 ]] && [[ "$boot_other_disabled" -ne 0 ]]
-        then
-            echo "$path has boot-other-disabled set, skip it..." >&2
-            continue
-        fi
-
-        if [[ "$image_invalid" -ne 0 ]]
-        then
-            echo "$path has image-invalid set, skip it..." >&2
-            continue
-        fi
-
-        dev="$path"
-        break
-    done
-
-    if [ ! "${dev:-}" ]
-    then
-        echo "Warning: No such device, assuming last if any..." >&2
-        dev="$path"
-    fi
-
-    echo "$dev"
-}
-
 expand_dev() {
     local dev
 
@@ -107,9 +51,6 @@ info "Setting up SteamOS udev rules"
 EFI=$(getarg 'rd.steamos.efi=')
 if [ -z "$EFI" ]; then
     EFI=$(getarg 'steamos.efi=')
-fi
-if [ -z "$EFI" ]; then
-    EFI="$(get_chainedloader_device)"
 fi
 if [ -z "$EFI" ]; then
     warn "No second loader found!"
