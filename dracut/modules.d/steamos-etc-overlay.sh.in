@@ -76,12 +76,6 @@ mount_etc_overlay() {
     return 1
 }
 
-NOOVERLAY=$(getarg 'rd.steamos.nooverlay=')
-if [ -n "$NOOVERLAY" ]; then
-    warn "/etc overlay disabled by kernel cmdline."
-    return 0
-fi
-
 if prepare_etc_overlay; then
     if mount_etc_overlay; then
         return 0
