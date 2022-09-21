@@ -28,7 +28,7 @@ check() {
 
     # steamos helpers for partsets
     require_binaries \
-        lsblk sort steamos-ls \
+        lsblk sort \
         @libexecdir@/steamos/steamos-partsets-generator \
         || return 1
 
@@ -82,7 +82,7 @@ install() {
     inst_multiple \
         basename dirname plymouth rmdir sed sleep file \
         e2label mkfs.ext4 tune2fs e2fsck \
-        lsblk sort steamos-ls uuidgen \
+        lsblk sort uuidgen \
         btrfs btrfstune e2fsck \
         steamos-factory-reset-config mktemp \
         @libexecdir@/steamos/steamos-partsets-generator \
