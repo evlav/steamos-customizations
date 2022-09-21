@@ -33,12 +33,6 @@ Options:
 Options for disk:
  partset=<self|other|A|B|dev>
                          explicitly specifies partset
- noesp                   no mount /esp
- noefi                   no mount /efi
- novar                   no mount /var (implies nooverlay)
- nohome                  no mount /home (implies nooffload)
- nooffload               no bind-mount offloaded directories
- nooverlay               no mount overlayed /etc
 EOF
 }
 
@@ -185,11 +179,11 @@ then
     done
 fi
 
-if [[ ! "${noesp:-}" ]] && [[ ! "${esp:-}" ]]
+if [[ ! "${esp:-}" ]]
 then
     echo "esp: No such device" >&2
     exit 1
-elif [[ ! "${noefi:-}" ]] && [[ ! "${efi:-}" ]]
+elif [[ ! "${efi:-}" ]]
 then
     echo "efi: No such device" >&2
     exit 1
@@ -197,11 +191,11 @@ elif [[ ! "${rootfs:-}" ]]
 then
     echo "rootfs: No such device" >&2
     exit 1
-elif [[ ! "${novar:-}" ]] && [[ ! "${var:-}" ]]
+elif [[ ! "${var:-}" ]]
 then
     echo "var: No such device" >&2
     exit 1
-elif [[ ! "${nohome:-}" ]] && [[ ! "${home:-}" ]]
+elif [[ ! "${home:-}" ]]
 then
     echo "home: No such device" >&2
     exit 1
@@ -210,43 +204,22 @@ fi
 # Mount partset
 mount "$rootfs" "$mnt"
 trap 'umount -R "$mnt"' 0
-if [[ ! "${nohome:-}" ]]
-then
-    mount "$home" "$mnt/home"
-fi
-if [[ ! "${novar:-}" ]]
-then
-    mount "$var" "$mnt/var"
-fi
-if [[ ! "${noefi:-}" ]]
-then
-    mount "$efi" "$mnt/efi"
-fi
-if [[ ! "${noesp:-}" ]]
-then
-    mount "$esp" "$mnt/esp"
-fi
+mount "$home" "$mnt/home"
+mount "$var" "$mnt/var"
+mount "$efi" "$mnt/efi"
+mount "$esp" "$mnt/esp"
 
 # Mount offload
-if [[ ! "${nohome:-}" ]] && [[ ! "${nooverlay:-}" ]]
-then
-    for i in /opt /root /srv /usr/lib/debug /usr/local
-    do
-        mount --bind "$mnt/home/.steamos/offload$i" "$mnt$i"
-    done
-    if [[ ! "${novar:-}" ]]
-    then
-        for i in /var/cache/pacman /var/lib/docker /var/lib/flatpak /var/lib/systemd/coredump /var/log /var/tmp
-        do
-            mount --bind "$mnt/home/.steamos/offload$i" "$mnt$i"
-        done
-    fi
-fi
+for i in /opt /root /srv /usr/lib/debug /usr/local
+do
+    mount --bind "$mnt/home/.steamos/offload$i" "$mnt$i"
+done
+for i in /var/cache/pacman /var/lib/docker /var/lib/flatpak /var/lib/systemd/coredump /var/log /var/tmp
+do
+    mount --bind "$mnt/home/.steamos/offload$i" "$mnt$i"
+done
 
 # Mount overlay
-if [[ ! "${novar:-}" ]] && [[ ! "${nooverlay:-}" ]]
-then
-    mount -t overlay -o "lowerdir=$mnt/etc,upperdir=$mnt/var/lib/overlays/etc/upper,workdir=$mnt/var/lib/overlays/etc/work" none "$mnt/etc"
-fi
+mount -t overlay -o "lowerdir=$mnt/etc,upperdir=$mnt/var/lib/overlays/etc/upper,workdir=$mnt/var/lib/overlays/etc/work" none "$mnt/etc"
 
 trap - 0
