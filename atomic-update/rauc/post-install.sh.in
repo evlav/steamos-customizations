@@ -225,6 +225,19 @@ sync_var_mountpoints() {
         --exclude="/lost+found/" \
         --exclude="/lib/overlays/etc/upper/rauc" \
         "$src/" "$dst/"
+
+
+    # Run ensure script to fix any user changes to deck user, just in case
+
+
+    # Note we are running the script from the current OS in the "other" partition
+    # using < to pipe it in. This gets around a chicken/egg with having the script
+    # available on the "other" partition and also makes us not need to check if the 
+    # script exists.
+    # Update this if the script ever gets renamed to keep in sync with what we are installing.
+    steamos-chroot --partset $UPDATED_SLOT -- /usr/bin/python < /usr/bin/steamos_ensure_deck_user.py ||
+        err "Failed to ensure deck user exists in expected groups.  Aborting update"
+
     fsfreeze -u "$src"
 }
 
