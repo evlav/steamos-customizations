@@ -77,6 +77,11 @@ test_scenarios = [
         scenario_path = './wronguid',
         result_value = 1
     ),
+    TestScenario(
+        description = 'Password set',
+        scenario_path = 'passwordset',
+        result_value = 0
+    ),
 ]
 
 DB_FILES = ['passwd', 'group', 'shadow', 'gshadow']
