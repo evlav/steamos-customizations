@@ -99,6 +99,11 @@ test_scenarios = [
         scenario_path = 'anotheruser',
         result_value = 0
     ),
+    TestScenario(
+        description = 'Combined',
+        scenario_path = 'combined',
+        result_value = 0
+    ),
 ]
 
 DB_FILES = ['passwd', 'group', 'shadow', 'gshadow']
