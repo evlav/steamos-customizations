@@ -79,6 +79,12 @@ test_scenarios = [
         result_value = 0
     ),
     TestScenario(
+        description = 'Renamed deck user (Home exists)',
+        scenario_path = './renameduser',
+        home_exists = True,
+        result_value = 0
+    ),
+    TestScenario(
         description = 'Wrong groups',
         scenario_path = './wronggroups',
         home_exists = False,
