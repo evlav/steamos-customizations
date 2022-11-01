@@ -57,51 +57,67 @@ class TestScenario:
     ''' Test scenarios to check.
     description: Human readable description for scenario
     scenario_path: The path of the start and expected result password files for this scenario
+    home_exists: True if home should exist before test is ran, false if it shouldn't
     result_value: The expected exit code from running the ensure script
     '''
     description: str
     scenario_path: str
+    home_exists: bool
     result_value: int
 
 test_scenarios = [
     TestScenario(
         description ='Missing deck user',
         scenario_path = './missinguser',
+        home_exists = False,
         result_value = 0
     ),
     TestScenario(
         description = 'Renamed deck user',
         scenario_path = './renameduser',
+        home_exists = False,
         result_value = 0
     ),
     TestScenario(
         description = 'Wrong groups',
         scenario_path = './wronggroups',
+        home_exists = False,
         result_value = 0
     ),
     TestScenario(
         description = 'Disabled deck user',
         scenario_path = './disabled',
+        home_exists = False,
         result_value = 0
     ),
     TestScenario(
         description = 'Wrong UID',
         scenario_path = './wronguid',
+        home_exists = False,
         result_value = 1
     ),
     TestScenario(
         description = 'Password set',
         scenario_path = 'passwordset',
+        home_exists = False,
         result_value = 0
     ),
     TestScenario(
         description = 'Another user',
         scenario_path = 'anotheruser',
+        home_exists = False,
         result_value = 0
     ),
     TestScenario(
         description = 'Combined',
         scenario_path = 'combined',
+        home_exists = False,
+        result_value = 0
+    ),
+    TestScenario(
+        description = 'Home Exists (missing deck user, but home already exists',
+        scenario_path = 'homeexists',
+        home_exists = True,
         result_value = 0
     ),
 ]
@@ -198,6 +214,11 @@ class TestEnsureScript(unittest.TestCase):
         try:
             for data in test_scenarios:
                 with self.subTest(msg=data.description):
+                    if data.home_exists:
+                        subprocess.run(['mkdir', '/home/deck'], check=False)
+                    else:
+                        subprocess.run(['rm', '-fR', '/home/deck'], check=False)
+
                     print(f"\nRunning test: {data.description}")
                     # Copy initial files
 
