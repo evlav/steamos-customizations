@@ -13,6 +13,7 @@ LODIND_CONFIG := $(wildcard journald.conf.d/*.conf)
 PROFILE_CONFIG := profile.d/steamos.sh
 XORG_CONFIG := xorg.conf.d/10-steamos-virtualdisplaysize.conf
 SYSTEMD_REMOUNT_FS_CONFIG := systemd-remount-fs.service.d/steamos-remount-rw.conf
+PROTON_LIMITS_CONFIG := limits.d/15-proton-nice.conf
 
 MOUNTS_IN := $(wildcard systemd/*.mount.in)
 MOUNTS := $(patsubst %.in,%,$(MOUNTS_IN))
@@ -44,6 +45,8 @@ install: all
 	install -m 0644 $(LODIND_CONFIG) $(DESTDIR)$(libdir)/systemd/journald.conf.d/
 	install -d $(DESTDIR)$(sysconfdir)/profile.d
 	install -m 0644 $(PROFILE_CONFIG) $(DESTDIR)$(sysconfdir)/profile.d
+	install -d $(DESTDIR)$(sysconfdir)/limits.d
+	install -m 0644 $(PROTON_LIMITS_CONFIG) $(DESTDIR)$(sysconfdir)/limits.d
 	install -d $(DESTDIR)$(datadir)/X11/xorg.conf.d
 	install -m 0644 $(XORG_CONFIG) $(DESTDIR)$(datadir)/X11/xorg.conf.d
 	install -d $(DESTDIR)$(systemdunitsdir)
