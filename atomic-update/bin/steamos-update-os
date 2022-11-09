@@ -31,13 +31,7 @@ update_now() {
         sleep 5s
     fi
 
-    if grep -q 'systemd.unit=steamos-update-os.target' /proc/cmdline; then
-        steamos-logger "Rebooting in 5 seconds...";
-        sleep 5s
-        reboot
-    else
-        echo "Reboot to run the new version of SteamOS." >&2
-    fi
+    echo "Reboot to run the new version of SteamOS." >&2
 }
 
 update_after_reboot() {
