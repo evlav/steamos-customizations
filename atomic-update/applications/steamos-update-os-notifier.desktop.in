@@ -1,9 +1,0 @@
-[Desktop Entry]
-Name=SteamOS Update Operating System Notifier
-Comment=KUpdate Notifier for the new systemtray specification
-Exec=@libexecdir@/steamos/steamos-update-os-notifier
-Icon=system-software-update
-Type=Application
-NoDisplay=true
-OnlyShowIn=KDE
-Keywords=kupdate-notifier;system;update;updater

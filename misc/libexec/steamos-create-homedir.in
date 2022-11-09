@@ -52,9 +52,6 @@ do
     [ -e "$i" ] || continue
     ln -sf "$i" "$homedir/Desktop/${i##*/}"
 done
-install -d -m755 "$homedir/.config/autostart"
-ln -sf @datadir@/applications/steamos-update-os-notifier.desktop "$homedir/.config/autostart/steamos-update-os-notifier.desktop"
-install -D -m644 @datadir@/steamos/kupdatenotifierrc "$homedir/.config/kupdatenotifierrc"
 mkdir -p "$homedir/.config/systemd/user/default.target.wants"
 ln -sf /usr/lib/systemd/user/gamemoded.service "$homedir/.config/systemd/user/default.target.wants/gamemoded.service"
 chown -R "$uid:$gid" "$homedir"
