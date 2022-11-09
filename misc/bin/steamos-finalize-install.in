@@ -146,6 +146,15 @@ function migrate_network
     rm -f /var/lib/NetworkManager/*
 }
 
+function migrate_home_steamos_update
+{
+    # These have been disabled during the product launch and removed sometime
+    # after. Remove the files from the user homedir.
+    rm -f "/home/deck/.config/autostart/steamos-update-os-notifier.desktop" || :
+    rm -f "/home/deck/.config/kupdatenotifierrc" || :
+
+}
+
 while [[ "$#" -ne 0 ]]
 do
     if [[ "$1" =~ ^(-h|--help)$ ]]
@@ -184,6 +193,7 @@ then
     if in_chroot || [[ ${force_migrate:-} ]]
     then
         migrate_network
+        migrate_home_steamos_update
     else
         echo "Skipping configuration migration steps as this is not running in a chroot."
     fi
@@ -191,6 +201,6 @@ fi
 
 if [[ ! ${no_boot_install:-} ]]
 then
-    install_bootloaders   
+    install_bootloaders
 fi
 
