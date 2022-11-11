@@ -32,9 +32,17 @@ EOF
     # must be after 60-persistent-storage.rules
     while read -r name partuuid
     do
-        cat <<EOF
-ENV{ID_PART_ENTRY_SCHEME}=="gpt", ENV{ID_PART_ENTRY_UUID}=="$partuuid", SYMLINK+="@udev_symlinks_reldir@/$partset/$name", ENV{UDISKS_IGNORE}="$udisks"
-EOF
+	if cryptsetup isLuks /dev/disk/by-partuuid/$partuuid; then
+	    luks_uuid=`cryptsetup luksUUID /dev/disk/by-partuuid/$partuuid | tr -d -`
+	    cat <<-EOF
+		ENV{ID_PART_ENTRY_SCHEME}=="gpt", ENV{ID_PART_ENTRY_UUID}=="$partuuid", SYMLINK+="disk/by-partsets/$partset/$name-crypt", ENV{UDISKS_IGNORE}="$udisks"
+		ENV{DM_UUID}=="CRYPT-LUKS2-$luks_uuid-*", SYMLINK+="disk/by-partsets/$partset/$name", ENV{UDISKS_IGNORE}="1"
+		EOF
+	else
+	    cat <<-EOF
+		ENV{ID_PART_ENTRY_SCHEME}=="gpt", ENV{ID_PART_ENTRY_UUID}=="$partuuid", SYMLINK+="@udev_symlinks_reldir@/$partset/$name", ENV{UDISKS_IGNORE}="$udisks"
+		EOF
+	fi
     done <"$1"
 }
 

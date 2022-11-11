@@ -83,7 +83,7 @@ install() {
         basename dirname plymouth rmdir sed sleep file \
         e2label mkfs.ext4 tune2fs e2fsck \
         dd lsblk sort steamos-ls uuidgen \
-        btrfs btrfstune e2fsck \
+        btrfs btrfstune e2fsck cryptsetup \
         steamos-factory-reset-config mktemp \
         iconv /usr/lib/gconv/UTF-16.so /usr/lib/gconv/gconv-modules \
         @libexecdir@/steamos/steamos-partsets-generator \
