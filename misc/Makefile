@@ -19,10 +19,12 @@ MOUNTS_IN := $(wildcard systemd/*.mount.in)
 MOUNTS := $(patsubst %.in,%,$(MOUNTS_IN))
 SERVICES_IN := $(wildcard systemd/*.service.in)
 SERVICES := $(patsubst %.in,%,$(SERVICES_IN))
+GENERATORS_IN := $(wildcard systemd/system-generators/*.in)
+GENERATORS := $(patsubst %.in,%,$(GENERATORS_IN))
 SYSUSERS := $(wildcard sysusers/*)
 UNITS := $(SERVICES) $(MOUNTS)
 
-all: $(BINARIES) $(LIBRARIES_EXEC) $(UNITS)
+all: $(BINARIES) $(LIBRARIES_EXEC) $(UNITS) $(GENERATORS)
 
 install: all
 	install -d $(DESTDIR)$(sbindir)
@@ -52,6 +54,8 @@ install: all
 	install -d $(DESTDIR)$(systemdunitsdir)
 	install -m 0644 $(UNITS) $(DESTDIR)$(systemdunitsdir)
 	$(call enable-systemd-units,$(DESTDIR)$(systemdunitsdir),$(notdir $(UNITS)))
+	install -d $(DESTDIR)$(systemdgeneratorsdir)
+	install -m 0755 $(GENERATORS) $(DESTDIR)$(systemdgeneratorsdir)
 	install -d $(DESTDIR)$(libdir)/sysusers.d
 	install -m 0644 $(SYSUSERS) $(DESTDIR)$(libdir)/sysusers.d
 	install -d $(DESTDIR)$(sysconfdir)/systemd/system/systemd-remount-fs.service.d

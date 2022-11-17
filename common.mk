@@ -8,6 +8,7 @@ datadir    := $(prefix)/share
 libdir     := $(prefix)/lib
 libexecdir := $(prefix)/libexec
 sbindir    := $(prefix)/sbin
+systemdgeneratorsdir := $(libdir)/systemd/system-generators
 systemdunitsdir := $(libdir)/systemd/system
 completionsdir := $(shell pkg-config --define-variable=prefix=$(prefix) --variable=completionsdir bash-completion 2>/dev/null \
 			  || echo /usr/share/bash-completion/completions/)
@@ -110,6 +111,7 @@ REBOOT_FOR_UPDATE := $(STEAMOS_ATOMUPD_RUNTIME_DIR)/reboot_for_update
 	  -e 's;@libexecdir@;$(libexecdir);g' \
 	  -e 's;@sbindir@;$(sbindir);g' \
 	  -e 's;@datadir@;$(datadir);g' \
+	  -e 's;@systemdgeneratorsdir@;$(systemdgeneratorsdir);g' \
 	  -e 's;@steamos_n_partitions@;$(STEAMOS_N_PARTITIONS);g' \
 	  -e 's;@steamos_all_partlabels@;$(STEAMOS_ALL_PARTLABELS);g' \
 	  -e 's;@grub_binary_relpath@;$(GRUB_BINARY_RELPATH);g' \

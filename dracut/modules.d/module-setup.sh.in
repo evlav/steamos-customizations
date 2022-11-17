@@ -88,6 +88,7 @@ install() {
         iconv /usr/lib/gconv/UTF-16.so /usr/lib/gconv/gconv-modules \
         @libexecdir@/steamos/steamos-partsets-generator \
         $systemdutildir/systemd-veritysetup \
+        $systemdutildir/system-generators/steamos-cryptsetup-generator \
         $systemdutildir/system-generators/systemd-veritysetup-generator
 
     inst /usr/share/file/misc/magic.mgc

@@ -1,0 +1,26 @@
+#!/bin/sh
+
+set -e
+
+export SYSTEMD_CRYPTTAB=/run/steamos-crypttab
+
+unit_dir="$1"
+
+rm -f ${SYSTEMD_CRYPTTAB}
+
+for device in /dev/disk/by-partsets/self/*-crypt /dev/disk/by-partsets/shared/*-crypt; do
+    if [ -e "$device" ]; then
+        base_device="${device%-crypt}"
+        name="${base_device##*/}"
+        unit_file=`systemd-escape --suffix=device -p ${base_device}`
+        if ! grep -qws "^$name" ${SYSTEMD_CRYPTTAB}; then
+            echo "$name $device none tpm2-device=auto,discard,headless,noauto" >> ${SYSTEMD_CRYPTTAB}
+        fi
+        mkdir -p "$unit_dir"
+        echo '[Unit]' > "$unit_dir/$unit_file"
+        echo "Wants=systemd-cryptsetup@$name.service" >> "$unit_dir/$unit_file"
+        echo "After=systemd-cryptsetup@$name.service" >> "$unit_dir/$unit_file"
+    fi
+done
+
+@systemdgeneratorsdir@/systemd-cryptsetup-generator "$@"
