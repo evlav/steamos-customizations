@@ -41,7 +41,7 @@ test:archlinux:
 lint:pylint:
   extends: .lint_template
   script:
-    - pylint --disable=R1732 atomic-update
+    - pylint --disable=R1732 --disable=R0801 atomic-update
 
 lint:mypy:
   extends: .lint_template
