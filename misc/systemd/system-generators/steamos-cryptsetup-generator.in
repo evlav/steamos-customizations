@@ -18,8 +18,7 @@ for device in /dev/disk/by-partsets/self/*-crypt /dev/disk/by-partsets/shared/*-
         fi
         mkdir -p "$unit_dir"
         echo '[Unit]' > "$unit_dir/$unit_file"
-        echo "Wants=systemd-cryptsetup@$name.service" >> "$unit_dir/$unit_file"
-        echo "After=systemd-cryptsetup@$name.service" >> "$unit_dir/$unit_file"
+        echo "Requires=systemd-cryptsetup@$name.service" >> "$unit_dir/$unit_file"
     fi
 done
 
