@@ -2,20 +2,23 @@
 
 set -e
 
-export SYSTEMD_CRYPTTAB=/run/steamos-crypttab
-
 unit_dir="$1"
 
+export SYSTEMD_CRYPTTAB=/run/steamos-crypttab
 rm -f ${SYSTEMD_CRYPTTAB}
 
 for device in /dev/disk/by-partsets/self/*-crypt /dev/disk/by-partsets/shared/*-crypt; do
     if [ -e "$device" ]; then
-        base_device="${device%-crypt}"
-        name="${base_device##*/}"
-        unit_file=`systemd-escape --suffix=device -p ${base_device}`
-        if ! grep -qws "^$name" ${SYSTEMD_CRYPTTAB}; then
-            echo "$name $device none tpm2-device=auto,discard,headless,noauto" >> ${SYSTEMD_CRYPTTAB}
+        # Add entry to the crypttab file
+        realdev=`lsblk -ndo path ${device}`
+        name="${realdev##*/}_crypt"
+        if ! grep -qs "^$name " ${SYSTEMD_CRYPTTAB}; then
+            echo "$name $realdev none tpm2-device=auto,discard,headless,noauto" >> ${SYSTEMD_CRYPTTAB}
         fi
+
+        # Make dev-disk-by\x2dpartsets-*.device require cryptsetup
+        decrypted_device="${device%-crypt}"
+        unit_file=`systemd-escape --suffix=device -p ${decrypted_device}`
         mkdir -p "$unit_dir"
         echo '[Unit]' > "$unit_dir/$unit_file"
         echo "Requires=systemd-cryptsetup@$name.service" >> "$unit_dir/$unit_file"
