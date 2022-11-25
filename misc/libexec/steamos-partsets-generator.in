@@ -35,7 +35,7 @@ EOF
 	if cryptsetup isLuks /dev/disk/by-partuuid/$partuuid; then
 	    luks_uuid=`cryptsetup luksUUID /dev/disk/by-partuuid/$partuuid | tr -d -`
 	    cat <<-EOF
-		ENV{ID_PART_ENTRY_SCHEME}=="gpt", ENV{ID_PART_ENTRY_UUID}=="$partuuid", SYMLINK+="disk/by-partsets/$partset/$name-crypt", ENV{UDISKS_IGNORE}="$udisks"
+		ENV{ID_PART_ENTRY_SCHEME}=="gpt", ENV{ID_PART_ENTRY_UUID}=="$partuuid", SYMLINK+="disk/by-partsets/$partset/$name-encrypted", ENV{UDISKS_IGNORE}="$udisks"
 		ENV{DM_UUID}=="CRYPT-LUKS2-$luks_uuid-*", SYMLINK+="disk/by-partsets/$partset/$name", ENV{UDISKS_IGNORE}="1"
 		EOF
 	else

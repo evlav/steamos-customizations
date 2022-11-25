@@ -7,17 +7,17 @@ unit_dir="$1"
 export SYSTEMD_CRYPTTAB=/run/steamos-crypttab
 rm -f ${SYSTEMD_CRYPTTAB}
 
-for device in /dev/disk/by-partsets/self/*-crypt /dev/disk/by-partsets/shared/*-crypt; do
+for device in /dev/disk/by-partsets/self/*-encrypted /dev/disk/by-partsets/shared/*-encrypted; do
     if [ -e "$device" ]; then
         # Add entry to the crypttab file
         realdev=`lsblk -ndo path ${device}`
-        name="${realdev##*/}_crypt"
+        name="${realdev##*/}_decrypted"
         if ! grep -qs "^$name " ${SYSTEMD_CRYPTTAB}; then
             echo "$name $realdev none tpm2-device=auto,discard,headless,noauto" >> ${SYSTEMD_CRYPTTAB}
         fi
 
         # Make dev-disk-by\x2dpartsets-*.device require cryptsetup
-        decrypted_device="${device%-crypt}"
+        decrypted_device="${device%-encrypted}"
         unit_file=`systemd-escape --suffix=device -p ${decrypted_device}`
         mkdir -p "$unit_dir"
         echo '[Unit]' > "$unit_dir/$unit_file"
