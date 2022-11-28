@@ -92,6 +92,14 @@ ATOMUPD_IMAGES_URL := https://atomupd-images.steamos.cloud/steamos-holo
 # This is used by steamos-atomupd >= 0.20220216.0 (steamos-atomupd-git >= r197).
 ATOMUPD_META_URL := https://atomupd.steamos.cloud/meta
 
+# Semicolon separated list of known suggested variants that could be chosen.
+# This list is currently parsed by atomupd-daemon and exposed in the
+# property "VariantsList"
+# Please note that the only allowed symbols are lowercase and uppercase
+# word characters, numbers, underscore, hyphen and the semicolon as a
+# separator.
+ATOMUPD_VARIANTS_LIST := holo;holo-beta
+
 # Directory where RAUC will mount the update bundle
 RAUC_RUNTIME_DIR := /run/rauc
 
@@ -127,6 +135,7 @@ REBOOT_FOR_UPDATE := $(STEAMOS_ATOMUPD_RUNTIME_DIR)/reboot_for_update
 	  -e 's;@atomupd_query_url@;$(ATOMUPD_QUERY_URL);g' \
 	  -e 's;@atomupd_images_url@;$(ATOMUPD_IMAGES_URL);g' \
 	  -e 's;@atomupd_meta_url@;$(ATOMUPD_META_URL);g' \
+	  -e 's;@atomupd_variants_list@;$(ATOMUPD_VARIANTS_LIST);g' \
 	  -e 's;@rauc_runtime_dir@;$(RAUC_RUNTIME_DIR);g' \
 	  -e 's;@steamos_atomupd_runtime_dir@;$(STEAMOS_ATOMUPD_RUNTIME_DIR);g' \
 	  -e 's;@reboot_for_update@;$(REBOOT_FOR_UPDATE);g' \
