@@ -110,35 +110,37 @@ STEAMOS_ATOMUPD_RUNTIME_DIR := /run/steamos-atomupd
 # record that we have a pending reboot to switch to the new image.
 REBOOT_FOR_UPDATE := $(STEAMOS_ATOMUPD_RUNTIME_DIR)/reboot_for_update
 
+# NOTE: Don't use the semicolon as a separator for sed because it will
+# clash with the semicolons used in the variants list
 %: %.in
 	@echo "Substituting @variables@ in $<"
 	@sed \
-	  -e 's;@bindir@;$(bindir);g' \
-	  -e 's;@libdir@;$(libdir);g' \
-	  -e 's;@libexecdir@;$(libexecdir);g' \
-	  -e 's;@sbindir@;$(sbindir);g' \
-	  -e 's;@datadir@;$(datadir);g' \
-	  -e 's;@steamos_n_partitions@;$(STEAMOS_N_PARTITIONS);g' \
-	  -e 's;@steamos_all_partlabels@;$(STEAMOS_ALL_PARTLABELS);g' \
-	  -e 's;@grub_binary_relpath@;$(GRUB_BINARY_RELPATH);g' \
-	  -e 's;@grub_config_relpath@;$(GRUB_CONFIG_RELPATH);g' \
-	  -e 's;@steamos_relpath@;$(STEAMOS_RELPATH);g' \
-	  -e 's;@bootconf_reldir@;$(BOOTCONF_RELDIR);g' \
-	  -e 's;@bootconf_oldpath@;$(BOOTCONF_OLDPATH);g' \
-	  -e 's;@roothash_relpath@;$(ROOTHASH_RELPATH);g' \
-	  -e 's;@partsets_reldir@;$(PARTSETS_RELDIR);g' \
-	  -e 's;@factory_reset_config_dir@;$(FACTORY_RESET_CONFIG_DIR);g' \
-	  -e 's;@etc_overlay_absdir@;$(ETC_OVERLAY_ABSDIR);g' \
-	  -e 's;@offload_absdir@;$(OFFLOAD_ABSDIR);g' \
-	  -e 's;@udev_symlinks_reldir@;$(UDEV_SYMLINKS_RELDIR);g' \
-	  -e 's;@udev_symlinks_absdir@;$(UDEV_SYMLINKS_ABSDIR);g' \
-	  -e 's;@atomupd_query_url@;$(ATOMUPD_QUERY_URL);g' \
-	  -e 's;@atomupd_images_url@;$(ATOMUPD_IMAGES_URL);g' \
-	  -e 's;@atomupd_meta_url@;$(ATOMUPD_META_URL);g' \
-	  -e 's;@atomupd_variants_list@;$(ATOMUPD_VARIANTS_LIST);g' \
-	  -e 's;@rauc_runtime_dir@;$(RAUC_RUNTIME_DIR);g' \
-	  -e 's;@steamos_atomupd_runtime_dir@;$(STEAMOS_ATOMUPD_RUNTIME_DIR);g' \
-	  -e 's;@reboot_for_update@;$(REBOOT_FOR_UPDATE);g' \
+	  -e 's|@bindir@|$(bindir)|g' \
+	  -e 's|@libdir@|$(libdir)|g' \
+	  -e 's|@libexecdir@|$(libexecdir)|g' \
+	  -e 's|@sbindir@|$(sbindir)|g' \
+	  -e 's|@datadir@|$(datadir)|g' \
+	  -e 's|@steamos_n_partitions@|$(STEAMOS_N_PARTITIONS)|g' \
+	  -e 's|@steamos_all_partlabels@|$(STEAMOS_ALL_PARTLABELS)|g' \
+	  -e 's|@grub_binary_relpath@|$(GRUB_BINARY_RELPATH)|g' \
+	  -e 's|@grub_config_relpath@|$(GRUB_CONFIG_RELPATH)|g' \
+	  -e 's|@steamos_relpath@|$(STEAMOS_RELPATH)|g' \
+	  -e 's|@bootconf_reldir@|$(BOOTCONF_RELDIR)|g' \
+	  -e 's|@bootconf_oldpath@|$(BOOTCONF_OLDPATH)|g' \
+	  -e 's|@roothash_relpath@|$(ROOTHASH_RELPATH)|g' \
+	  -e 's|@partsets_reldir@|$(PARTSETS_RELDIR)|g' \
+	  -e 's|@factory_reset_config_dir@|$(FACTORY_RESET_CONFIG_DIR)|g' \
+	  -e 's|@etc_overlay_absdir@|$(ETC_OVERLAY_ABSDIR)|g' \
+	  -e 's|@offload_absdir@|$(OFFLOAD_ABSDIR)|g' \
+	  -e 's|@udev_symlinks_reldir@|$(UDEV_SYMLINKS_RELDIR)|g' \
+	  -e 's|@udev_symlinks_absdir@|$(UDEV_SYMLINKS_ABSDIR)|g' \
+	  -e 's|@atomupd_query_url@|$(ATOMUPD_QUERY_URL)|g' \
+	  -e 's|@atomupd_images_url@|$(ATOMUPD_IMAGES_URL)|g' \
+	  -e 's|@atomupd_meta_url@|$(ATOMUPD_META_URL)|g' \
+	  -e 's|@atomupd_variants_list@|$(ATOMUPD_VARIANTS_LIST)|g' \
+	  -e 's|@rauc_runtime_dir@|$(RAUC_RUNTIME_DIR)|g' \
+	  -e 's|@steamos_atomupd_runtime_dir@|$(STEAMOS_ATOMUPD_RUNTIME_DIR)|g' \
+	  -e 's|@reboot_for_update@|$(REBOOT_FOR_UPDATE)|g' \
 	  $< > $@
 	@if grep -q '@[[:alnum:]_]*@' $@; then \
 	  echo >&2 "Substitution error!!!"; \
