@@ -171,13 +171,14 @@ clean:
 # _enable-systemd-unit -- Create a symlink to enable a systemd unit
 
 define _enable-systemd-unit
+	case $(2) in *@*) ;; *) \
 	wantedby=$$(sed -n -E 's/(WantedBy|RequiredBy)\s*=\s*//p' $(1)/$(2)); \
 	if [ "$$wantedby" ]; then \
 	  for unit in $$wantedby; do \
 	    install -d "$(1)/$$unit.wants"; \
 	    cd "$(1)/$$unit.wants" && ln -srfv "../$(2)"; \
 	  done; \
-	fi;
+	fi;; esac;
 endef
 
 # enable-systemd-units -- Create a symlink to enable a systemd units

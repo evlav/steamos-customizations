@@ -1,0 +1,18 @@
+[Unit]
+Description=Unlock the encrypted %I dir
+DefaultDependencies=no
+ConditionPathIsDirectory=%I
+After=home.mount
+PartOf=home.mount
+Wants=steamos-offload-pre.target
+Before=steamos-offload-pre.target local-fs.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecCondition=fscrypt status --quiet %I
+ExecStart=steamos-unlock-dir %I
+ExecStop=fscrypt lock --quiet %I
+
+[Install]
+WantedBy=home.mount

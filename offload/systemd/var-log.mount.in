@@ -9,6 +9,7 @@
 
 [Unit]
 Description=SteamOS Offload - /var/log
+After=steamos-offload-pre.target
 
 [Mount]
 What=@offload_absdir@/var/log

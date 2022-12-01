@@ -9,6 +9,7 @@
 
 [Unit]
 Description=SteamOS Offload - /var/tmp
+After=steamos-offload-pre.target
 
 [Mount]
 What=@offload_absdir@/var/tmp

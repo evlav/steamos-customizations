@@ -9,6 +9,7 @@
 
 [Unit]
 Description=SteamOS Offload - /root
+After=steamos-offload-pre.target
 
 [Mount]
 What=@offload_absdir@/root

@@ -9,6 +9,7 @@
 
 [Unit]
 Description=SteamOS Offload - /opt
+After=steamos-offload-pre.target
 
 [Mount]
 What=@offload_absdir@/opt

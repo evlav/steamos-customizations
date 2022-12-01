@@ -8,14 +8,6 @@
 #  or (at your option) any later version.
 
 [Unit]
-Description=SteamOS Offload - /var/cache/pacman
-After=steamos-offload-pre.target
-
-[Mount]
-What=@offload_absdir@/var/cache/pacman
-Where=/var/cache/pacman
-Type=none
-Options=bind
-
-[Install]
-WantedBy=steamos-offload.target
+Description=SteamOS Offload (Pre)
+RefuseManualStart=yes
+Before=steamos-offload.target

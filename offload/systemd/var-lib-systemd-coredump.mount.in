@@ -9,6 +9,7 @@
 
 [Unit]
 Description=SteamOS Offload - /var/lib/systemd/coredump
+After=steamos-offload-pre.target
 
 [Mount]
 What=@offload_absdir@/var/lib/systemd/coredump

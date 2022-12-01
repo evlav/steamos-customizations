@@ -9,6 +9,7 @@
 
 [Unit]
 Description=SteamOS Offload - /srv
+After=steamos-offload-pre.target
 
 [Mount]
 What=@offload_absdir@/srv
