@@ -1,0 +1,79 @@
+#!/bin/sh
+
+set -e
+
+KEYDIR=".fscrypt-steamos"
+
+fail () { echo "$1" >&2; exit 1; }
+
+check_dir_status () {
+    local dir="$1"
+
+    # Basic checks
+    [ "`id -u`" = "0" ] || fail "This script must be run as root"
+    [ -d "$dir" ]       || fail "$dir does not exist or is not a directory"
+    fscrypt status --quiet "$dir" 2> /dev/null || fail "$dir is not encrypted"
+
+    # Return successfully if the directory is already unlocked
+    fscrypt status "$dir" | grep -q '^Unlocked: Yes' && exit 0
+
+    # We need the TPM in order to unlock a directory
+    [ -e "/dev/tpmrm0" ] || fail "No TPM available"
+}
+
+get_remaining_attempts () {
+    local max_tries=`tpm2_getcap properties-variable | grep TPM2_PT_MAX_AUTH_FAIL | cut -d : -f 2`
+    local lockout_counter=`tpm2_getcap properties-variable | grep TPM2_PT_LOCKOUT_COUNTER | cut -d : -f 2`
+    echo $(($max_tries - $lockout_counter))
+}
+
+decrypt_fscrypt_key () {
+    local dir="$1"
+    local mntpoint=`findmnt -n -o target --target "$dir"`
+    local tpm_key_pub="$mntpoint/$KEYDIR/key.pub"
+    local tpm_key_priv="$mntpoint/$KEYDIR/key.priv"
+    local tpm_key_has_pin="$mntpoint/$KEYDIR/key.has_pin"
+    local tpm_key_ctx="$WORKDIR"/key.ctx
+
+    # Look for the sealed encryption key on disk
+    [ -f "$tpm_key_pub" -a -f "$tpm_key_priv" ] || fail "Encryption key not found"
+
+    # Get the TPM's primary key and load the sealed encryption key
+    tpm2_createprimary -Q -G ecc -c "$WORKDIR"/prim.ctx
+    tpm2_load -Q -C "$WORKDIR"/prim.ctx -u "$tpm_key_pub" -r "$tpm_key_priv" -c "$tpm_key_ctx"
+
+    local pin_msg="Enter a PIN for the encrypted directory"
+    local use_cache="--accept-cached"
+    local tpm_pin="$WORKDIR"/tpm-pin
+    local fscrypt_key="$WORKDIR"/fscrypt.key
+
+    if [ -f "$tpm_key_has_pin" ]; then
+        # Repeat until the user enters the right PIN
+        while true; do
+            systemd-ask-password --keyname=steamos-fscrypt $use_cache "$pin_msg" > "$tpm_pin"
+            tpm2_unseal -Q -c "$tpm_key_ctx" -p file:"$tpm_pin" -o "$fscrypt_key" 2> /dev/null && break
+            keyctl unlink %user:steamos-fscrypt > /dev/null
+            local remaining=`get_remaining_attempts`
+            pin_msg="Invalid PIN, try again (remaining attempts: $remaining):"
+            use_cache=""
+        done
+        rm -f "$tpm_pin"
+    else
+        tpm2_unseal -Q -c "$tpm_key_ctx" -o "$fscrypt_key" 2> /dev/null
+    fi
+}
+
+# Check parameters and get the canonical directory name
+[ "$#" = "1" ] || fail "Usage: `basename $0` <directory>"
+DIR=`realpath "$1"`
+
+# Temporary directory for keys and TPM context files
+WORKDIR=`mktemp -d /run/fscrypt.XXXXXX`
+cleanup () {
+    test -d "$WORKDIR" && rm -rf "$WORKDIR"
+}
+trap cleanup EXIT INT
+
+check_dir_status "$DIR"
+decrypt_fscrypt_key "$DIR"
+fscrypt unlock --key="$WORKDIR"/fscrypt.key --quiet "$DIR"

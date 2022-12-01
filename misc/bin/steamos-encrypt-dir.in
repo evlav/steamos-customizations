@@ -1,0 +1,221 @@
+#!/bin/sh
+
+# TODO: this is a working proof of concept, but this would also need
+# - a more robust way to store the encryption key
+# - a way to have a recovery key
+
+set -e
+
+PROTECTOR_NAME="steamos"
+KEYDIR=".fscrypt-steamos"
+COPY_ORIGINAL_DATA=0
+USE_PIN=0
+
+OPTS=$(getopt -l force,with-pin -n `basename $0` -- "" "$@")
+eval set -- "$OPTS"
+
+while true; do
+    case "$1" in
+        --force) COPY_ORIGINAL_DATA=1; shift ;;
+        --with-pin) USE_PIN=1; shift ;;
+        --) shift; break ;;
+    esac
+done
+
+fail () { echo "$1" >&2; exit 1; }
+
+check_dir_status () {
+    local dir="$1"
+
+    # Perform some basic checks
+    [ `id -u` = "0" ]    || fail "This script must be run as root"
+    [ -e "/dev/tpmrm0" ] || fail "No TPM available"
+    [ -d "$dir" ]        || fail "$dir does not exist or is not a directory"
+    fscrypt status --quiet "$dir" 2> /dev/null && fail "$dir is already encrypted"
+
+    # If the dir is not empty we need to copy the data to a temporary dir
+    if [ `ls -A "$dir" | wc -l` -ne 0 ]; then
+        if [ "$COPY_ORIGINAL_DATA" = "0" ]; then
+            fail "$dir is not empty. Run with --force if you really want to encrypt it"
+        fi
+    else
+        COPY_ORIGINAL_DATA=0
+    fi
+}
+
+# If the directory to encrypt is not empty we need to copy the data elsewhere first.
+# This checks that the filesystem has enough space
+check_available_space () {
+    local dir="$1"
+    local mntpoint="$2"
+    local free_space=`df -k --output=avail "$mntpoint" | tail -n 1`
+    local space_needed=`du -sk "$dir" | cut -f 1`
+    space_needed=$(($space_needed + 1000000))
+    if [ "$space_needed" -gt "$free_space" ]; then
+        fail "Not enough available disk space for this operation"
+    fi
+}
+
+# Check if the filesystem supports fscrypt and
+# run 'fscrypt setup' it if it hasn't been done yet
+check_filesystem_status () {
+    local dir="$1"
+    local mntpoint="$2"
+    local device=`findmnt -n -o source --target "$dir"`
+
+    # This script only supports ext4
+    if [ x`lsblk -ndo fstype "$device"` != "xext4" ]; then
+        fail "$device does not contain an ext4 filesytem"
+    fi
+
+    # The partition must have encryption enabled
+    if ! dumpe2fs -h "$device" 2> /dev/null | grep -qw encrypt ; then
+        fail "$device does not support encryption. Enable it with tune2fs -O encrypt $device"
+    fi
+
+    # fscrypt needs these, even if they're empty
+    if [ ! -d "/.fscrypt/policies" -o ! -d "/.fscrypt/protectors" ]; then
+        if ! mkdir -m 0755 -p /.fscrypt/policies /.fscrypt/protectors 2> /dev/null; then
+            fail "Error creating /.fscrypt folder. Is the root filesystem writable?"
+        fi
+    fi
+
+    # Create the global fscrypt configuration
+    if [ ! -f /etc/fscrypt.conf ]; then
+        fscrypt setup --quiet
+    fi
+
+    # Configure fscrypt for the target partition
+    if ! fscrypt status --quiet "$mntpoint" 2> /dev/null; then
+        if ! fscrypt setup --quiet "$mntpoint"; then
+            fail "Error setting up encryption in $mntpoint"
+        fi
+    fi
+}
+
+
+# Load the TPM-sealed filesystem encryption key from disk
+# (or create one if it hasn't been created yet)
+load_encryption_key () {
+    local mntpoint="$1"
+    local tpm_primary="$WORKDIR"/prim.ctx
+    local tpm_key_pub="$mntpoint/$KEYDIR/key.pub"
+    local tpm_key_priv="$mntpoint/$KEYDIR/key.priv"
+    local tpm_key_has_pin="$mntpoint/$KEYDIR/key.has_pin"
+    local tpm_key_ctx="$WORKDIR"/key.ctx
+    local tpm_pin="$WORKDIR"/tpm-pin
+
+    # Get the TPM's primary key
+    tpm2_createprimary -Q -G ecc -c "$tpm_primary"
+
+    # Generate the fscrypt encryption key and seal it with the TPM
+    if [ ! -f "$tpm_key_pub" -o ! -f "$tpm_key_priv" ]; then
+        [ -d "$mntpoint/$KEYDIR" ] || mkdir -p -m 0700 "$mntpoint/$KEYDIR"
+        if [ "$USE_PIN" = "1" ]; then
+            while true; do
+                systemd-ask-password --keyname=steamos-fscrypt 'Enter a PIN for the encrypted folder' > "$tpm_pin"
+                systemd-ask-password 'Enter the PIN again' > "$tpm_pin".2
+                cmp -s "$tpm_pin" "$tpm_pin".2 && break
+                echo "The PINs don't match. Try again"
+                keyctl unlink %user:steamos-fscrypt > /dev/null
+            done
+            touch "$tpm_key_has_pin"
+        else
+            touch "$tpm_pin"
+        fi
+        head -c 32 /dev/random | tpm2_create -Q -C "$tpm_primary" -u "$tpm_key_pub" -r "$tpm_key_priv" -i - -p file:"$tpm_pin"
+        rm -f "$tpm_pin" "$tpm_pin".2
+    fi
+
+    # Load the sealed encryption key into the TPM
+    tpm2_load -Q -C "$tpm_primary" -u "$tpm_key_pub" -r "$tpm_key_priv" -c "$tpm_key_ctx"
+}
+
+
+get_remaining_attempts () {
+    local max_tries=`tpm2_getcap properties-variable | grep TPM2_PT_MAX_AUTH_FAIL | cut -d : -f 2`
+    local lockout_counter=`tpm2_getcap properties-variable | grep TPM2_PT_LOCKOUT_COUNTER | cut -d : -f 2`
+    echo $(($max_tries - $lockout_counter))
+}
+
+
+# Encrypt the directory
+encrypt_dir() {
+    local dir="$1"
+    local mntpoint="$2"
+    local tpm_key_ctx="$WORKDIR"/key.ctx
+    local pin_msg="Enter a PIN for the encrypted folder"
+    local use_cache="--accept-cached"
+    local tpm_key_has_pin="$mntpoint/$KEYDIR/key.has_pin"
+    local tpm_pin="$WORKDIR"/tpm-pin
+    local fscrypt_key="$WORKDIR"/fscrypt.key
+
+    if [ -f "$tpm_key_has_pin" ]; then
+        while true; do
+            systemd-ask-password --keyname=steamos-fscrypt $use_cache "$pin_msg" > "$tpm_pin"
+            tpm2_unseal -c "$tpm_key_ctx" -p file:"$tpm_pin" -o "$fscrypt_key" 2> /dev/null && break
+            keyctl unlink %user:steamos-fscrypt > /dev/null
+            pin_msg="Invalid PIN, try again (remaining attempts: `get_remaining_attempts`):"
+            use_cache=""
+        done
+        rm -f "$tpm_pin"
+    elif [ "$USE_PIN" = "1" ]; then
+        fail "Cannot use --with-pin if the existing key was created without one"
+    else
+        tpm2_unseal -c "$tpm_key_ctx" -o "$fscrypt_key" 2> /dev/null && break
+    fi
+
+    # Check if the SteamOS protector exists in that partition
+    local protector_id=`fscrypt status "$mntpoint" | grep \ \"$PROTECTOR_NAME\"\$ | cut -d ' ' -f 1`
+
+    if [ -n "$protector_id" ]; then
+        fscrypt encrypt --source=raw_key --key="$fscrypt_key" --quiet --protector="$mntpoint":"$protector_id" "$dir"
+    else
+        fscrypt encrypt --source=raw_key --key="$fscrypt_key" --quiet --name="$PROTECTOR_NAME" "$dir"
+    fi
+    rm -f "$fscrypt_key"
+}
+
+# Check parameters and get the canonical directory name
+[ "$#" = "1" ] || fail "Usage: `basename $0` [--force] [--with-pin] <directory>"
+DIR=`realpath "$1"`
+
+# Basic checks: does the dir exist, is the TPM available, etc.
+check_dir_status "$DIR"
+
+# Obtain the mount point from the directory
+MNTPOINT=`findmnt -n -o target --target "$DIR"`
+
+# Check that everything is ready to start encrypting
+[ "$COPY_ORIGINAL_DATA" = "1" ] && check_available_space "$DIR" "$MNTPOINT"
+check_filesystem_status "$DIR" "$MNTPOINT"
+
+# Temporary directories for the data and the TPM's context files
+[ "$COPY_ORIGINAL_DATA" = "1" ] && TEMP_DATA_DIR=`mktemp -d "$DIR".XXXXXX`
+WORKDIR=`mktemp -d /run/fscrypt.XXXXXX`
+cleanup () {
+    [ -d "$TEMP_DATA_DIR" ] && rm -rf "$TEMP_DATA_DIR"
+    [ -d "$WORKDIR" ] && rm -rf "$WORKDIR"
+}
+trap cleanup EXIT INT
+
+# Load (and generate if necessary) the disk encryption key into the TPM
+load_encryption_key "$MNTPOINT"
+
+# Use the encryption key to encrypt the directory
+if [ "$COPY_ORIGINAL_DATA" = "1" ]; then
+    mkdir -p "$TEMP_DATA_DIR/encrypted"
+    encrypt_dir "$TEMP_DATA_DIR/encrypted" "$MNTPOINT"
+    # Copy all the data to the new encrypted dir and then replace the original
+    cp -a "$DIR" "$TEMP_DATA_DIR/encrypted/data"
+    mv "$DIR" "$TEMP_DATA_DIR/original-data"
+    mv "$TEMP_DATA_DIR/encrypted/data" "$DIR"
+    rm -rf "$TEMP_DATA_DIR"
+else
+    encrypt_dir "$DIR" "$MNTPOINT"
+fi
+
+if [ "$MNTPOINT" = "/home" ]; then
+    echo "$DIR is now encrypted. To mount it automatically on boot run:"
+    echo systemctl enable \'`systemd-escape --template=fscrypt-unlock@.service "$DIR"`\'
+fi
