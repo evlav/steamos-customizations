@@ -11,6 +11,7 @@ SDDM_CONFIG := sddm.conf.d/steamos.conf
 LODIND_CONFIG := $(wildcard journald.conf.d/*.conf)
 PROFILE_CONFIG := profile.d/steamos.sh
 XORG_CONFIG := xorg.conf.d/10-steamos-virtualdisplaysize.conf
+TPM_CONFIG := modules-load.d/tpm.conf
 PROTON_LIMITS_CONFIG := limits.d/15-proton-nice.conf
 SYSTEMD_LOGIND_CONFIG := systemd-logind.service.d/homedir-override.conf
 MODULES_LOAD_CONFIG := $(wildcard modules-load.d/*.conf)
@@ -48,6 +49,8 @@ install: all
 	install -m 0644 $(PROTON_LIMITS_CONFIG) $(DESTDIR)$(sysconfdir)/limits.d
 	install -d $(DESTDIR)$(datadir)/X11/xorg.conf.d
 	install -m 0644 $(XORG_CONFIG) $(DESTDIR)$(datadir)/X11/xorg.conf.d
+	install -d $(DESTDIR)$(sysconfdir)/modules-load.d
+	install -m 0644 $(TPM_CONFIG) $(DESTDIR)$(sysconfdir)/modules-load.d
 	install -d $(DESTDIR)$(systemdunitsdir)
 	install -m 0644 $(UNITS) $(DESTDIR)$(systemdunitsdir)
 	$(call enable-systemd-units,$(DESTDIR)$(systemdunitsdir),$(notdir $(UNITS)))
