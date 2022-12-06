@@ -26,13 +26,11 @@
 // This setuid wrapper exposes a limited subset of steamos-bootconf's
 // functionality to unprivileged callers: specifically the set-mode
 // actions used to configure the well-known boot requests such as:
-// reboot reboot-other update (for example). This allows things like
+// reboot reboot-other (for example). This allows things like
 // steam and the plasma UI to request those update modes safely.
 
 static char *const allowed_mode[] = {
     "shutdown",
-    "update",
-    "update-other",
     "reboot",
     "reboot-other",
     NULL,
