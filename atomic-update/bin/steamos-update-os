@@ -20,7 +20,6 @@ set -u
 usage() {
     cat <<EOF
 Usage: ${0##*/} now [ATOMUPD-OPTIONS]
-       ${0##*/} after-reboot
        ${0##*/} -h|--help
 EOF
 }
@@ -34,11 +33,6 @@ update_now() {
     echo "Reboot to run the new version of SteamOS." >&2
 }
 
-update_after_reboot() {
-    /usr/sbin/steamos-set-bootmode update-other
-    echo "Reboot to start the update of SteamOS." >&2
-}
-
 if [[ $# -eq 0 ]]; then
     usage
     exit 1
@@ -48,10 +42,6 @@ case "$1" in
     (now)
         shift
         update_now "$@"
-        ;;
-    (after-reboot)
-        shift
-        update_after_reboot
         ;;
     (-h|--help)
         usage
