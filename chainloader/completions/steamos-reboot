@@ -39,7 +39,7 @@ _steamos-reboot()
     esac
 
     local options
-    options=(-h --help --factory-reset --update --update-other --reboot-other --next)
+    options=(-h --help --factory-reset --reboot-other --next)
     options+=(--reboot-to-bootloader-entry --reboot-to-bootloader-menu --list-bootloader-entries)
     options+=(--reboot-to-firmware-entry --reboot-to-firmware-setup --list-firmware-entries)
     COMPREPLY=($(compgen -W "${options[*]}" -- "$cur"))

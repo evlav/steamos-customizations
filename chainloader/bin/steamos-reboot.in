@@ -32,10 +32,6 @@ Options:
                  Same as --reboot-to-firmware-entry XXXX
      --factory-reset
                  Perform factory reset at shutdown
-     --update
-                 Set mode update to update at next boot
-     --update-other
-                 Set mode update-other to update other at next boot
      --reboot-other
                  Set mode reboot-other to boot on other at next boot
      --reboot-to-firmware-entry ENTRY
@@ -131,7 +127,7 @@ do
 
         steamos-factory-reset-config @factory_reset_config_dir@
         @sbindir@/steamos-set-bootmode reboot
-    elif [[ "$1" =~ ^--update$ ]] || [[ "$1" =~ ^--(update|reboot)-other$ ]]
+    elif [[ "$1" =~ ^--reboot-other$ ]]
     then
         @sbindir@/steamos-set-bootmode ${1:2}
     elif [[ "$1" =~ ^--next$ ]]
