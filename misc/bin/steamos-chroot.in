@@ -19,6 +19,7 @@ set -u
 
 DISK=       # --disk
 PARTSET=    # --partset
+NO_OVERLAY= # --no-overlay
 
 SYMLINKS_DIR=@udev_symlinks_absdir@
 
@@ -38,10 +39,15 @@ usage() {
     fi
 
     echo
-    echo "Usage: $(basename $0) [--disk DISK] --partset A|B|self|other -- COMMAND"
+    echo "Usage: $(basename $0) [--disk DISK] [--no-overlay] --partset A|B|self|other -- COMMAND"
     echo
     echo "Run COMMAND in a chroot. The chroot is SteamOS specific, which means"
     echo "that the various SteamOS partitions are mounted within the chroot."
+    echo
+    echo "By default, also the overlayed /etc will be mounted. Please note that the"
+    echo "overlay can only be mounted once, so you can't re-mount the /etc overlay"
+    echo "for 'self', or run multiple chroots for the same disk."
+    echo "Instead, to skip mounting the overlay, you can use the option '--no-overlay'."
     echo
     echo "There are two use-cases for this command:"
     echo
@@ -79,6 +85,10 @@ while [ $# -gt 0 ]; do
             shift
             [ "${1:-}" ] || usage 1
             PARTSET=$1
+            shift
+            ;;
+        --no-overlay)
+            NO_OVERLAY=yes
             shift
             ;;
         --)
@@ -144,7 +154,10 @@ prepare_chroot_at() {
     mount "$EFI_DEVICE" $dir/efi
     mount "$ESP_DEVICE" $dir/esp
     mount "$VAR_DEVICE" $dir/var
-    mount -t overlay -o "lowerdir=$dir/etc,upperdir=$dir/var/lib/overlays/etc/upper,workdir=$dir/var/lib/overlays/etc/work" none "$dir/etc"
+    if [ -z "$NO_OVERLAY" ]; then
+        mount -t overlay -o "lowerdir=$dir/etc,upperdir=$dir/var/lib/overlays/etc/upper,workdir=$dir/var/lib/overlays/etc/work" none "$dir/etc" || \
+        fail "Failed to mount the /etc overlay. You should either set the '--no-overlay' option or, if possible, manually unmount the /etc overlay"
+    fi
     if [ -d $dir/var/boot ]; then
         mount --bind $dir/var/boot $dir/boot
     fi
@@ -157,7 +170,9 @@ cleanup_chroot_at() {
     if mountpoint -q $dir/boot; then
         umount $dir/boot || :
     fi
-    umount $dir/etc  || :
+    if [ -z "$NO_OVERLAY" ]; then
+        umount $dir/etc  || :
+    fi
     umount $dir/var  || :
     umount $dir/esp  || :
     umount $dir/efi  || :
