@@ -30,7 +30,7 @@ _steamos-chroot()
     esac
 
     if [[ "$cur" == -* ]]; then
-        COMPREPLY=($(compgen -W "-h --help --disk --allow-self --partset" -- "$cur"))
+        COMPREPLY=($(compgen -W "-h --help --disk --allow-self --no-overlay --partset" -- "$cur"))
         return
     fi
 
