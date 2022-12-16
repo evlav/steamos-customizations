@@ -20,6 +20,7 @@ set -u
 DISK=       # --disk
 PARTSET=    # --partset
 NO_OVERLAY= # --no-overlay
+ALLOW_SELF= # --allow-self
 
 SYMLINKS_DIR=@udev_symlinks_absdir@
 
@@ -39,7 +40,7 @@ usage() {
     fi
 
     echo
-    echo "Usage: $(basename $0) [--disk DISK] [--no-overlay] --partset A|B|self|other -- COMMAND"
+    echo "Usage: $(basename $0) [--disk DISK] [--no-overlay] [--allow-self] --partset A|B|self|other -- COMMAND"
     echo
     echo "Run COMMAND in a chroot. The chroot is SteamOS specific, which means"
     echo "that the various SteamOS partitions are mounted within the chroot."
@@ -48,6 +49,9 @@ usage() {
     echo "overlay can only be mounted once, so you can't re-mount the /etc overlay"
     echo "for 'self', or run multiple chroots for the same disk."
     echo "Instead, to skip mounting the overlay, you can use the option '--no-overlay'."
+    echo
+    echo "If you want to chroot into the already booted partset, you should explicitly"
+    echo "set the option '--allow-self'."
     echo
     echo "There are two use-cases for this command:"
     echo
@@ -91,6 +95,10 @@ while [ $# -gt 0 ]; do
             NO_OVERLAY=yes
             shift
             ;;
+        --allow-self)
+            ALLOW_SELF=yes
+            shift
+            ;;
         --)
             shift
             break
@@ -127,6 +135,14 @@ else
     # No disk was provided, which means that we're chrooting into the
     # 'other' install, A or B. We can find these partitions reliably
     # using the existing symlinks.
+
+    if [ -z "$ALLOW_SELF" ]; then
+        BOOTED_SLOT=$(steamos-bootconf this-image)
+        if [ "$PARTSET" == "self" ] || [ "$PARTSET" == "$BOOTED_SLOT" ]; then
+            fail "Error: Partset '$PARTSET' is currently booted. If this is intentional, please use '--no-overlay --allow-self'"
+        fi
+    fi
+
     ROOTFS_DEVICE=$(realpath $SYMLINKS_DIR/$PARTSET/rootfs)
     EFI_DEVICE=$(realpath $SYMLINKS_DIR/$PARTSET/efi)
     ESP_DEVICE=$(realpath $SYMLINKS_DIR/shared/esp)

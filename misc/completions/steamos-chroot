@@ -24,13 +24,13 @@ _steamos-chroot()
             return
             ;;
         --partset)
-            COMPREPLY=($(compgen -W "A B self other" -- "$cur"))
+            COMPREPLY=($(compgen -W "A B other" -- "$cur"))
             return
             ;;
     esac
 
     if [[ "$cur" == -* ]]; then
-        COMPREPLY=($(compgen -W "-h --help --disk --partset" -- "$cur"))
+        COMPREPLY=($(compgen -W "-h --help --disk --allow-self --partset" -- "$cur"))
         return
     fi
 
