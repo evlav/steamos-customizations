@@ -7,14 +7,5 @@
 #  published by the Free Software Foundation; either version 2.1 of the License,
 #  or (at your option) any later version.
 
-d @offload_absdir@/usr/local/bin
-d @offload_absdir@/usr/local/etc
-d @offload_absdir@/usr/local/games
-d @offload_absdir@/usr/local/include
-d @offload_absdir@/usr/local/lib
-d @offload_absdir@/usr/local/man
-d @offload_absdir@/usr/local/sbin
-d @offload_absdir@/usr/local/share
-d @offload_absdir@/usr/local/src
 d @offload_absdir@/srv/ftp 0555 root ftp
 d @offload_absdir@/srv/http 0755
