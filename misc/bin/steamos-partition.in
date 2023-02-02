@@ -18,9 +18,9 @@ set -euo pipefail
 
 partition=$(findmnt -no partlabel /)
 if [[ "$partition" == "rootfs-A" ]]; then
-	echo -e "A"
+	echo -e "Partition:\tA"
 elif [[ "$partition" == "rootfs-B" ]]; then
-	echo -e "B"
+	echo -e "Partition:\tB"
 else
-    echo -e "Unknown"
+    echo -e "Partition:\tUnknown"
 fi
