@@ -52,6 +52,27 @@ fi
 rm -f $ACTIVE_TIMERS
 
 #
+# Take a slot and the json from steamos-atomupd/manifest.json and make
+# a suitable boot menu label, falling back to something generic
+#
+
+boot_label () {
+    local slot=${1:-\?}
+    local blob=${2:-"{}"}
+    local version=$(jq -rc '.version' <<<"$blob")
+    local product=$(jq -rc '.product' <<<"$blob")
+
+    case ${version,,} in
+        (snapshot|null|'')
+            version=$(jq -rc '.buildid | select(type=="string")' <<<"$blob")
+            ;;
+    esac
+    case ${product,,} in (steamos|null|'') product=SteamOS; ;; esac
+
+    echo "$product-${version:-Slot-$slot}"
+}
+
+#
 # Handle the 'other' efi partition
 #
 
@@ -294,6 +315,11 @@ if [ $ERR == 0 ]; then
   update_manifest=$(steamos-chroot --partset $UPDATED_SLOT -- cat "/etc/steamos-atomupd/manifest.json")
   update_buildid=$(jq -r '.buildid | select(type == "string")' <<< "$update_manifest")
   echo "$update_buildid" > "$REBOOT_FOR_UPDATE"
+  label=$(boot_label "$UPDATED_SLOT" "$update_manifest")
+  if [ -n "${label:-}" ]; then
+      steamos-chroot --partset $UPDATED_SLOT -- \
+                     steamos-bootconf config --set title "${label:-}"
+  fi
 fi
 
 exit $ERR
