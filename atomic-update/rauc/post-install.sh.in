@@ -61,15 +61,15 @@ boot_label () {
     local blob=${2:-"{}"}
     local version=$(jq -rc '.version' <<<"$blob")
     local product=$(jq -rc '.product' <<<"$blob")
+    local buildid=$(jq -rc '.buildid' <<<"$blob")
 
-    case ${version,,} in
-        (snapshot|null|'')
-            version=$(jq -rc '.buildid | select(type=="string")' <<<"$blob")
-            ;;
-    esac
+    case ${buildid}   in (null)            buildid="";      ;; esac
+    case ${version}   in (snapshot|null)   version="";      ;; esac
     case ${product,,} in (steamos|null|'') product=SteamOS; ;; esac
 
-    echo "$product-${version:-Slot-$slot}"
+    local ident=${version}${version:+-}${buildid}
+
+    echo "${product}-$slot${ident:+-}${ident}"
 }
 
 #
