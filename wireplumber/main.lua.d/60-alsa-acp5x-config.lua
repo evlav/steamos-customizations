@@ -3,12 +3,12 @@
 table.insert (alsa_monitor.rules, {
   matches = {
     {
-      -- Matches all sources from card HD-Audio Generic
+      -- Matches all sources from card acp5x
       { "node.name", "matches", "alsa_input.*" },
       { "alsa.card_name", "matches", "acp5x" },
     },
     {
-      -- Matches all sinks from card HD-Audio Generic
+      -- Matches all sinks from card acp5x
       { "node.name", "matches", "alsa_output.*" },
       { "alsa.card_name", "matches", "acp5x" },
     },
