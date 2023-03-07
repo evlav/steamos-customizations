@@ -26,10 +26,6 @@ wdir=$(mktemp -t -d rest-conf-XXXXXXXXXX)
 dev=
 opts=
 
-for dev in $SYMLINKS_DIR/all/efi-*; do
-    echo EFI $dev $(readlink -f $dev) > ${wdir}/${dev##*/}.cfg
-done
-
 for dev in $SYMLINKS_DIR/all/var-*; do
     opts=$(tune2fs -l "$dev" | sed -n 's/^Filesystem features:\s*//p')
     echo VAR $dev $(readlink -f $dev) "$opts" > ${wdir}/${dev##*/}.cfg
