@@ -63,7 +63,7 @@ install() {
     inst_dir /mnt
 
     inst_multiple \
-        basename dirname plymouth rmdir sed sleep file \
+        basename dirname plymouth rmdir sed sleep \
         e2label mkfs.ext4 tune2fs e2fsck \
         dd lsblk sort steamos-ls uuidgen \
         btrfs btrfstune e2fsck \
@@ -72,11 +72,6 @@ install() {
         @libexecdir@/steamos/steamos-partsets-generator \
         $systemdutildir/systemd-veritysetup \
         $systemdutildir/system-generators/systemd-veritysetup-generator
-
-    inst /usr/share/file/misc/magic.mgc
-    inst /usr/share/mime/magic
-
-    inst_script "$moddir/steamos-grubconfig.sh" "/lib/steamos-grubconfig.sh"
 
     inst_hook cmdline   90 "$moddir/steamos-parse-loaders.sh"
     inst_hook pre-mount 90 "$moddir/steamos-udev-rules.sh"

@@ -28,128 +28,9 @@
 
 declare -r FACTORY_RESET_CONFIG_DIR=@factory_reset_config_dir@
 declare -r SYMLINKS_DIR=@udev_symlinks_absdir@
-declare -r GRUB_CONFIG_RELPATH=@grub_config_relpath@
 declare -i want_reset=0
 
 . /lib/dracut-lib.sh
-. /lib/steamos-grubconfig.sh
-
-# when testing outside the initrd the base lib files are here:
-# . /usr/lib/dracut/modules.d/99base/dracut-lib.sh
-# . /usr/lib/dracut/modules.d/60steamos/steamos-grubconfig.sh
-
-get_fs_uuid () {
-    local -r dev=${1:-}
-    local uuid=$(lsblk -l -n -d -o UUID $dev)
-
-    echo "$uuid"
-}
-
-# These are the steps we need to take:
-# a) get the fs uuid for the root fs
-# b) mount "$device" on $efi_reset_mount
-# c) generate new grub config at a staging location on $efi_reset_mount
-# d) move the staged config to the real location if c succeeded
-reset_efi() {
-    local -r dev=${1:-}
-    local -r path=${2:-}
-    local -r img=${path##*/efi-}
-    local -r rdev=/dev/disk/by-partsets/$img/rootfs
-    local -r rootfs_uuid=$(get_fs_uuid $rdev)
-    local -r default_kernel=/boot/vmlinuz-linux-neptune
-    local -r default_initrd=/boot/initramfs-linux-neptune.img
-    local kernel=
-    local initrd=
-    local ucode=
-    local rdev_mount=
-
-    info "Checking $img root device $rdev (fsuuid: $rootfs_uuid)"
-    if ! ismounted $rdev; then
-        rdev_mount=$(mktemp -d)
-        info "Mounting rootfs $img to check for kernel"
-        mount -o ro $rdev $rdev_mount
-    fi
-
-    local finfo=
-    local maybe=
-    # pick an actual kernel image from the rootfs
-    while read maybe; do
-        finfo=$(file -bL $rdev_mount/$maybe)
-        info "Checking /$maybe: $finfo"
-        case $finfo in
-            *kernel*executable*[Ii]mage*)
-                kernel=/$maybe
-                info "Found kernel $kernel"
-                break
-                ;;
-        esac
-    done < <(cd $rdev_mount && ls -1r boot/vmlin*)
-
-    # find the initramfs and ucode images
-    while read maybe; do
-        info "Checking /$maybe"
-        case $maybe in
-            *-ucode.img)
-                [ "$ucode" ] && continue;
-                ucode=/$maybe
-                info "Found ucode $ucode"
-                ;;
-            *.img)
-                [ "$initrd" ] && continue;
-                initrd=/$maybe
-                info "Found initrd $initrd"
-                ;;
-        esac
-        [ "$ucode" ] && [ "$initrd" ] && break
-    done < <(cd $rdev_mount && ls -1r boot/*.img)
-
-    if [ "$rdev_mount" ]; then
-        sleep 3
-        info "Unmounting rootfs $img"
-        umount -f $rdev_mount
-    fi
-
-    # We're going to mount the efi partitions we want to scrub
-    # here so that in the worst case (ie this breaks), we won't
-    # leave the OS dealing with the wrong partition mounted at /efi
-    local -r efi_reset_mount=$(mktemp -d)
-    mkdir -p $efi_reset_mount
-
-    # Note: when regenerating an /efi partition we need to know
-    # the fs uuid (NOT the partition uuid or partition type uuid)
-    # of the related rootfs
-
-    local grubcfg=$efi_reset_mount/$GRUB_CONFIG_RELPATH
-    if [ "$rootfs_uuid" ]; then
-        mount $dev $efi_reset_mount
-        info "Regenerating bootloader cfg with $fsuuid $kernel $initrd $ucode"
-
-        if [ ! "$kernel" ] || [ ! "$initrd" ]; then
-            info "Kernel ($kernel) or initrd ($initrd) missing"
-            info "Image $img may not be bootable (not necessarily a problem)"
-        fi
-
-        print_grub_config \
-            "$rootfs_uuid"  \
-            ${kernel:-$default_kernel} \
-            ${initrd:-$default_initrd} \
-            "${ucode:-}" > $grubcfg.new
-
-        if [ $? -eq 0 ]; then
-            mv $grubcfg.new $grubcfg
-        else
-            warn "Failed to make new config for fs $rootfs_uuid at $grubcfg"
-            warn "kernel: $kernel; initrd: $initrd${ucode:+ + }$ucode"
-        fi
-        sleep 3
-        umount -f $efi_reset_mount
-    else
-        info "No root fs found for image $img, cannot reset bootloader"
-    fi
-
-    # stray unused mountpoint is untidy but not worth signalling an error:
-    rmdir $efi_reset_mount || true
-}
 
 reset_device_ext4() {
     local device=$1
@@ -308,11 +189,8 @@ for cfg in $FACTORY_RESET_CONFIG_DIR/*.cfg; do
         name="${instance##*/}"
         case $type in
             EFI)
-                info "Resetting bootloader config on $dev ($instance)"
-                (reset_efi $dev $instance && rm -f "$cfg") &
-                RESET_PID=$!
-                WAIT_PIDS+=($RESET_PID)
-                RESET_DEV[$RESET_PID]="$dev $name"
+                echo "Reset of efi partition ($instance, $dev) is obsolete, ignoring"
+                rm -f "$cfg"
                 ;;
             VAR|HOME)
                 # these are slow so we want them done in parallel and async
