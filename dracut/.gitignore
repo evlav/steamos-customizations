@@ -7,7 +7,6 @@ modules.d/module-setup.sh
 modules.d/steamos-emergency.sh
 modules.d/steamos-etc-overlay.sh
 modules.d/steamos-factory-reset.sh
-modules.d/steamos-grubconfig.sh
 modules.d/steamos-root.sh
 modules.d/steamos-udev-rules.sh
 modules.d/steamos-var-lib-modules.sh
