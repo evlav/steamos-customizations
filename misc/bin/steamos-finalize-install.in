@@ -89,8 +89,7 @@ function install_bootloaders
             install -Dm644 "@datadir@/factory/var/lib/modules/$kver/vmlinuz" "/boot/vmlinuz-$pkgbase"
             mkdir -p "/var/lib/modules/$kver"
             cp -a "@datadir@/factory/var/lib/modules/$kver" "/var/lib/modules/"
-            dracut --force --hostonly "/boot/initramfs-$pkgbase.img" "$kver"
-            dracut --force --no-hostonly "/boot/initramfs-$pkgbase-fallback.img" "$kver"
+            update-mkinitcpio
         done
     fi
     if [[ "${roothash:-}" ]]

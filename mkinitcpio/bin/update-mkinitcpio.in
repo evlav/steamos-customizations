@@ -4,8 +4,8 @@
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2020 Collabora Ltd.
-#  Copyright © 2020 Valve Corporation.
+#  Copyright © 2020,2023 Collabora Ltd.
+#  Copyright © 2020,2023 Valve Corporation.
 #
 #  This file is part of steamos-customizations.
 #
@@ -16,15 +16,13 @@
 
 set -e
 
-opts=(--force --persistent-policy by-partuuid)
 while read -r line; do
     if ! read -r pkgbase > /dev/null 2>&1 < "${line%/vmlinuz}/pkgbase"; then
         # if the kernel has no pkgbase, we skip it
         continue
     fi
 
-    kver="${line%/*}"
-    kver="${kver##*/}"
-    dracut "${opts[@]}" --hostonly "/boot/initramfs-$pkgbase.img" "$kver" "$@"
-    dracut "${opts[@]}" --no-hostonly "/boot/initramfs-$pkgbase-fallback.img" "$kver" "$@"
+    # the 'deck' preset uses ${pkgbase} to construct its output filename
+    export pkgbase
+    mkinitcpio -p linux-neptune "$@"
 done < <(compgen -G /usr/lib/modules/"*"/vmlinuz)

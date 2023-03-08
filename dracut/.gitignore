@@ -1,3 +1,0 @@
-bin/update-dracut
-dracut.conf.d/*.conf
-modules.d/*.sh

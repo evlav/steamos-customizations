@@ -1,0 +1,6 @@
+bin/update-mkinitcpio
+initcpio/steam-deck.inst
+initcpio/steamos.hook
+initcpio/steamos.inst
+mkinitcpio.d/deck.conf
+mkinitcpio.d/linux-neptune.preset
