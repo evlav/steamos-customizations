@@ -1,1 +1,2 @@
 systemd/*.service
+generator/steamos-steamlib-generator

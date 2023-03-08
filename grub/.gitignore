@@ -3,3 +3,5 @@ libexec/steamos-grub-install
 libexec/steamos-grub-mkearlyconfig
 libexec/steamos-grub-mkimage
 systemd/*.service
+grub.d/30_efi-prober
+grub.d/99_reboot

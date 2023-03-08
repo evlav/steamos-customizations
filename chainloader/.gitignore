@@ -1,2 +1,4 @@
 bin/steamos-reboot
+bin/steamos-ls
+bin/steamos-set-bootmode
 systemd/*.service

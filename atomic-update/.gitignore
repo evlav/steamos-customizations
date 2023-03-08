@@ -1,4 +1,6 @@
 rauc/*.conf
 rauc/*.sh
 systemd/*.service
+systemd/rauc.service.d/override.conf
 tmpfiles.d/*.conf
+steamos-atomupd/client.conf

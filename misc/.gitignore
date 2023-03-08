@@ -8,7 +8,12 @@ bin/steamos-partsets
 bin/steamos-readonly
 bin/steamos-devmode
 bin/steamos-verity
+bin/steamos-finalize-install
+bin/steamos-partition
 libexec/steamos-create-homedir
 libexec/steamos-partsets-generator
+libexec/steamos-cfs-debugfs-settings
+libexec/steamos-finish-oobe-migration
+libexec/steamos-initrd-do-reset
 systemd/*.mount
 systemd/*.service
