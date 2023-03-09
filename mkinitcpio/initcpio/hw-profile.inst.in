@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cache_deck_module () {
+cache_hw_module () {
     # canonicalise the module name to the module path filename
     # as this is what mkinitcpio uses internally as an identifier:
     local name=
@@ -15,26 +15,26 @@ cache_deck_module () {
 }
 
 build() {
-    # DECK_MODULES is a bash array of the minimal module set we want
-    # in our steam-deck initrd (for booting and emergency debugging)
+    # HW_PROFILE_MODULES is a bash array of the minimal module set we want
+    # in our hw-specific initrd (for booting and emergency debugging)
     # it is typically set in preset file:
-    if (( ${#DECK_MODULES[@]} ))
+    if (( ${#HW_PROFILE_MODULES[@]} ))
     then
-        map cache_deck_module "${DECK_MODULES[@]}"
+        map cache_hw_module "${HW_PROFILE_MODULES[@]}"
     else
-        msg "Warning: steam-deck module invoked but DECK_MODULES unset"
+        msg "Warning: hw-profile module invoked but HW_PROFILE_MODULES unset"
     fi
 
     # make sure we can access common filesystems when
     # we drop to an emergency shell, even if not in config:
-    map cache_deck_module btrfs ext4 ext3 vfat fat exfat overlay
+    map cache_hw_module btrfs ext4 ext3 vfat fat exfat overlay
 }
 
 help() {
     cat <<'HELPEOF'
-This hook specifies the exact set of initrd modules required by the
-steam deck (roughly what mkinitcpio autodetect would do, plus a few
-modules we think would be useful for debugging/testing/vms).
+This hook specifies the minimal set of initrd modules required by the
+target hardware (roughly what mkinitcpio autodetect would do, plus a 
+few modules we think would be useful for debugging/testing/vms).
 
 It does this by piggybacking on the same mechanism as autodetect,
 which means that it can be used alongside autodetect even if running

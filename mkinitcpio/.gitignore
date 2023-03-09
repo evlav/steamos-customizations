@@ -1,5 +1,5 @@
 bin/update-mkinitcpio
-initcpio/steam-deck.inst
+initcpio/hw-profile.inst
 initcpio/steamos.hook
 initcpio/steamos.inst
 mkinitcpio.d/deck.conf

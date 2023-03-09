@@ -53,11 +53,11 @@ FILES=()
 # NOTE: the steam deck module does manually what the 'autodetect' module does
 # when run on an actual deck to build an intrd, but withou the need to run on
 # an actual device:
-HOOKS=(base udev steamos steam-deck modconf block filesystems keyboard fsck)
+HOOKS=(base udev steamos hw-profile modconf block filesystems keyboard fsck)
 # HOOKS=(base udev steamos autodetect modconf block filesystems keyboard fsck)
 
-# This is used by the steam-deck module to populate the initrd module tree:
-DECK_MODULES=(
+# This is used by the hw-profile module to populate the initrd module tree:
+HW_PROFILE_MODULES=(
 overlay \
 btrfs \
 ext4 \
