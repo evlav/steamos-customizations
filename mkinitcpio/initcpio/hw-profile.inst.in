@@ -1,5 +1,7 @@
 #!/bin/bash
 
+declare _reason
+
 cache_hw_module () {
     # canonicalise the module name to the module path filename
     # as this is what mkinitcpio uses internally as an identifier:
@@ -10,24 +12,30 @@ cache_hw_module () {
     name=${file##*/}
     name=${name%.ko*}
 
-    add_module "$name"
-    _autodetect_cache["$name"]=1
+    if [ "${_autodetect_cache[$name]:-0}" != 1 ]
+    then
+        msg "Adding kernel module $name ($_reason)"
+        add_module "$name"
+        _autodetect_cache["$name"]=1
+    fi
 }
 
 build() {
+    # make sure we can access common filesystems when
+    # we drop to an emergency shell, even if not in config:
+    _reason="hw-profile built-in"
+    map cache_hw_module btrfs ext4 ext3 vfat fat exfat overlay
+
     # HW_PROFILE_MODULES is a bash array of the minimal module set we want
     # in our hw-specific initrd (for booting and emergency debugging)
     # it is typically set in preset file:
     if (( ${#HW_PROFILE_MODULES[@]} ))
     then
+        _reason="configured by HW_PROFILE_MODULES"
         map cache_hw_module "${HW_PROFILE_MODULES[@]}"
     else
         msg "Warning: hw-profile module invoked but HW_PROFILE_MODULES unset"
     fi
-
-    # make sure we can access common filesystems when
-    # we drop to an emergency shell, even if not in config:
-    map cache_hw_module btrfs ext4 ext3 vfat fat exfat overlay
 }
 
 help() {
