@@ -18,7 +18,7 @@ build() {
     map add_binary ${STEAMOS_BINARIES[@]}
 
     # steamos helper scripts (eg the partset generator)
-    map add_file @libexecdir@/steamos/*
+    map add_file @libexecdir@/steamos/steamos-*
 
     # make iconv work
     map add_file /usr/lib/gconv/gconv-modules.d/*
