@@ -11,7 +11,9 @@ MODULES=()
 # wish into the CPIO image.  This is run last, so it may be used to
 # override the actual binaries included by a given hook
 # BINARIES are dependency parsed, so you may safely ignore libraries
-BINARIES=(/usr/bin/fsck*)
+BINARIES=(/sbin/fsck*)
+# NOTE: some of our CI images are not usrmerged, so we can't rely on
+# /sbin being a symlink to /usr/bin:
 
 # FILES
 # This setting is similar to BINARIES above, however, files are added
