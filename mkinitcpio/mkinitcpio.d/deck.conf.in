@@ -72,10 +72,16 @@ mmc_block \
 sdhci-pci \
 usb-storage \
 usbhid \
-virtio_blk \
 xhci-pci \
 xxhash_generic \
 serio-raw \
+)
+
+# cribbed from dracut's qemu module (which we were explicitly including)
+QEMU_MODULES=(
+ata_piix ata_generic pata_acpi cdrom sr_mod ahci virtio_blk virtio \
+virtio_ring virtio_pci virtio_scsi virtio_console virtio_rng virtio_mem \
+spapr-vscsi qemu_fw_cfg \
 )
 
 # COMPRESSION

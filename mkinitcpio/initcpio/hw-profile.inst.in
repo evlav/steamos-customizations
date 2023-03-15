@@ -26,6 +26,14 @@ build() {
     _reason="hw-profile built-in"
     map cache_hw_module btrfs ext4 ext3 vfat fat exfat overlay
 
+    # QEMU_MODULES is a bash array of kernel modules required for qemu support
+    # It is set in our preset file:
+    if (( ${#QEMU_MODULES[@]} ))
+    then
+        _reason="configured by QEMU_MODULES"
+        map cache_hw_module "${QEMU_MODULES[@]}"
+    fi
+
     # HW_PROFILE_MODULES is a bash array of the minimal module set we want
     # in our hw-specific initrd (for booting and emergency debugging)
     # it is typically set in preset file:
