@@ -1,4 +1,8 @@
-rauc/*.conf
-rauc/*.sh
-systemd/*.service
-tmpfiles.d/*.conf
+rauc/bootloader-custom-backend.sh
+rauc/post-install.sh
+rauc/pre-install.sh
+rauc/rauc-override.sh
+rauc/system.conf
+steamos-atomupd/client.conf
+systemd/rauc.service.d/override.conf
+tmpfiles.d/steamos-atomupd.conf

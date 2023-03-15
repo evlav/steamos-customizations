@@ -1,2 +1,3 @@
 bin/steamos-reboot
-systemd/*.service
+systemd/steamos-boot.service
+systemd/steamos-install-steamcl.service
