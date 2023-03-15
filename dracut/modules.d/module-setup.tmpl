@@ -14,6 +14,8 @@
 #  published by the Free Software Foundation; either version 2.1 of the License,
 #  or (at your option) any later version.
 
+@STEAMOS_BINARIES@
+
 # called by dracut
 check() {
     # basic commands
@@ -59,14 +61,11 @@ installkernel() {
 # called by dracut
 install() {
     inst_dir /mnt
+    inst_multiple "${STEAMOS_BINARIES[@]}"
 
     inst_multiple \
-        basename dirname plymouth rmdir sed sleep \
-        e2label mkfs.ext4 tune2fs \
-        dd lsblk sort btrfs \
-        steamos-factory-reset-config mktemp \
+        dd tr \
         iconv /usr/lib/gconv/UTF-16.so /usr/lib/gconv/gconv-modules \
-        @libexecdir@/steamos/steamos-partsets-generator \
         $systemdutildir/systemd-veritysetup \
         $systemdutildir/system-generators/systemd-veritysetup-generator
 

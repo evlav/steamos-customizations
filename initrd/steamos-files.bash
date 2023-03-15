@@ -1,0 +1,30 @@
+declare -a STEAMOS_BINARIES=(
+    basename
+    blkid
+    btrfs
+    cat
+    dirname
+    e2label
+    echo
+    findmnt
+    @libexecdir@/steamos/steamos-partsets-generator
+    ls
+    lsblk
+    mkdir
+    mkfs.ext4
+    mktemp
+    mountpoint
+    plymouth
+    printf
+    readlink
+    realpath
+    rmdir
+    sed
+    sfdisk
+    sleep
+    sort
+    steamos-factory-reset-config
+    tail
+    tune2fs
+    udevadm
+)
