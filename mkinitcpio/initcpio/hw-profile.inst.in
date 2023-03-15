@@ -9,6 +9,19 @@ cache_hw_module () {
     local file=$(modinfo -b "$_optmoduleroot" \
                          -k $KERNELVERSION \
                          -F filename "$1" 2>/dev/null)
+
+    if [ "$file" = "(builtin)" ]
+    then
+        msg "Kernel module $1 is builtin ($_reason)"
+        return 0
+    fi
+
+    if [ -z "$file" ]
+    then
+        msg "Kernel module $1 not configured in $KERNELVERSION ($_reason)"
+        return 0
+    fi
+
     name=${file##*/}
     name=${name%.ko*}
 
@@ -23,14 +36,14 @@ cache_hw_module () {
 build() {
     # make sure we can access common filesystems when
     # we drop to an emergency shell, even if not in config:
-    _reason="hw-profile built-in"
+    _reason="required by mkinitcpio hw-profile"
     map cache_hw_module btrfs ext4 ext3 vfat fat exfat overlay
 
     # QEMU_MODULES is a bash array of kernel modules required for qemu support
     # It is set in our preset file:
     if (( ${#QEMU_MODULES[@]} ))
     then
-        _reason="configured by QEMU_MODULES"
+        _reason="required by QEMU_MODULES"
         map cache_hw_module "${QEMU_MODULES[@]}"
     fi
 
@@ -39,7 +52,7 @@ build() {
     # it is typically set in preset file:
     if (( ${#HW_PROFILE_MODULES[@]} ))
     then
-        _reason="configured by HW_PROFILE_MODULES"
+        _reason="required by HW_PROFILE_MODULES"
         map cache_hw_module "${HW_PROFILE_MODULES[@]}"
     else
         msg "Warning: hw-profile module invoked but HW_PROFILE_MODULES unset"
