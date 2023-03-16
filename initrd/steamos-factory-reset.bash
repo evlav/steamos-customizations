@@ -1,19 +1,3 @@
-#!/bin/bash
-# -*- mode: sh; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
-# vim: et sts=4 sw=4
-
-#  SPDX-License-Identifier: LGPL-2.1+
-#
-#  Copyright © 2019-2022 Collabora Ltd.
-#  Copyright © 2019-2022 Valve Corporation.
-#
-#  This file is part of steamos-customizations.
-#
-#  steamos-customizations is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU Lesser General Public License as published
-#  by the Free Software Foundation; either version 2.1 of the License, or
-#  (at your option) any later version.
-
 # Perform a factory reset
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> X <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 # NOTE: This is never a complete nuke-the-site-from-orbit reset
@@ -29,8 +13,6 @@
 declare -r FACTORY_RESET_CONFIG_DIR=@factory_reset_config_dir@
 declare -r SYMLINKS_DIR=@udev_symlinks_absdir@
 declare -i want_reset=0
-
-. /lib/dracut-lib.sh
 
 reset_device_ext4() {
     local device=$1
@@ -58,7 +40,7 @@ reset_device_ext4() {
         fi
         mt_point="$proc_mnt"
         mt_opts="$proc_opts"
-        warn "Unmounting $device from $mt_point ($mt_opts)"
+        @WARN@ "Unmounting $device from $mt_point ($mt_opts)"
         umount -v "$device"
     done < /proc/mounts
 
@@ -68,7 +50,7 @@ reset_device_ext4() {
     fi
 
     if ismounted "$device"; then
-        warn "Could not unmount $device from $mt_point"
+        @WARN@ "Could not unmount $device from $mt_point"
         return 1
     fi
 
@@ -99,10 +81,10 @@ reset_device_ext4() {
         fi
     done
 
-    info "Making ext4 filesystem on device $device (options: ${opts[*]})"
+    @INFO@ "Making ext4 filesystem on device $device (options: ${opts[*]})"
     mkfs.ext4 "${opts[@]}" "$device"
     if [ -n "$mt_point" ]; then
-        warn "Remounting fresh fs on $device at $mt_point ($mt_opts)"
+        @WARN@ "Remounting fresh fs on $device at $mt_point ($mt_opts)"
         mount ${mt_opts:+-o} $mt_opts "$device" "$mt_point"
     fi
 }
@@ -110,9 +92,9 @@ reset_device_ext4() {
 cleanup_esp=0
 if [ ! -d /esp/efi ]; then
     dev=$(readlink -f $SYMLINKS_DIR/all/esp)
-    info "Checking ESP partition $dev"
+    @INFO@ "Checking ESP partition $dev"
     if ! ismounted $dev; then
-        info "Mounting $dev at /esp"
+        @INFO@ "Mounting $dev at /esp"
         mkdir -p /esp
         mount $dev /esp
         cleanup_esp=1
@@ -130,11 +112,9 @@ fi
 
 # the bootloader can't generate the reset manifest for us, but it is now
 # allowed to request a factory reset via the kernel command line:
-if [ $want_reset -eq 0 ]
-then
+if [ $want_reset -eq 0 ]; then
     want_reset=$(getarg 'steamos.factory-reset=')
-    if [ "$want_reset" -gt 0 ]
-    then
+    if [ "$want_reset" -gt 0 ]; then
         steamos-factory-reset-config
     fi
 fi
@@ -145,7 +125,7 @@ fi
 for cfg in $FACTORY_RESET_CONFIG_DIR/*.cfg; do
     case $cfg in
         */*-dev.cfg)
-            warn "Ignoring reset for development partition $cfg"
+            @WARN@ "Ignoring reset for development partition $cfg"
             rm -v $cfg
             ;;
     esac
@@ -158,7 +138,7 @@ if [ $want_reset -ne 1 ]; then
     return 0
 fi
 
-info "A factory reset has been requested."
+@INFO@ "A factory reset has been requested."
 # Make sure we bail out if the reset fails at any stage
 # we do this to make sure the reset will be re-attempted
 # or resumed if it does not complete here (possibly because
@@ -185,24 +165,24 @@ for cfg in $FACTORY_RESET_CONFIG_DIR/*.cfg; do
     [ -r $cfg ] || continue
 
     while read type instance dev opts; do
-        info "Processing manifest file $cfg (async)"
+        @INFO@ "Processing manifest file $cfg (async)"
         name="${instance##*/}"
         case $type in
             EFI)
-                echo "Reset of efi partition ($instance, $dev) is obsolete, ignoring"
+                @INFO@ "Reset of efi partition ($instance, $dev) is obsolete, ignoring"
                 rm -f "$cfg"
                 ;;
             VAR|HOME)
                 # these are slow so we want them done in parallel and async
                 # BUT we need to wait until they're all done before proceeding
-                info "Formatting data partition $dev ($instance)"
+                @INFO@ "Formatting data partition $dev ($instance)"
                 (reset_device_ext4 $dev "$name" "$opts" && rm -f "$cfg") &
                 RESET_PID=$!
                 WAIT_PIDS+=($RESET_PID)
                 RESET_DEV[$RESET_PID]="$dev $name"
                 ;;
             *)
-                warn "Unexpected SteamOS reset type $type ($instance, $dev)"
+                @WARN@ "Unexpected SteamOS reset type $type ($instance, $dev)"
                 rm -f "$cfg"
                 ;;
         esac
@@ -216,13 +196,13 @@ while true; do
         # nothing left to wait for.
         break;
     elif [ $rc -ne 0 ]; then
-        warn "Reset of ${RESET_DEV[$WAITED_FOR]} failed, factory reset incomplete"
+        @WARN@ "Reset of ${RESET_DEV[$WAITED_FOR]} failed, factory reset incomplete"
     else
-        info "Reset of ${RESET_DEV[$WAITED_FOR]} complete"
+        @INFO@ "Reset of ${RESET_DEV[$WAITED_FOR]} complete"
     fi
 done
 
-info "Unmounting /esp"
+@INFO@ "Unmounting /esp"
 if [ $cleanup_esp = "1" ]; then
     umount /esp
 fi
