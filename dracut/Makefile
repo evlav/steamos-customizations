@@ -8,6 +8,7 @@ BINARIES_IN := $(wildcard bin/*.in)
 BINARIES := $(patsubst %.in,%,$(BINARIES_IN))
 COMPLETIONS := $(wildcard completions/*)
 GEN_MOD_IN := modules.d/module-setup.sh.in
+GEN_MOD_IN += modules.d/steamos-factory-reset.sh.in
 MODULES_IN := $(wildcard modules.d/*.sh.in) $(GEN_MOD_IN)
 MODULES := $(patsubst %.in,%,$(MODULES_IN))
 README := modules.d/README
@@ -15,6 +16,9 @@ CLEANABLE := $(BINARIES) $(ALPM_SCRIPTS) $(ALPM_HOOKS) $(GEN_MOD_IN) $(MODULES)
 
 modules.d/module-setup.sh.in: modules.d/module-setup.tmpl ../initrd/steamos-files.bash
 	../initrd/inline-file.sh "@STEAMOS_BINARIES@" $^ > $@
+
+modules.d/steamos-factory-reset.sh.in: modules.d/steamos-factory-reset.tmpl ../initrd/steamos-factory-reset.bash
+	../initrd/inline-file.sh "@STEAMOS_FACTORY_RESET@" $^ | sed -e 's|@INFO@|info|g;s|@WARN@|warn|g' > $@
 
 all: $(BINARIES) $(ALPM_SCRIPTS) $(ALPM_HOOKS) $(GEN_MOD_IN) $(MODULES)
 
