@@ -11,8 +11,7 @@
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> X <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 declare -r FACTORY_RESET_CONFIG_DIR=@factory_reset_config_dir@
-declare -r SYMLINKS_DIR=@udev_symlinks_absdir@
-declare -i want_reset=0
+declare -r UDEV_SYMLINKS_DIR=@udev_symlinks_absdir@
 
 reset_device_ext4() {
     local device=$1
@@ -89,120 +88,135 @@ reset_device_ext4() {
     fi
 }
 
-cleanup_esp=0
-if [ ! -d /esp/efi ]; then
-    dev=$(readlink -f $SYMLINKS_DIR/all/esp)
-    @INFO@ "Checking ESP partition $dev"
-    if ! ismounted $dev; then
-        @INFO@ "Mounting $dev at /esp"
-        mkdir -p /esp
-        mount $dev /esp
-        cleanup_esp=1
-    fi
-fi
+do_reset() {
+    @INFO@ "A factory reset has been requested."
 
-if [ -d $FACTORY_RESET_CONFIG_DIR ]; then
+    # Make sure we bail out if the reset fails at any stage
+    # we do this to make sure the reset will be re-attempted
+    # or resumed if it does not complete here (possibly because
+    # the user got bored and leaned on the power button)
+
+    # There is a small chance of a reset loop occurring if the reset cannot
+    # complete for fundamental reasons (unable to format filesystem and so
+    # forth) BUT
+    #
+    # a) the device is probably hosed anyway if this happens
+    #
+    # b) we care more (for now) about doing a genuine reset to stop
+    #    leaking private data / things worth actual €£$¥ to the next owner
+    #    than we do about [hopefully] unlikely reset loops
+
+    # We want to reset each filesystem in parallel _but_ we must wait for
+    # them to finish as we have to release all fds before the pivot to the
+    # real sysroot happens:
+    # NOTE: the rootfs would need to be reset _before_ the EFI fs if we were
+    # handling it, as its fs uuid must be known for the EFI reset - but since
+    # we're not touching it everything is parallelisable:
+    declare -a WAIT_PIDS=()
+    declare -A RESET_DEV
     for cfg in $FACTORY_RESET_CONFIG_DIR/*.cfg; do
-        if [ -e "$cfg" ]; then
-            want_reset=1
-            break
+        [ -r $cfg ] || continue
+
+        while read type instance dev opts; do
+            @INFO@ "Processing manifest file $cfg (async)"
+            name="${instance##*/}"
+            case $type in
+                EFI)
+                    @INFO@ "Reset of efi partition ($instance, $dev) is obsolete, ignoring"
+                    rm -f "$cfg"
+                    ;;
+                VAR|HOME)
+                    # these are slow so we want them done in parallel and async
+                    # BUT we need to wait until they're all done before proceeding
+                    @INFO@ "Formatting data partition $dev ($instance)"
+                    (reset_device_ext4 $dev "$name" "$opts" && rm -f "$cfg") &
+                    RESET_PID=$!
+                    WAIT_PIDS+=($RESET_PID)
+                    RESET_DEV[$RESET_PID]="$dev $name"
+                    ;;
+                *)
+                    @WARN@ "Unexpected SteamOS reset type $type ($instance, $dev)"
+                    rm -f "$cfg"
+                    ;;
+            esac
+        done < $cfg
+    done
+
+    while true; do
+        wait -f -p WAITED_FOR -n
+        rc=$?
+        if [ $rc -eq 127 ]; then
+            # nothing left to wait for.
+            break;
+        elif [ $rc -ne 0 ]; then
+            @WARN@ "Reset of ${RESET_DEV[$WAITED_FOR]} failed, factory reset incomplete"
+        else
+            @INFO@ "Reset of ${RESET_DEV[$WAITED_FOR]} complete"
         fi
     done
-fi
+}
 
-# the bootloader can't generate the reset manifest for us, but it is now
-# allowed to request a factory reset via the kernel command line:
-if [ $want_reset -eq 0 ]; then
-    want_reset=$(getarg 'steamos.factory-reset=')
-    if [ "$want_reset" -gt 0 ]; then
-        steamos-factory-reset-config
+factory_reset() {
+    local want_reset=0
+    local cleanup_esp=0
+
+    ########################################################################
+    # mount /esp if it isn't mounted
+    if [ ! -d /esp/efi ]; then
+        dev=$(readlink -f $UDEV_SYMLINKS_DIR/all/esp)
+        @INFO@ "Checking ESP partition $dev"
+        if ! ismounted "$dev"; then
+            @INFO@ "Mounting $dev at /esp"
+            mkdir -p /esp
+            mount "$dev" /esp
+            cleanup_esp=1
+        fi
     fi
-fi
 
-# leave dev partitions alone - they're not present on consumer-mode
-# devices and they're a handy place from which to diagnose/fix/test
-# if we're making changes to the factory reset and we make a mess:
-for cfg in $FACTORY_RESET_CONFIG_DIR/*.cfg; do
-    case $cfg in
-        */*-dev.cfg)
-            @WARN@ "Ignoring reset for development partition $cfg"
-            rm -v $cfg
-            ;;
-    esac
-done
-
-if [ $want_reset -ne 1 ]; then
-    if [ $cleanup_esp = "1" ]; then
-        umount /esp
+    ########################################################################
+    # if reset config exists, we want a reset:
+    if [ -d $FACTORY_RESET_CONFIG_DIR ]; then
+        for cfg in $FACTORY_RESET_CONFIG_DIR/*.cfg; do
+            if [ -e "$cfg" ]; then
+                @INFO@ "Factory reset request found in $FACTORY_RESET_CONFIG_DIR"
+                want_reset=1
+                break
+            fi
+        done
     fi
-    return 0
-fi
 
-@INFO@ "A factory reset has been requested."
-# Make sure we bail out if the reset fails at any stage
-# we do this to make sure the reset will be re-attempted
-# or resumed if it does not complete here (possibly because
-# the user got bored and leaned on the power button)
+    ########################################################################
+    # if we don't already have a reset config then check to see if
+    # the bootloader asked us to generate one:
+    if [ "$want_reset" -eq 0 ]; then
+        want_reset=$1
+        if [ "$want_reset" -ne 0 ]; then
+            steamos-factory-reset-config
+        fi
+    fi
 
-# There is a small chance of a reset loop occurring if the reset cannot complete
-# for fundamental reasons (unable to format filesystem and so forth) BUT
-#
-# a) the device is probably hosed anyway if this happens
-#
-# b) we care more (for now) about doing a genuine reset to stop
-#    leaking private data / things worth actual €£$¥ to the next owner
-#    than we do about [hopefully] unlikely reset loops
-
-# We want to reset each filesystem in parallel _but_ we must wait for
-# them to finish as we have to release all fds before the pivot to the
-# real sysroot happens:
-# NOTE: the rootfs would need to be reset _before_ the EFI fs if we were
-# handling it, as its fs uuid must be known for the EFI reset - but since
-# we're not touching it everything is parallelisable:
-declare -a WAIT_PIDS=()
-declare -A RESET_DEV
-for cfg in $FACTORY_RESET_CONFIG_DIR/*.cfg; do
-    [ -r $cfg ] || continue
-
-    while read type instance dev opts; do
-        @INFO@ "Processing manifest file $cfg (async)"
-        name="${instance##*/}"
-        case $type in
-            EFI)
-                @INFO@ "Reset of efi partition ($instance, $dev) is obsolete, ignoring"
-                rm -f "$cfg"
-                ;;
-            VAR|HOME)
-                # these are slow so we want them done in parallel and async
-                # BUT we need to wait until they're all done before proceeding
-                @INFO@ "Formatting data partition $dev ($instance)"
-                (reset_device_ext4 $dev "$name" "$opts" && rm -f "$cfg") &
-                RESET_PID=$!
-                WAIT_PIDS+=($RESET_PID)
-                RESET_DEV[$RESET_PID]="$dev $name"
-                ;;
-            *)
-                @WARN@ "Unexpected SteamOS reset type $type ($instance, $dev)"
-                rm -f "$cfg"
+    ########################################################################
+    # partitions belonging to a dev slot don't get scrubbed, ever.
+    # (production deck images should never have a dev slot out of the box):
+    for cfg in $FACTORY_RESET_CONFIG_DIR/*.cfg; do
+        case $cfg in
+            */*-dev.cfg)
+                @WARN@ "Ignoring reset for development partition $cfg"
+                rm -v $cfg
                 ;;
         esac
-    done < $cfg
-done
+    done
 
-while true; do
-    wait -f -p WAITED_FOR -n
-    rc=$?
-    if [ $rc -eq 127 ]; then
-        # nothing left to wait for.
-        break;
-    elif [ $rc -ne 0 ]; then
-        @WARN@ "Reset of ${RESET_DEV[$WAITED_FOR]} failed, factory reset incomplete"
-    else
-        @INFO@ "Reset of ${RESET_DEV[$WAITED_FOR]} complete"
+    ########################################################################
+    # perform the actual reset operations
+    if [ "$want_reset" -eq 1 ]; then
+        do_reset
     fi
-done
 
-@INFO@ "Unmounting /esp"
-if [ $cleanup_esp = "1" ]; then
-    umount /esp
-fi
+    ########################################################################
+    # unmount /esp if we mounted it
+    if [ "$cleanup_esp" -eq 1 ]; then
+        @INFO@ "Unmounting /esp"
+        umount /esp
+    fi
+}
