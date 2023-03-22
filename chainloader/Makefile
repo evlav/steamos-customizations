@@ -13,7 +13,7 @@ SERVICES_IN := $(wildcard systemd/*.service.in)
 SERVICES := $(patsubst %.in,%,$(SERVICES_IN))
 CLEANABLE := $(BINARIES) $(SERVICES) $(SUIDBINS)
 
-all: $(BINARIES) $(LIBRARIES_EXEC) $(SERVICES) $(SUIDBINS)
+all: $(BINARIES) $(SERVICES) $(SUIDBINS)
 
 bin/steamos-set-bootmode: bin/steamos-set-bootmode.c
 	$(CC) -Wall -Wextra $^ -DBINDIR=\"$(bindir)\" -o $@
