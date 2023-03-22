@@ -149,15 +149,8 @@ REBOOT_FOR_UPDATE := $(STEAMOS_ATOMUPD_RUNTIME_DIR)/reboot_for_update
 	fi
 
 clean:
-	@echo checking $(BINARIES) $(SERVICES) $(CLEANABLE)
-	@for x in $(BINARIES) $(SERVICES) $(CLEANABLE);  \
-	 do 			\
-	     if [ -f $$x.in ];  \
-	     then  		\
-	         rm -vf $$x;    \
-	     fi;                \
-	 done
-	@for x in $(SUIDBINS); do rm -vf $(SUIDBINS); done
+	@echo checking $(CLEANABLE)
+	@for x in $(CLEANABLE); do rm -vf $$x; done
 
 # -------- Functions -------- #
 
