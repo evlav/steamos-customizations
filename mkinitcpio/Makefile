@@ -4,13 +4,19 @@ MKINITCPIOD_IN := $(wildcard mkinitcpio.d/*.in)
 HOOKSCRIPTS_IN := $(wildcard initcpio/*.hook.in)
 INSTSCRIPTS_IN := $(wildcard initcpio/*.inst.in)
 
+ALPM_HOOKS_IN   := $(wildcard alpm/hooks/*.in)
+ALPM_HOOKS      := $(patsubst %.in,%,$(ALPM_HOOKS_IN))
+ALPM_SCRIPTS_IN := $(wildcard alpm/scripts/*.in)
+ALPM_SCRIPTS    := $(patsubst %.in,%,$(ALPM_SCRIPTS_IN))
+
 BINARIES_IN     := $(wildcard bin/*.in)
 BINARIES        := $(patsubst %.in,%,$(BINARIES_IN))
 
 MKINITCPIOD := $(patsubst %.in,%,$(MKINITCPIOD_IN))
 HOOKSCRIPTS := $(patsubst %.in,%,$(HOOKSCRIPTS_IN))
 INSTSCRIPTS := $(patsubst %.in,%,$(INSTSCRIPTS_IN))
-CLEANABLE   := $(MKINITCPIOD) $(HOOKSCRIPTS) $(INSTSCRIPTS) $(BINARIES)
+CLEANABLE   := $(MKINITCPIOD) $(HOOKSCRIPTS) $(INSTSCRIPTS) $(BINARIES) \
+               $(ALPM_SCRIPTS) $(ALPM_HOOKS)
 
 all: $(CLEANABLE)
 
@@ -33,3 +39,7 @@ install: all
 	  done)
 	@install -d $(DESTDIR)/etc/mkinitcpio.d
 	@install -m 0644 $(MKINITCPIOD) $(DESTDIR)/etc/mkinitcpio.d
+	@install -d $(DESTDIR)$(datadir)/libalpm/hooks
+	@install -m 644 $(ALPM_HOOKS) $(DESTDIR)$(datadir)/libalpm/hooks
+	@install -d $(DESTDIR)$(datadir)/libalpm/scripts
+	@install -m 755 $(ALPM_SCRIPTS) $(DESTDIR)$(datadir)/libalpm/scripts

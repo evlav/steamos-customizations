@@ -1,9 +1,0 @@
-PRESETS=('linux_neptune')
-
-ALL_microcode=/boot/amd_ucode.img
-
-linux_neptune_kver=/boot/vmlinuz-${pkgbase:-linux-neptune}
-linux_neptune_config=/etc/mkinitcpio.d/deck.conf
-linux_neptune_image=/boot/initramfs-${pkgbase:-linux-neptune}.img
-linux_neptune_options=
-

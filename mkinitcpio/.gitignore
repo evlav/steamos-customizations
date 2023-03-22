@@ -2,5 +2,7 @@ bin/update-mkinitcpio
 initcpio/hw-profile.inst
 initcpio/steamos.hook
 initcpio/steamos.inst
-mkinitcpio.d/deck.conf
-mkinitcpio.d/linux-neptune.preset
+mkinitcpio.d/*.hw.conf
+alpm/hooks/*.hook
+alpm/scripts/mkinitcpio-steamos-install
+alpm/scripts/streamline-mkinitcpio-config

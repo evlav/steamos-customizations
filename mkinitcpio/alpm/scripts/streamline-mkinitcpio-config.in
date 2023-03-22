@@ -1,0 +1,193 @@
+#!/bin/bash
+
+#  SPDX-License-Identifier: LGPL-2.1+
+#
+#  Copyright © 2023 Collabora Ltd.
+#  Copyright © 2023 Valve Corporation.
+#
+#  This file is part of steamos-customizations.
+#
+#  steamos-customizations is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU Lesser General Public License as
+#  published by the Free Software Foundation; either version 2.1 of the License,
+#  or (at your option) any later version.
+
+set -u
+
+declare -A __BEFORE=()
+declare -A __AFTER=()
+
+establish_baseline ()
+{
+    local __x __type __val __name
+
+    while read __x __type __val
+    do
+        case $__x$__val in
+            declare__*)
+                continue;
+                ;;
+            declare*=*)
+                __name=${__val%%=*}
+                __BEFORE[$__name]=${__type}
+                ;;
+        esac
+    done < <(declare -p)
+}
+
+record_settings ()
+{
+    local __x __type __btype __val __name
+    local __settings=${1:-/dev/null}
+
+    . "$__settings"
+
+    case $__settings in
+        *.hw.conf)
+            true
+            ;;
+        *.conf)
+            for __x in /etc/mkinitcpio.d/*.hw.conf
+            do
+                if [ -f $__x ]; then . $__x; fi
+            done
+            ;;
+    esac
+    
+    while read __x __type __val;
+     do
+         __name=${__val%%=*}
+        case $__x$__val in
+            (declare__*)
+                continue
+                ;;
+
+            (declare*=*)
+                __btype=${__BEFORE[$__name]:-none}
+
+                [ $__btype != none    ] && continue
+                [ $__btype == $__type ] && continue
+
+                __AFTER[$__name]=$__type
+                ;;
+        esac
+    done < <(declare -p)
+}
+
+dump_var ()
+{
+    local tmp
+    local -n var=$1
+
+    case ${__AFTER[$1]:--none} in
+        -A)
+            tmp="$(declare -p $1)"
+            echo "${tmp#declare -A }"
+            ;;
+        -a)
+            echo $1\=\("${var[@]}"\)
+            ;;
+        --)
+            tmp="$(declare -p $1)"
+            echo "${tmp#declare -- }"
+            ;;
+    esac         
+}
+
+regenerate_settings ()
+{
+    local __x __y __scrub
+    local -a __presets=()
+    local -a __hooks=()
+    local -i __have_hw=0
+    local -i __have_so=0
+    local -i __have_ud=1
+    local __insertion_point=base
+    local __buf=$(mktemp)
+    local __out="$2"
+    local __what=
+
+    # strip the fallback preset, we don't want it:
+    for __x in ${PRESETS[@]}
+    do
+        case $__x in fallback) continue; ;; esac
+        __presets+=($__x)
+    done
+
+    for __x in ${HOOKS[@]}
+    do
+        case $__x in
+            hw-profile)
+                __have_hw=1
+                ;;
+            steamos)
+                __have_so=1
+                ;;
+            udev)
+                __have_ud=1
+                __insertion_point=$__x
+                ;;
+        esac
+    done
+
+    # remove autodetect (build is in a VM/container so would pick the wrong things)
+    # make sure udev, steamos, hw-profile are present and in that order:
+    for __x in ${HOOKS[@]}
+    do
+        if [ $__x = autodetect ]; then continue; fi
+
+        __hooks+=($__x)
+
+        if [ $__x = $__insertion_point ]
+        then
+            if [ $__have_ud -eq 0 ]; then __hooks+=(udev);       fi
+            if [ $__have_so -eq 0 ]; then __hooks+=(steamos);    fi
+            if [ $__have_hw -eq 0 ]; then __hooks+=(hw-profile); fi
+        fi
+    done
+
+    while read __x
+    do
+        case $__x in
+            fallback_image)
+                __scrub=fallback_image
+                typeset -n __scrub
+                rm -f "$__scrub"
+                typeset +n __scrub
+                ;;
+            fallback_*)
+                true
+                ;;
+            *_config)
+                __what=${__x%_config}
+                echo $__x\=/etc/mkinitcpio.d/${__what}.dynamic.conf
+                ;;
+            PRESETS)
+                echo PRESETS\=\("${__presets[@]}"\)
+                ;;
+            HOOKS)
+                echo HOOKS\=\("${__hooks[@]}"\)
+                ;;
+            *)
+                dump_var $__x
+                ;;
+        esac 
+    done < <(for __y in ${!__AFTER[@]}; do echo $__y; done | sort) > $__buf
+
+    mv $__buf "$__out"
+}
+
+############################################################################
+
+
+if [ -f "${1:-/dev/null}" ]
+then
+    establish_baseline
+    record_settings "$1"
+    regenerate_settings "$1" ${2:-$1}
+else
+    echo "Usage : $0 <file-to-be-sourced> [output-file]" >&2
+    echo "  ('${1:-}' is not a file)" >&2
+    echo "  Input file must be an initcpio .conf or .preset" >&2
+    exit 1
+fi

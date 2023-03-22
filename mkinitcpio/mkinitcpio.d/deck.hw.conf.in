@@ -1,0 +1,26 @@
+BINARIES+=(/sbin/fsck*)
+# This is used by the hw-profile module to populate the initrd module tree:
+HW_PROFILE_MODULES=(
+overlay \
+btrfs \
+ext4 \
+vfat \
+exfat \
+blake2b_generic \
+hid-multitouch \
+i8042 \
+mmc_block \
+sdhci-pci \
+usb-storage \
+usbhid \
+xhci-pci \
+xxhash_generic \
+serio-raw \
+)
+
+# cribbed from dracut's qemu module (which we were explicitly including)
+QEMU_MODULES=(
+ata_piix ata_generic pata_acpi cdrom sr_mod ahci virtio_blk virtio \
+virtio_ring virtio_pci virtio_scsi virtio_console virtio_rng virtio_mem \
+spapr-vscsi qemu_fw_cfg \
+)
