@@ -15,7 +15,6 @@ SUBDIRS :=		\
 	chainloader	\
 	dracut		\
 	gpd-quirks	\
-	glx		\
 	grub		\
 	misc		\
 	NetworkManager	\
