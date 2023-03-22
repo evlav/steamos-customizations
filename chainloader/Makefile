@@ -11,6 +11,7 @@ SUIDBINS := bin/steamos-set-bootmode
 COMPLETIONS := $(wildcard completions/*)
 SERVICES_IN := $(wildcard systemd/*.service.in)
 SERVICES := $(patsubst %.in,%,$(SERVICES_IN))
+CLEANABLE := $(BINARIES) $(SERVICES) $(SUIDBINS)
 
 all: $(BINARIES) $(LIBRARIES_EXEC) $(SERVICES) $(SUIDBINS)
 
