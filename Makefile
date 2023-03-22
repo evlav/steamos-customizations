@@ -14,7 +14,6 @@ SUBDIRS :=		\
 	atomic-update	\
 	chainloader	\
 	dracut		\
-	gpd-quirks	\
 	grub		\
 	misc		\
 	NetworkManager	\

@@ -29,7 +29,6 @@ Content
  * atomic-update: Configuration and tools to perform Atomic Updates using rauc
  * chainloader: Boot configuration
  * dracut: dracut script and configurations to mount the rootfs
- * gpd-quirks: device-specific rotation-quirk Xorg configuration
  * grub: GRUB2 bootloader tools and services
  * misc: Set of features
  * offload: Set of mount targets for read-write partitions
