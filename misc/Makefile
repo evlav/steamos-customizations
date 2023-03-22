@@ -21,6 +21,7 @@ SERVICES_IN := $(wildcard systemd/*.service.in)
 SERVICES := $(patsubst %.in,%,$(SERVICES_IN))
 SYSUSERS := $(wildcard sysusers/*)
 UNITS := $(SERVICES) $(MOUNTS)
+CLEANABLE := $(BINARIES) $(LIBRARIES_EXEC) $(UNITS)
 
 all: $(BINARIES) $(LIBRARIES_EXEC) $(UNITS)
 
