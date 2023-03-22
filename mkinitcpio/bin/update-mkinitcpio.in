@@ -22,7 +22,5 @@ while read -r line; do
         continue
     fi
 
-    # the 'deck' preset uses ${pkgbase} to construct its output filename
-    export pkgbase
-    mkinitcpio -p linux-neptune "$@"
+    mkinitcpio -p $pkgbase "$@"
 done < <(compgen -G /usr/lib/modules/"*"/vmlinuz)
