@@ -6,6 +6,7 @@ SERVICES_IN := $(wildcard systemd/*.service.in)
 SERVICES := $(patsubst %.in,%,$(SERVICES_IN))
 SWAPS := $(wildcard systemd/*.swap)
 UNITS := $(SERVICES) $(SWAPS)
+CLEANABLE := $(SERVICES)
 
 all: $(SERVICES)
 
