@@ -14,4 +14,5 @@ modules.d/steamos-root.sh
 modules.d/steamos-udev-rules.sh.in
 modules.d/steamos-udev-rules.sh
 modules.d/steamos-var-lib-modules.sh
+modules.d/steamos-var.sh.in
 modules.d/steamos-var.sh
