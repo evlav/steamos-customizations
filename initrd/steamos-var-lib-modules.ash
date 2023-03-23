@@ -1,19 +1,3 @@
-#!/bin/sh
-# -*- mode: sh; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
-# vim: et sts=4 sw=4
-
-#  SPDX-License-Identifier: LGPL-2.1+
-#
-#  Copyright © 2019-2021 Collabora Ltd.
-#  Copyright © 2019-2021 Valve Corporation.
-#
-#  This file is part of steamos-customizations.
-#
-#  steamos-customizations is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU Lesser General Public License as published
-#  by the Free Software Foundation; either version 2.1 of the License, or
-#  (at your option) any later version.
-
 # Initialize /var in case of first boot
 #
 # /var is empty on first boot or after a factory reset. A 'usual' way of
@@ -32,39 +16,31 @@
 #
 # So, let's do the job manually here.
 
-. /lib/dracut-lib.sh
-
 initialize_var_lib_modules() {
 
     # Create /var/lib/modules from factory
 
-    local moddir=var/lib/modules
-    local orig=$NEWROOT@datadir@/factory/$moddir
-    local dest=$NEWROOT/$moddir
+    local moddir="var/lib/modules"
+    local orig="$NEWROOT@datadir@/factory/$moddir"
+    local dest="$NEWROOT/$moddir"
 
-    info "Checking modules source and destination ($orig; $dest)"
+    @INFO@ "Checking modules source and destination ($orig; $dest)"
     [ -e "$dest" ] && return 0
     [ -d "$orig" ] || return 0
 
-    info "Creating module directory '$dest'"
+    @INFO@ "Creating module directory '$dest'"
     mkdir -p "$(dirname "$dest")"
 
     # purge any half copied content or leftovers
     rm -rf "$dest".new
 
-    info "Copying $orig to $dest.new"
-    if cp -a "$orig" "$dest".new; then
-        info "Copy successful, installing to $dest"
-        mv "$dest".new "$dest"
+    @INFO@ "Copying $orig to $dest.new"
+    if cp -a "$orig" "$dest.new"; then
+        @INFO@ "Copy successful, installing to $dest"
+        mv "$dest.new" "$dest"
         return 0
     fi
 
-    warn "Could not install kernel modules to $dest, system may need rescue"
+    @WARN@ "Could not install kernel modules to $dest, system may need rescue"
     return 1
 }
-
-if initialize_var_lib_modules; then
-    return 0
-fi
-
-emergency_shell
