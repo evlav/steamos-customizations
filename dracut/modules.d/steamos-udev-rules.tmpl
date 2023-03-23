@@ -17,3 +17,10 @@
 . /lib/dracut-lib.sh
 
 @STEAMOS_UDEV_RULES@
+
+EFI=$(getarg 'rd.steamos.efi=')
+if [ -z "$EFI" ]; then
+    EFI=$(getarg 'steamos.efi=')
+fi
+
+steamos_setup_partsets "$EFI"
