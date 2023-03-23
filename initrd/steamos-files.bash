@@ -24,6 +24,7 @@ declare -a STEAMOS_BINARIES=(
     sort
     steamos-factory-reset-config
     tail
+    tr
     tune2fs
     udevadm
 )
