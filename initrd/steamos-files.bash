@@ -7,7 +7,6 @@ declare -a STEAMOS_BINARIES=(
     dirname
     echo
     findmnt
-    @libexecdir@/steamos/steamos-partsets-generator
     ls
     lsblk
     mkdir

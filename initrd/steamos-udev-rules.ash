@@ -28,6 +28,20 @@ expand_dev() {
     echo "$dev"
 }
 
+udev_rules() {
+    local partset="${1##*/}"
+
+    # ignore the "other" partitions, so they don't know up in dolphin
+    local udisks
+    [ "$partset" = "other" ] && udisks=1 || udisks=0
+
+    while read -r name partuuid; do
+        cat <<EOF
+ENV{ID_PART_ENTRY_SCHEME}=="gpt", ENV{ID_PART_ENTRY_UUID}=="$partuuid", SYMLINK+="@udev_symlinks_reldir@/$partset/$name", ENV{UDISKS_IGNORE}="$udisks"
+EOF
+    done < "$1"
+}
+
 steamos_generate_partsets () {
     local dev=$1
 
@@ -42,10 +56,13 @@ steamos_generate_partsets () {
         return 1
     fi
 
+    mkdir -p /run/udev/rules.d
     for partset in /mnt/@partsets_reldir@/*; do
         [ -e "$partset" ] || continue
         @INFO@ "Generating udev rules from $partset"
-        @libexecdir@/steamos/steamos-partsets-generator "$partset"
+
+        # must be after 60-persistent-storage.rules
+        udev_rules "$partset" > "/run/udev/rules.d/90-steamos-partsets-${partset##*/}.rules"
     done
     umount /mnt
 

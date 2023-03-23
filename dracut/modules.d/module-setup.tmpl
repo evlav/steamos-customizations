@@ -31,7 +31,6 @@ check() {
     # steamos helpers for partsets
     require_binaries \
         lsblk sort \
-        @libexecdir@/steamos/steamos-partsets-generator \
         || return 1
 
     # systemd helpers for dm-verity
