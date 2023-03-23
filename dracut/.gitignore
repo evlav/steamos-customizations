@@ -11,6 +11,7 @@ modules.d/steamos-etc-overlay.sh
 modules.d/steamos-factory-reset.sh.in
 modules.d/steamos-factory-reset.sh
 modules.d/steamos-root.sh
+modules.d/steamos-udev-rules.sh.in
 modules.d/steamos-udev-rules.sh
 modules.d/steamos-var-lib-modules.sh
 modules.d/steamos-var.sh
