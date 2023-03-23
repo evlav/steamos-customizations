@@ -20,22 +20,6 @@
 # and basic commands such a basename, dirname, realpath, ...
 #
 
-get_device_number() {
-
-    # Get the device number, for example:
-    # /dev/sda3 -> 3
-    # /dev/nvme0n1p3 -> 3
-
-    local device=$(realpath "$1")
-    [ -b "$device" ] || return
-
-    local devname=$(basename "$device")
-    local partition="/sys/class/block/$devname/partition"
-    if [ -e "$partition" ]; then
-        cat "$partition"
-    fi
-}
-
 get_parent_device() {
 
     # Get the parent of a block device, for example:
@@ -109,22 +93,6 @@ get_device_by_typeuuid() {
     done < <(sfdisk -ql -o device,type-uuid "$disk" | tail +2)
 }
 
-get_device_by_partnumber() {
-
-    # Get the block device for a given disk and partition number, for example:
-    # /dev/sda, 3 -> /dev/sda3
-
-    # TODO rework?
-
-    local disk=$(realpath "$1")
-    local partnumber=$2
-
-    [ -b "$disk" ] || return
-    [ "$partnumber" ] || return
-
-    sfdisk -ql -o device "$disk" | tail +2 | sed -n "${partnumber}p"
-}
-
 get_partlabel() {
 
     # Get the partlabel for a given block device, for example:
@@ -139,33 +107,6 @@ get_partlabel() {
     while read dev name; do
         if [ "$dev" == "$device" ]; then echo "$name"; return; fi
     done < <(sfdisk -ql -o device,name "$disk" | tail +2)
-}
-
-get_partuuid() {
-
-    # Get the partuuid for a given block device, for example:
-    # /dev/sda2 -> 9f1db873-be42-485b-9993-78466a3637c7
-
-    local device=$(realpath "$1")
-    [ -b "$device" ] || return
-
-    local disk=$(get_parent_device "$device")
-    [ -b "$disk" ] || return
-
-    while read dev uuid; do
-        if [ "$dev" == "$device" ]; then echo "${uuid,,}"; return; fi
-    done < <(sfdisk -ql -o device,uuid "$disk" | tail +2)
-}
-
-get_partition_count() {
-
-    # Get the number of partitions on a disk, for example:
-    # /dev/sda -> 10
-
-    local disk=$(realpath "$1")
-    [ -b "$disk" ] || return
-
-    sfdisk -ql "$disk" | tail +2 | wc -l
 }
 
 #
@@ -196,38 +137,6 @@ lsblk_fstype() {
 
     fstype=$(blkid -o value -s TYPE "$device")
     if [ "$fstype" ]; then echo "$fstype"; return; fi
-}
-
-#
-# findmnt(8), mountpoint(1) helpers  --  util-linux package
-#
-# These functions require findmnt, hence (see man page):
-# /etc/fstab, /etc/mtab or /proc/self/mountinfo
-#
-#     ~ Caveats ~
-#
-# Automatic mountpoints (ie. autofs) must be handled with care. They're not
-# triggered by findmnt, so it's up to the caller to mount it beforehand, if
-# needed. If we don't decide to mount it, we face inconsistent result, ie:
-#
-#    $ findmnt --real -no partuuid /efi      # -> no result
-#    $ ls >/dev/null /efi                    # trigger mount
-#    $ findmnt --real -no partuuid /efi      # try again
-#    652313ba-e3f6-4435-9626-e9995cebb4fe
-
-find_mountpoint_for_device() {
-
-    # Get the mountpoint associated with a block device, assuming that the
-    # block device is mounted (ie. it won't work for autofs). For example:
-    # /dev/sda8 -> /var
-
-    local device=$(realpath "$1")
-    [ -b "$device" ] || return
-
-    while read source target; do
-        # return first match
-        echo "$target"; return
-    done < <(findmnt --real -nvo source,target "$device")
 }
 
 find_device_for_mountpoint() {
@@ -308,25 +217,4 @@ get_partition_linkname() {
     local partlabel=$1
 
     echo "${partlabel%-*}"
-}
-
-#
-# misc helpers
-#
-
-roothash_is_valid() {
-
-    # Test whether a roothash is valid (should be a 64 chars hexa string)
-
-    local roothash=$1
-    local pattern='^[a-fA-F0-9]{64}$'
-
-    [[ "$roothash" =~ $pattern ]]
-}
-
-verity_is_enabled() {
-
-    # Test whether dm-verity is enabled for the rootfs
-
-    grep -q 'roothash=' /proc/cmdline
 }
