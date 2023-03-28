@@ -27,17 +27,9 @@ reset_device_ext4() {
         return 0
     fi
 
-    # NOTE: should be impossible to get a device w/o a label, yet regardless
-    # no cached label, read from fs:
-    if [ -z "$label" ]; then
-        label=$(e2label "$device")
-    fi
-
-    if [ "$label" ]; then
-        opts+=(-L "$label")
-        if [ "$label" = "home" ]; then
-            opts+=(-m 0)
-        fi
+    opts+=(-L "$label")
+    if [ "$label" = "home" ]; then
+        opts+=(-m 0)
     fi
 
     # use cached opts from FACTORY_RESET_CONFIG_DIR, alternatively read them
