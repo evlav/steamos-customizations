@@ -58,8 +58,6 @@ installkernel() {
 
 # called by dracut
 install() {
-    local dev
-
     inst_dir /mnt
 
     inst_multiple \
