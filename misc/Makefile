@@ -2,7 +2,6 @@ include ../common.mk
 
 BINARIES_IN := $(wildcard bin/*.in)
 BINARIES := $(patsubst %.in,%,$(BINARIES_IN))
-LIBRARIES := $(wildcard lib/*)
 LIBRARIES_EXEC_IN := $(wildcard libexec/*.in)
 LIBRARIES_EXEC := $(patsubst %.in,%,$(LIBRARIES_EXEC_IN))
 COMPLETIONS := $(wildcard completions/*)
@@ -29,8 +28,6 @@ install: all
 	install -d $(DESTDIR)$(sbindir)
 	install -m 0755 $(BINARIES) $(DESTDIR)$(sbindir)
 	ln -sfv steamos-mount $(DESTDIR)$(sbindir)/mount.steamos
-	install -d $(DESTDIR)$(libdir)/steamos
-	install -m 0755 $(LIBRARIES) $(DESTDIR)$(libdir)/steamos
 	install -d $(DESTDIR)$(libexecdir)/steamos
 	install -m 0755 $(LIBRARIES_EXEC) $(DESTDIR)$(libexecdir)/steamos
 	install -d $(DESTDIR)$(completionsdir)
