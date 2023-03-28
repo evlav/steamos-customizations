@@ -13,37 +13,21 @@
 reset_device_ext4() {
     local device=$1
     local label=$2
-    local fs_opts=(${@:3})
-    local opts=(-qF)
-    local features=
-    local tmp=
+    local casefold=$3
+    local noreserved=$4
 
     # not considering it an error if a device we were meant to wipe does not exist
     if ! [ -b "$device" ]; then
         return 0
     fi
 
-    opts+=(-L "$label")
-    if [ "$label" = "home" ]; then
-        opts+=(-m 0)
-    fi
+    [ "$casefold" -eq 1 ] && fmt_case="-O casefold"
+    [ "$noreserved" -eq 1 ] && fmt_nores="-m 0"
 
-    # use cached opts from @factory_reset_config_dir@, alternatively read them
-    # from the filesystem
-    if [ ${#fs_opts[@]} -eq 0 ]; then
-        read -r -a fs_opts < <(tune2fs -l "$device" | sed -n 's/^Filesystem features:\s*//p')
-    fi
-
-    # copy the important fs opts explicitly (currently just casefold):
-    for tmp in "${features[@]}"; do
-        if [ "$tmp" = "casefold" ]; then
-            opts+=(-O casefold)
-            break
-        fi
-    done
-
-    @INFO@ "Making ext4 filesystem on device $device (options: ${opts[*]})"
-    mkfs.ext4 "${opts[@]}" "$device"
+    @INFO@ "Making ext4 filesystem on device $device"
+    @INFO@ "Options: with casefold: $casefold, w/o res blocks: $noreserved"
+    # shellcheck disable=SC2086 # do not quote these optional arguments
+    mkfs.ext4 -qF -L "$label" $fmt_case $fmt_nores "$device"
 }
 
 do_reset() {
@@ -72,10 +56,12 @@ do_reset() {
     # we're not touching it everything is parallelisable:
     declare -a WAIT_PIDS=()
     declare -A RESET_DEV
+
     for cfg in "@factory_reset_config_dir@"/*.cfg; do
         [ -r "$cfg" ] || continue
 
-        while read type instance dev opts; do
+        # shellcheck disable=SC2094 # yes, the read/rm is perfectly safe
+        while read -r type instance dev casefold noreserved; do
             @INFO@ "Processing manifest file $cfg (async)"
             name="${instance##*/}"
             case $type in
@@ -87,7 +73,7 @@ do_reset() {
                     # these are slow so we want them done in parallel and async
                     # BUT we need to wait until they're all done before proceeding
                     @INFO@ "Formatting data partition $dev ($instance)"
-                    (reset_device_ext4 $dev "$name" "$opts" && rm -f "$cfg") &
+                    (reset_device_ext4 "$dev" "$name" "$casefold" "$noreserved" && rm -f "$cfg") &
                     RESET_PID=$!
                     WAIT_PIDS+=($RESET_PID)
                     RESET_DEV[$RESET_PID]="$dev $name"
