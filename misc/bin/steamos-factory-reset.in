@@ -21,10 +21,6 @@ FORCE=0 # --force
 
 FACTORY_RESET_CONFIG_DIR=@factory_reset_config_dir@
 
-[ -e @libdir@/steamos/steamos-partitions-lib ] && \
-    . @libdir@/steamos/steamos-partitions-lib  || \
-    { echo "Failed to source '@libdir@/steamos/steamos-partitions-lib'"; exit 1; }
-
 usage() {
     local status=${1-2}
 
