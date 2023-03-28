@@ -1,19 +1,3 @@
-#!/bin/sh
-# -*- mode: sh; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
-# vim: et sts=4 sw=4
-
-#  SPDX-License-Identifier: LGPL-2.1+
-#
-#  Copyright © 2019-2021 Collabora Ltd.
-#  Copyright © 2019-2021 Valve Corporation.
-#
-#  This file is part of steamos-customizations.
-#
-#  steamos-customizations is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU Lesser General Public License as published
-#  by the Free Software Foundation; either version 2.1 of the License, or
-#  (at your option) any later version.
-
 # Mount the etc overlay for steamos atomic
 #
 # Mount the /etc overlay now (that is, in the initrd), which is needed for
@@ -34,27 +18,24 @@
 #
 # For these reasons, we do the job manually here.
 
-ETC_OVERLAY_ABSDIR=@etc_overlay_absdir@
-
-. /lib/dracut-lib.sh
 
 sysroot="$NEWROOT"
-overlaydir="$ETC_OVERLAY_ABSDIR"
+overlaydir="/var/lib/overlays/etc"
 upperdir="${sysroot}${overlaydir}/upper"
 lowerdir="${sysroot}/etc"
 workdir="${sysroot}${overlaydir}/work"
 
 prepare_etc_overlay() {
     # upper dir contains persistent data, create it only if it doesn't exist
-    info "Preparing /etc overlay { $overlaydir $upperdir $workdir }"
+    @INFO@ "Preparing /etc overlay { $overlaydir $upperdir $workdir }"
     if [ ! -d "$upperdir" ]; then
-        info "Creating overlay upper directory '$upperdir'"
+        @INFO@ "Creating overlay upper directory '$upperdir'"
         rm -fr "$upperdir"
         mkdir -p "$upperdir"
     fi
 
     # work dir must exist and be empty
-    info "Clearing overlay work directory $workdir"
+    @INFO@ "Clearing overlay work directory $workdir"
     rm -fr "$workdir"
     mkdir -p "$workdir"
 }
@@ -62,12 +43,12 @@ prepare_etc_overlay() {
 mount_etc_overlay() {
 
     # Mount the /etc overlay
-    info "Mounting overlay $upperdir on $lowerdir ($workdir)"
+    @INFO@ "Mounting overlay $upperdir on $lowerdir ($workdir)"
     mount -v \
         -t overlay \
-        -o lowerdir=$lowerdir,upperdir=$upperdir,workdir=$workdir \
+        -o "lowerdir=$lowerdir,upperdir=$upperdir,workdir=$workdir" \
         overlay \
-        $lowerdir 2>&1 | vinfo
+        "$lowerdir" 2>&1 | vinfo
 
     if ismounted "$lowerdir"; then
         return 0
@@ -75,14 +56,3 @@ mount_etc_overlay() {
 
     return 1
 }
-
-if prepare_etc_overlay; then
-    if mount_etc_overlay; then
-        return 0
-    fi
-fi
-
-warn "Mounting $upperdir failed: Compile the kernel with CONFIG_OVERLAY_FS!"
-warn "*** Dropping you to a shell; the system will continue"
-warn "*** when you leave the shell."
-emergency_shell
