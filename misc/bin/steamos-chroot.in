@@ -27,11 +27,41 @@ DEV_SHARED_LOCK_FD=
 
 SYMLINKS_DIR=@udev_symlinks_absdir@
 
-[ -e @libdir@/steamos/steamos-partitions-lib ] && \
-    . @libdir@/steamos/steamos-partitions-lib  || \
-    { echo "Failed to source '@libdir@/steamos/steamos-partitions-lib'"; exit 1; }
-
 # Helpers
+
+get_device_by_partlabel() {
+
+    # Get the block device for a given disk and partition label, for example:
+    # /dev/sda, efi-A -> /dev/sda2
+
+    local disk=$(realpath "$1")
+    local partlabel=$2
+
+    [ -b "$disk" ] || return
+    [ "$partlabel" ] || return
+
+    while read device name; do
+        # FIXME return first match
+        if [ "$name" == "$partlabel" ]; then echo "$device"; return; fi
+    done < <(sfdisk -ql -o device,name "$disk" | tail +2)
+}
+
+get_device_by_typeuuid() {
+
+    # Get the block device for a given disk and partition type uuid, for example:
+    # /dev/sda, c12a7328-f81f-11d2-ba4b-00a0c93ec93b -> /dev/sda1
+
+    local disk=$(realpath "$1")
+    local typeuuid=${2,,}
+
+    [ -b "$disk" ] || return
+    [ "$typeuuid" ] || return
+
+    while read device uuid; do
+        # FIXME return first match
+        if [ "${uuid,,}" == "$typeuuid" ]; then echo "$device"; return; fi
+    done < <(sfdisk -ql -o device,type-uuid "$disk" | tail +2)
+}
 
 log () { echo >&2 "$@"; }
 fail() { echo >&2 "$@"; exit 1; }
