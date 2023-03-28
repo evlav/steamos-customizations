@@ -31,6 +31,8 @@ reset_device_ext4() {
 }
 
 do_reset() {
+    local wait_pids
+
     @INFO@ "A factory reset has been requested."
 
     # Make sure we bail out if the reset fails at any stage
@@ -54,8 +56,6 @@ do_reset() {
     # NOTE: the rootfs would need to be reset _before_ the EFI fs if we were
     # handling it, as its fs uuid must be known for the EFI reset - but since
     # we're not touching it everything is parallelisable:
-    declare -a WAIT_PIDS=()
-    declare -A RESET_DEV
 
     for cfg in "@factory_reset_config_dir@"/*.cfg; do
         [ -r "$cfg" ] || continue
@@ -73,10 +73,15 @@ do_reset() {
                     # these are slow so we want them done in parallel and async
                     # BUT we need to wait until they're all done before proceeding
                     @INFO@ "Formatting data partition $dev ($instance)"
-                    (reset_device_ext4 "$dev" "$name" "$casefold" "$noreserved" && rm -f "$cfg") &
-                    RESET_PID=$!
-                    WAIT_PIDS+=($RESET_PID)
-                    RESET_DEV[$RESET_PID]="$dev $name"
+                    (
+                        if reset_device_ext4 "$dev" "$name" "$casefold" "$noreserved"; then
+                            rm -f "$cfg"
+                            @INFO@ "Reset of $dev ($instance) complete"
+                        else
+                            @WARN@ "Reset of $dev ($instance) failed, factory reset incomplete"
+                        fi
+                    ) &
+                    wait_pids="$wait_pids $!"
                     ;;
                 *)
                     @WARN@ "Unexpected SteamOS reset type $type ($instance, $dev)"
@@ -86,18 +91,12 @@ do_reset() {
         done < "$cfg"
     done
 
-    while true; do
-        wait -f -p WAITED_FOR -n
-        rc=$?
-        if [ $rc -eq 127 ]; then
-            # nothing left to wait for.
-            break;
-        elif [ $rc -ne 0 ]; then
-            @WARN@ "Reset of ${RESET_DEV[$WAITED_FOR]} failed, factory reset incomplete"
-        else
-            @INFO@ "Reset of ${RESET_DEV[$WAITED_FOR]} complete"
-        fi
-    done
+    if [ -n "$wait_pids" ]; then
+        @INFO@ "Waiting for $wait_pids"
+        # shellcheck disable=SC2086 # a space separated list
+        wait $wait_pids
+        @INFO@ "Formatting complete"
+    fi
 }
 
 factory_reset() {
