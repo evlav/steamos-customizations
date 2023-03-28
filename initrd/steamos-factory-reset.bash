@@ -20,37 +20,11 @@ reset_device_ext4() {
     local opts=(-qF)
     local features=
     local tmp=
-    local mt_point=
-    local mt_opts=
 
     device=$(readlink -f "$device")
     # not considering it an error if a device we were meant to wipe does not exist
     if ! [ -b "$device" ]; then
         return 0
-    fi
-
-    # can't have the device mounted while we reformat it
-    # but we do want to save the mount opts if it is mounted
-    local proc_dev proc_mnt proc_fs proc_opts proc_etc
-
-    while read proc_dev proc_mnt proc_fs proc_opts proc_etc; do
-        if [ "$device" != "$proc_dev" ]; then
-            continue
-        fi
-        mt_point="$proc_mnt"
-        mt_opts="$proc_opts"
-        @WARN@ "Unmounting $device from $mt_point ($mt_opts)"
-        umount -v "$device"
-    done < /proc/mounts
-
-    # try harder if it's still mounted
-    if ismounted "$device"; then
-        umount -v -f "$device"
-    fi
-
-    if ismounted "$device"; then
-        @WARN@ "Could not unmount $device from $mt_point"
-        return 1
     fi
 
     # NOTE: should be impossible to get a device w/o a label, yet regardless
@@ -82,10 +56,6 @@ reset_device_ext4() {
 
     @INFO@ "Making ext4 filesystem on device $device (options: ${opts[*]})"
     mkfs.ext4 "${opts[@]}" "$device"
-    if [ -n "$mt_point" ]; then
-        @WARN@ "Remounting fresh fs on $device at $mt_point ($mt_opts)"
-        mount ${mt_opts:+-o} $mt_opts "$device" "$mt_point"
-    fi
 }
 
 do_reset() {
