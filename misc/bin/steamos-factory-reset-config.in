@@ -16,21 +16,21 @@
 
 set -euo pipefail
 
-SYMLINKS_DIR=@udev_symlinks_absdir@
-HOME_DEVICE=$SYMLINKS_DIR/all/home
-ESP_DEVICE=$SYMLINKS_DIR/all/esp
-
 wdir=$(mktemp -t -d rest-conf-XXXXXXXXXX)
-dev=
-opts=
 
-for dev in $SYMLINKS_DIR/all/var-*; do
-    opts=$(tune2fs -l "$dev" | sed -n 's/^Filesystem features:\s*//p')
-    echo VAR $dev $(readlink -f $dev) "$opts" > ${wdir}/${dev##*/}.cfg
+has_feature() { tune2fs -l "$1" | grep -q "$2" && echo 1 || echo 0; }
+get_casefold() { has_feature "$1" "Filesystem features:.*\<casefold\>"; }
+get_noreserved() { has_feature "$1" "Reserved block count:\s*\<0\>"; }
+
+print_cfg() {
+    echo "$1" "$2" "$(readlink -f "$2")" "$(get_casefold "$2")" "$(get_noreserved "$2")"
+}
+
+for dev in "@udev_symlinks_absdir@"/all/var-*; do
+    print_cfg "VAR" "$dev" > "$wdir/${dev##*/}.cfg"
 done
 
-opts=$(tune2fs -l "$HOME_DEVICE" | sed -n 's/^Filesystem features:\s*//p')
-echo HOME $HOME_DEVICE $(readlink -f $HOME_DEVICE) "$opts" > ${wdir}/home.cfg
+print_cfg "HOME" "@udev_symlinks_absdir@/all/home" > "$wdir/home.cfg"
 
 mkdir -p "@factory_reset_config_dir@"
 mv "$wdir"/* "@factory_reset_config_dir@"
