@@ -25,7 +25,7 @@ check() {
 
     # for factory reset at shutdown
     require_binaries \
-        e2label mkfs.ext4 tune2fs \
+        mkfs.ext4 tune2fs \
         || return 1
 
     # steamos helpers for partsets

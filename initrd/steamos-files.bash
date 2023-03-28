@@ -5,7 +5,6 @@ declare -a STEAMOS_BINARIES=(
     btrfs
     cat
     dirname
-    e2label
     echo
     findmnt
     @libexecdir@/steamos/steamos-partsets-generator
