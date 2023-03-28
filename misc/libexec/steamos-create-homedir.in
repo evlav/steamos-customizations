@@ -18,8 +18,7 @@
 # separation that we currently have - for example:
 # - kupdate-notifier is provided by one package, its config in another.
 
-set -e
-set -u
+set -euo pipefail
 
 if [[ "$#" -eq 0 ]]
 then
