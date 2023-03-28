@@ -33,7 +33,7 @@ reset_device_ext4() {
     # but we do want to save the mount opts if it is mounted
     local proc_dev proc_mnt proc_fs proc_opts proc_etc
 
-    while read proc_dev proc_mnt proc_fs proc_opts proc_etc; do
+    while read -r proc_dev proc_mnt proc_fs proc_opts proc_etc; do
         if [ "$device" != "$proc_dev" ]; then
             continue
         fi
