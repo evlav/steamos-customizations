@@ -15,7 +15,6 @@ declare -a STEAMOS_BINARIES=(
     mountpoint
     plymouth
     printf
-    readlink
     realpath
     rmdir
     sed
