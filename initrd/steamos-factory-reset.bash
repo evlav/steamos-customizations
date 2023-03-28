@@ -121,7 +121,7 @@ factory_reset() {
     local cleanup_esp=0
 
     ########################################################################
-    # mount /esp if it isn't mounted
+    # mount /esp if it isn't mounted, the reset config is located in there
     if [ ! -d /esp/efi ]; then
         local dev="@udev_symlinks_absdir@/all/esp"
         @INFO@ "Checking ESP partition $dev"
