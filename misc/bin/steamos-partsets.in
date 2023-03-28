@@ -20,11 +20,162 @@ set -u
 OUTDIR=  # $1
 DEVICES= # --devices=
 
-[ -e @libdir@/steamos/steamos-partitions-lib ] && \
-    . @libdir@/steamos/steamos-partitions-lib  || \
-    { echo "Failed to source '@libdir@/steamos/steamos-partitions-lib'"; exit 1; }
-
 # Helpers
+
+get_parent_device() {
+
+    # Get the parent of a block device, for example:
+    # /dev/sda3 -> /dev/sda
+
+    local device=$(realpath "$1")
+    [ -b "$device" ] || return
+
+    local devname=$(basename "$device")
+    local diskname=$(basename "$(realpath "/sys/class/block/$devname/..")")
+    local disk="/dev/$diskname"
+    [ -b "$disk" ] || return
+
+    echo "$disk"
+}
+
+get_slave_devices() {
+
+    # Get the slaves owned by a block device, for example:
+    # /dev/dm-0 -> /dev/sda4 /dev/sda6  (separated with newlines)
+
+    local device=$(realpath "$1")
+    [ -b "$device" ] || return
+
+    local devname=$(basename "$device")
+    [ -d "/sys/class/block/$devname/slaves/" ] || return
+
+    local slavenames=$(ls -1 "/sys/class/block/$devname/slaves/")
+    local slaves=$(printf "/dev/%s\n" $slavenames)
+
+    echo "$slaves"
+}
+
+get_partlabel() {
+
+    # Get the partlabel for a given block device, for example:
+    # /dev/sda2 -> efi-A
+
+    local device=$(realpath "$1")
+    [ -b "$device" ] || return
+
+    local disk=$(get_parent_device "$device")
+    [ -b "$disk" ] || return
+
+    while read dev name; do
+        if [ "$dev" == "$device" ]; then echo "$name"; return; fi
+    done < <(sfdisk -ql -o device,name "$disk" | tail +2)
+}
+
+#
+# lsblk(8), blkid(8) helpers  --  util-linux package
+#
+#    ~ Caveats ~
+#
+# lsblk(8) is recommended over blkid, however it requires udev to be around,
+# otherwise it fails to get some information. When is udev not around, you
+# might ask? In containers. blkid(8), OTOH, seems to behave just fine without
+# udev.
+#
+# Hence these functions call lsblk first, and fall back to blkid on failure.
+#
+
+lsblk_fstype() {
+
+    # Get the filesystem type for a given block device, for example:
+    # /dev/sda6 -> ext4
+
+    local device=$(realpath "$1")
+    [ -b "$device" ] || return
+
+    local fstype=
+
+    fstype=$(lsblk --nodeps -no fstype "$device")
+    if [ "$fstype" ]; then echo "$fstype"; return; fi
+
+    fstype=$(blkid -o value -s TYPE "$device")
+    if [ "$fstype" ]; then echo "$fstype"; return; fi
+}
+
+find_device_for_mountpoint() {
+
+    # Get the block device backing a mountpoint, for example:
+    # /var -> /dev/sda8
+    # /    -> /dev/dm-0
+
+    local mountpoint=$(realpath "$1")
+    mountpoint -q "$mountpoint" || return
+
+    # make sure autofs mountpoints is mounted
+    local fstype=$(findmnt -no fstype "$mountpoint")
+    if [ "$fstype" == "autofs" ]; then
+        ls >/dev/null "$mountpoint"
+    fi
+
+    local source=$(findmnt --real -nvo source "$mountpoint")
+    [ "$source" ] || return
+
+    realpath "$source"
+}
+
+find_device_for_mountpoint_deep() {
+
+    # Similar to find_device_for_mountpoint(), except that in case the device
+    # found is a device mapper, we go further and resolve it to the "real"
+    # block device.
+    #
+    # This was intended for dm-verity, and tested with dm-verity. Other kind
+    # of device mappers were not tested, and might not work.
+    #
+    # For example:
+    # / -> /dev/sda6
+
+    local mountpoint=$(realpath "$1")
+    mountpoint -q "$mountpoint" || return
+
+    local device=$(find_device_for_mountpoint "$mountpoint")
+    if [[ "$device" != /dev/dm-* ]]; then echo "$device"; return; fi
+
+    while read slave; do
+        # discard slaves whose fstype is DM_*
+        if [[ "$(lsblk_fstype "$slave")" == DM_* ]]; then continue; fi
+        # return first match
+        echo "$slave"; return
+    done < <(get_slave_devices "$device")
+}
+
+get_partition_set() {
+
+    # Get the partition set for a given partlabel, for example:
+    # efi-A -> A
+    # var   ->
+
+    local partlabel=$1
+    local suffix=
+
+    suffix=${partlabel##*-}
+    if [ "$suffix" = "$partlabel" ]; then
+        # delimiter was not found, hence partition set is empty
+        return
+    fi
+
+    echo "$suffix"
+}
+
+get_partition_linkname() {
+
+    # Get the partition symlink name for a given partlabel, for example:
+    # efi-A -> efi
+    # var   -> var
+
+    local partlabel=$1
+
+    echo "${partlabel%-*}"
+}
 
 log () { echo >&2 "$@"; }
 fail() { echo >&2 "$@"; exit 1; }
