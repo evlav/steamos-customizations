@@ -11,7 +11,6 @@
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> X <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 declare -r FACTORY_RESET_CONFIG_DIR=@factory_reset_config_dir@
-declare -r UDEV_SYMLINKS_DIR=@udev_symlinks_absdir@
 
 reset_device_ext4() {
     local device=$1
@@ -23,7 +22,6 @@ reset_device_ext4() {
     local mt_point=
     local mt_opts=
 
-    device=$(readlink -f "$device")
     # not considering it an error if a device we were meant to wipe does not exist
     if ! [ -b "$device" ]; then
         return 0
@@ -157,7 +155,7 @@ factory_reset() {
     ########################################################################
     # mount /esp if it isn't mounted
     if [ ! -d /esp/efi ]; then
-        dev=$(readlink -f $UDEV_SYMLINKS_DIR/all/esp)
+        local dev="@udev_symlinks_absdir@/all/esp"
         @INFO@ "Checking ESP partition $dev"
         if ! ismounted "$dev"; then
             @INFO@ "Mounting $dev at /esp"
