@@ -29,6 +29,7 @@ Content
  * atomic-update: Configuration and tools to perform Atomic Updates using rauc
  * chainloader: Boot configuration
  * dracut: dracut script and configurations to mount the rootfs
+ * mkinitcpio: initrd configuration which handles fs mounting, overlays, etc
  * grub: GRUB2 bootloader tools and services
  * misc: Set of features
  * offload: Set of mount targets for read-write partitions
