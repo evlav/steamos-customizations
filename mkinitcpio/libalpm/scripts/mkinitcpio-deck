@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-2.0-only
+
+set -e
+
+while read -r line; do
+    read -r pkgbase < "${line%/vmlinuz}/pkgbase"
+    preset="/etc/mkinitcpio.d/${pkgbase}.preset"
+
+    # XXX: Should probably do something smarter
+    if [[ -e "$preset" ]]; then
+        mv -- "$preset" "${preset}.stmsave"
+    fi
+
+    # XXX: use conf snippets, drop this hack
+    conf="/etc/mkinitcpio.conf"
+    if [[ -e "$conf" ]]; then
+        sed -i '/^HOOKS=/d' "$conf"
+        echo "HOOKS=(base udev steamos steam-deck modconf keyboard block filesystems)" >> "$conf"
+    fi
+
+    # create the preset from our template
+    sed "s|%PKGBASE%|${pkgbase}|g" /usr/share/mkinitcpio/deck.preset \
+        | install -Dm644 /dev/stdin "$preset"
+
+    # Avoid having a second (identical) initrd
+    sed -i '/^PRESETS=/d' "$preset"
+    echo "PRESETS=('default')" >> "$preset"
+done
