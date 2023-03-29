@@ -1,0 +1,12 @@
+[Trigger]
+Type = Path
+Operation = Install
+Operation = Upgrade
+Target = usr/lib/modules/*/vmlinuz
+Target = usr/lib/steamos/modules/*/vmlinuz
+
+[Action]
+Description = Updating Deck mkinitcpio...
+When = PostTransaction
+Exec = /usr/share/libalpm/scripts/mkinitcpio-deck
+NeedsTargets
