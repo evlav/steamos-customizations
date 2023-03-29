@@ -1,0 +1,66 @@
+#!/bin/bash
+
+build() {
+    # Number of Deck specific modules, some of which may be autodetected
+    # already. For the sake of stability we include them all.
+    declare -a DECK_MODULES=(
+        blake2b_generic
+        btrfs
+        exfat
+        ext3
+        ext4
+        fat
+        hid-multitouch
+        i8042
+        mmc_block
+        overlay
+        sdhci-pci
+        serio-raw
+        usbhid
+        usb-storage
+        vfat
+        xhci-pci
+        xxhash_generic
+    )
+
+    # Handful of qemu modules, cribbed from dracut's qemu module. We would be
+    # using these for CI testing purposes et al.
+    declare -a QEMU_MODULES=(
+        ahci
+        ata_generic
+        ata_piix
+        cdrom
+        pata_acpi
+        qemu_fw_cfg
+        spapr-vscsi
+        sr_mod
+        virtio
+        virtio_blk
+        virtio_console
+        virtio_mem
+        virtio_pci
+        virtio_ring
+        virtio_rng
+        virtio_scsi
+    )
+
+    map add_module "${DECK_MODULES[@]}"
+    map add_module "${QEMU_MODULES[@]}"
+
+    # Also to the cache, otherwise add_checked_module_modules will add
+    # everything, including stuff we don't need.
+    for m in in "${DECK_MODULES[@]}"; do
+        _autodetect_cache["$m"]=1
+    done
+    for m in "${QEMU_MODULES[@]}"; do
+        _autodetect_cache["$m"]=1
+    done
+}
+
+help() {
+    cat <<'HELPEOF'
+This hook specifies the exact set of initrd modules required by the
+steam deck, plus a few modules we think would be useful for testing
+debugging and vms).
+HELPEOF
+}

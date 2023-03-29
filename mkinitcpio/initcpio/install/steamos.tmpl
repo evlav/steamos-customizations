@@ -1,0 +1,16 @@
+#!/bin/bash
+
+build() {
+    @STEAMOS_BINARIES@
+
+    map add_binary "${STEAMOS_BINARIES[@]}"
+
+    add_runscript
+}
+
+help() {
+    cat <<HELPEOF
+This hook adds the tools required by the steamos custom boot mechanism. Do not
+remove this hook unless you know what you're doing.
+HELPEOF
+}

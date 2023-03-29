@@ -1,0 +1,5 @@
+initcpio/hooks/steamos.in
+initcpio/hooks/steamos
+initcpio/install/steamos.in
+initcpio/install/steamos
+initcpio/install/steam-deck

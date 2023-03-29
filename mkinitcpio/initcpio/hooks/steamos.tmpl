@@ -1,0 +1,134 @@
+#!/usr/bin/ash
+# -*- mode: sh; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
+# vim: et sts=4 sw=4
+
+#  SPDX-License-Identifier: LGPL-2.1+
+#
+#  Copyright © 2022-2023 Collabora Ltd.
+#  Copyright © 2022-2023 Valve Corporation.
+#
+#  This file is part of steamos-customizations.
+#
+#  steamos-customizations is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU Lesser General Public License as published
+#  by the Free Software Foundation; either version 2.1 of the License, or
+#  (at your option) any later version.
+
+NEWROOT=/new_root
+
+# these are set by steamos_parse_cmdline based on the kernel cmdline:
+steamos_efi=
+steamos_factory_reset=0
+
+emergency_shell () {
+    launch_interactive_shell --exec
+}
+
+ismounted() {
+    findmnt "$1" > /dev/null 2>&1
+}
+
+vinfo() {
+    local x
+    while read -r x; do
+        msg "$x"
+    done
+}
+
+to_integer() {
+    if [ -n "$1" ] && [ "$1" -ne 0 ]; then
+        echo 1
+    else
+        echo 0
+    fi
+}
+
+# under dracut we'd just call getarg whenever we needed a command line value
+# but initcpio does things a little differently so we cluster all the fetches
+# here in one callback:
+steamos_parse_cmdline () {
+    local key=$1 value=$2
+
+    case $key in
+        rd.steamos.factory-reset|steamos.factory-reset)
+            steamos_factory_reset=$(to_integer "$value")
+            ;;
+        rd.steamos.efi|steamos.efi)
+            steamos_efi="$value"
+            info "EFI partition from kernel cmdline is %s" "$steamos_efi"
+            ;;
+    esac
+
+    return 0
+}
+
+############################################################################
+
+@STEAMOS_UDEV_RULES@
+
+############################################################################
+
+run_hook() {
+    # This hook runs _before_ the real rootfs is mounted
+    local rdev
+
+    parse_cmdline steamos_parse_cmdline </proc/cmdline
+
+    ######################################################################
+    # reuse dracut : pre-mount : 90 : steamos-udev-rules.sh
+    steamos_setup_partsets "$steamos_efi"
+
+    ######################################################################
+    # from dracut : mount : 90 : steamos-root.sh
+    rdev=/dev/@udev_symlinks_reldir@/self/rootfs
+    msg "Waiting for root device $rdev"
+    poll_device "$rdev"
+
+    msg "Setting root target to $rdev"
+    # shellcheck disable=SC2034 # used by init_functions:default_mount_handler()
+    root=$rdev
+
+    # NOTE: under dracut we explicitly mounted the root target. mkinitcpio will
+    # implicitly attempt to mount whatever 'root' is set to after 'run_hook'
+}
+
+############################################################################
+
+@STEAMOS_FACTORY_RESET@
+
+############################################################################
+
+@STEAMOS_VAR@
+
+############################################################################
+
+@STEAMOS_ETC_OVERLAY@
+
+############################################################################
+
+@STEAMOS_VAR_LIB@
+
+############################################################################
+
+run_latehook () {
+    # This is run after the rootfs is mounted, but before
+    # switch_root is invoked to pivot to it:
+
+    # re-parse the command line (settings from run_hook will have
+    # disappeared by now):
+    parse_cmdline steamos_parse_cmdline </proc/cmdline
+
+    # reuse dracut : pre-pivot : 88 : steamos-factory-reset.sh
+    factory_reset "$steamos_factory_reset"
+
+    # reuse dracut : pre-pivot : 89 : steamos-var.sh
+    # reuse dracut : pre-pivot : 90 : steamos-etc-overlay.sh
+    # reuse dracut : pre-pivot : 90 : steamos-var-lib-modules.sh
+    if mount_var &&
+       setup_etc_overlay &&
+       initialize_var_lib_modules; then
+        return 0
+    else
+        emergency_shell
+    fi
+}
