@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-2.0-only
+
+set -e
+
+# XXX: use conf snippets, drop this hack
+sed -i 's/^HOOKS=.*/HOOKS=(base udev steamos steam-deck modconf keyboard block filesystems)/' /etc/mkinitcpio.conf
