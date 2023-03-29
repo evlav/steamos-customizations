@@ -74,22 +74,8 @@ function install_bootloaders
 
     if [[ ! "${no_kernel:-}" ]]
     then
-        mapfile -t moduledirs < <(ls -1d /usr/lib/steamos/modules/* 2>/dev/null)
-        for moduledir in "${moduledirs[@]}"
-        do
-            if ! read -r pkgbase > /dev/null 2>&1 < "$moduledir/pkgbase"
-            then
-                # if the kernel has no pkgbase, we skip it
-                continue
-            fi
-
-            kver="${moduledir##*/}"
-            install -Dm644 "@datadir@/factory/var/lib/modules/$kver/vmlinuz" "/boot/vmlinuz-$pkgbase"
-            mkdir -p "/var/lib/modules/$kver"
-            cp -a "@datadir@/factory/var/lib/modules/$kver" "/var/lib/modules/"
-            dracut --force --hostonly "/boot/initramfs-$pkgbase.img" "$kver"
-            dracut --force --no-hostonly "/boot/initramfs-$pkgbase-fallback.img" "$kver"
-        done
+        echo "Runnign ${0##*/} without --no-kernel is not supported"
+        exit 1
     fi
     if [[ "${roothash:-}" ]]
     then
