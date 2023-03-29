@@ -62,9 +62,8 @@ install() {
 
     inst_multiple \
         basename dirname plymouth rmdir sed sleep \
-        e2label mkfs.ext4 tune2fs e2fsck \
-        lsblk sort uuidgen \
-        btrfs btrfstune e2fsck \
+        e2label mkfs.ext4 tune2fs \
+        lsblk sort btrfs \
         steamos-factory-reset-config mktemp \
         @libexecdir@/steamos/steamos-partsets-generator \
         $systemdutildir/systemd-veritysetup \
