@@ -156,18 +156,6 @@ factory_reset() {
     fi
 
     ########################################################################
-    # partitions belonging to a dev slot don't get scrubbed, ever.
-    # (production deck images should never have a dev slot out of the box):
-    for cfg in $FACTORY_RESET_CONFIG_DIR/*.cfg; do
-        case $cfg in
-            */*-dev.cfg)
-                @WARN@ "Ignoring reset for development partition $cfg"
-                rm -v $cfg
-                ;;
-        esac
-    done
-
-    ########################################################################
     # perform the actual reset operations
     if [ "$want_reset" -eq 1 ]; then
         do_reset
