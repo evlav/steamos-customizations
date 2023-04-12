@@ -48,7 +48,11 @@ steamos_generate_partsets() {
     umount /mnt
 
     udevadm control --reload-rules
-    udevadm trigger --settle
+    udevadm trigger
+    # Explicitly wait for _everything_ to settle. We do not want trigger
+    # --settle here since that may lead to deadlock or other issues. See the
+    # manual for details how the two differ.
+    udevadm settle
 }
 
 steamos_setup_partsets() {
