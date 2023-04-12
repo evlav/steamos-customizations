@@ -10,8 +10,6 @@
 # so it is able to reset them.
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> X <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-declare -r FACTORY_RESET_CONFIG_DIR=@factory_reset_config_dir@
-
 reset_device_ext4() {
     local device=$1
     local label=$2
@@ -30,7 +28,7 @@ reset_device_ext4() {
         opts+=(-m 0)
     fi
 
-    # use cached opts from FACTORY_RESET_CONFIG_DIR, alternatively read them
+    # use cached opts from @factory_reset_config_dir@, alternatively read them
     # from the filesystem
     if [ ${#fs_opts[@]} -eq 0 ]; then
         read -r -a fs_opts < <(tune2fs -l "$device" | sed -n 's/^Filesystem features:\s*//p')
@@ -74,8 +72,8 @@ do_reset() {
     # we're not touching it everything is parallelisable:
     declare -a WAIT_PIDS=()
     declare -A RESET_DEV
-    for cfg in $FACTORY_RESET_CONFIG_DIR/*.cfg; do
-        [ -r $cfg ] || continue
+    for cfg in "@factory_reset_config_dir@"/*.cfg; do
+        [ -r "$cfg" ] || continue
 
         while read type instance dev opts; do
             @INFO@ "Processing manifest file $cfg (async)"
@@ -99,7 +97,7 @@ do_reset() {
                     rm -f "$cfg"
                     ;;
             esac
-        done < $cfg
+        done < "$cfg"
     done
 
     while true; do
@@ -135,13 +133,13 @@ factory_reset() {
 
     ########################################################################
     # if reset config exists, we want a reset:
-    if [ -d $FACTORY_RESET_CONFIG_DIR ]; then
-        for cfg in $FACTORY_RESET_CONFIG_DIR/*.cfg; do
-            if [ -e "$cfg" ]; then
-                @INFO@ "Factory reset request found in $FACTORY_RESET_CONFIG_DIR"
-                want_reset=1
-                break
-            fi
+    if [ -d "@factory_reset_config_dir@" ]; then
+        for cfg in "@factory_reset_config_dir@"/*.cfg; do
+            [ -r "$cfg" ] || continue
+
+            @INFO@ "Factory reset request found in @factory_reset_config_dir@"
+            want_reset=1
+            break
         done
     fi
 
