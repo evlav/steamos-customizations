@@ -17,11 +17,9 @@
 set -euo pipefail
 
 SYMLINKS_DIR=@udev_symlinks_absdir@
-FACTORY_RESET_CONFIG_DIR=@factory_reset_config_dir@
 HOME_DEVICE=$SYMLINKS_DIR/all/home
 ESP_DEVICE=$SYMLINKS_DIR/all/esp
 
-cdir=${1:-$FACTORY_RESET_CONFIG_DIR}
 wdir=$(mktemp -t -d rest-conf-XXXXXXXXXX)
 dev=
 opts=
@@ -34,6 +32,6 @@ done
 opts=$(tune2fs -l "$HOME_DEVICE" | sed -n 's/^Filesystem features:\s*//p')
 echo HOME $HOME_DEVICE $(readlink -f $HOME_DEVICE) "$opts" > ${wdir}/home.cfg
 
-mkdir -p "$cdir"
-mv "${wdir}"/* "$cdir"
+mkdir -p "@factory_reset_config_dir@"
+mv "$wdir"/* "@factory_reset_config_dir@"
 rmdir "$wdir"
