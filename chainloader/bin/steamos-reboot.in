@@ -125,7 +125,7 @@ do
             exit 1
         fi
 
-        steamos-factory-reset-config @factory_reset_config_dir@
+        steamos-factory-reset-config
         @sbindir@/steamos-set-bootmode reboot
     elif [[ "$1" =~ ^--reboot-other$ ]]
     then

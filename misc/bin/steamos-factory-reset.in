@@ -18,8 +18,6 @@ set -euo pipefail
 
 FORCE=0 # --force
 
-FACTORY_RESET_CONFIG_DIR=@factory_reset_config_dir@
-
 usage() {
     local status=${1-2}
 
@@ -32,8 +30,7 @@ usage() {
     echo
     echo "Factory reset of SteamOS, wipe out the data partitions."
     echo
-    echo "This script records the partitions to be reset in:"
-    echo "  $FACTORY_RESET_CONFIG_DIR"
+    echo "This script records the partitions to be reset."
     echo "On reboot the initrd scrubs them and does a first-boot setup."
     echo
 
@@ -80,6 +77,6 @@ if ! ask "Do you want to continue?"; then
     exit 0
 fi
 
-if steamos-factory-reset-config "$FACTORY_RESET_CONFIG_DIR"; then
+if steamos-factory-reset-config; then
     reboot
 fi
