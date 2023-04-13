@@ -66,6 +66,7 @@ enable_devmode() {
     fi
     pacman-key --init
     pacman-key --populate
+    pacman -Sy --noconfirm --needed archlinux-keyring
     pacman --noconfirm -S $(pacman -Qnkq | cut -d' ' -f1 | sort | uniq)
     touch "$touch_file"
 }
