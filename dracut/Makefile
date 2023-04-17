@@ -24,7 +24,7 @@ modules.d/module-setup.sh.in: modules.d/module-setup.tmpl ../initrd/steamos-file
 modules.d/steamos-etc-overlay.sh.in: modules.d/steamos-etc-overlay.tmpl ../initrd/steamos-etc-overlay.ash
 	../initrd/inline-file.sh "@STEAMOS_ETC_OVERLAY@" $^ | sed -e 's|@INFO@|info|g;s|@WARN@|warn|g' > $@
 
-modules.d/steamos-factory-reset.sh.in: modules.d/steamos-factory-reset.tmpl ../initrd/steamos-factory-reset.bash
+modules.d/steamos-factory-reset.sh.in: modules.d/steamos-factory-reset.tmpl ../initrd/steamos-factory-reset.ash
 	../initrd/inline-file.sh "@STEAMOS_FACTORY_RESET@" $^ | sed -e 's|@INFO@|info|g;s|@WARN@|warn|g' > $@
 
 modules.d/steamos-udev-rules.sh.in: modules.d/steamos-udev-rules.tmpl ../initrd/steamos-udev-rules.ash

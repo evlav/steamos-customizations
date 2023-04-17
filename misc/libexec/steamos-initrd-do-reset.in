@@ -1,0 +1,168 @@
+#!/bin/bash
+# -*- mode: sh; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
+# vim: et sts=4 sw=4
+
+#  SPDX-License-Identifier: LGPL-2.1+
+#
+#  Copyright © 2023 Collabora Ltd.
+#  Copyright © 2023 Valve Corporation.
+#
+#  This file is part of steamos-customizations.
+#
+#  steamos-customizations is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU Lesser General Public License as published
+#  by the Free Software Foundation; either version 2.1 of the License, or
+#  (at your option) any later version.
+
+################################# NOTES #################################
+# Make sure we bail out if the reset fails at any stage.
+
+# We do this to make sure the reset will be re-attempted or resumed
+# if it does not complete here (possibly because the user got bored
+# and leant on the power button)
+
+# There is a small chance of a reset loop occurring if the reset cannot
+# complete for fundamental reasons (unable to format filesystem and so
+# forth) BUT
+#
+# a) the device is probably hosed anyway if this happens
+#
+# b) we care more about doing a genuine reset to stop leaking private
+#    data / things worth actual €£$¥ to the next owner than we do about
+#    [hopefully] unlikely reset loops
+
+# We want to reset each filesystem in parallel _but_ we must wait for
+# them to finish as we have to release all fds before the pivot to the
+# real sysroot happens.
+#=======================================================================#
+declare -a WAIT_PIDS=()
+declare -A RESET_DEV
+declare -r FACTORY_RESET_CONFIG_DIR=@factory_reset_config_dir@
+
+if [ -z "$INITRD_FACTORY_RESET" ];
+then
+    echo "$0 invoked outside initrd, refusing to run" >&2
+    exit 1
+fi
+
+ismounted() { findmnt "$1" > /dev/null 2>&1; }
+
+reset_device_ext4()
+{
+    local device=$1
+    local label=$2
+    local fs_opts=(${@:3})
+    local opts=(-qF)
+    local tmp=
+    local mt_point=
+    local mt_opts=
+    local reserved=0
+
+    # not considering it an error if a device we were meant to wipe does not exist
+    if [ ! -b "$device" ]; then
+        return 0
+    fi
+
+    # can't have the device mounted while we reformat it
+    # but we do want to save the mount opts if it is mounted
+    local proc_dev proc_mnt proc_fs proc_opts proc_etc
+
+    while read -r proc_dev proc_mnt proc_fs proc_opts proc_etc;
+    do
+        if [ "$device" != "$proc_dev" ];
+        then
+            continue
+        fi
+        mt_point="$proc_mnt"
+        mt_opts="$proc_opts"
+        echo "Unmounting $device from $mt_point ($mt_opts)"
+        umount -v "$device"
+    done < /proc/mounts
+
+    # try harder if it's still mounted
+    if ismounted "$device";
+    then
+        umount -v -f "$device"
+    fi
+
+    if ismounted "$device";
+    then
+        echo "Could not unmount $device from $mt_point"
+        return 1
+    fi
+
+    opts+=(-L "$label")
+
+    # if the reserved block count is 0 turn off reserved blocks on the new fs
+    # otherwise let mkfs set the default reserved block level:
+    read -r reserved < <(tune2fs -l "$device" | sed -n 's/^Reserved block count:\s*//p')
+    if [ $reserved -eq 0 ]
+    then
+        opts+=(-m 0)
+    fi
+
+    # use cached opts from FACTORY_RESET_CONFIG_DIR, alternatively read them
+    # from the filesystem
+    if [ ${#fs_opts[@]} -eq 0 ]; then
+        read -r -a fs_opts < <(tune2fs -l "$device" | sed -n 's/^Filesystem features:\s*//p')
+    fi
+
+    # copy fs opts:
+    for tmp in "${fs_opts[@]}"; do
+        opts+=(-O $tmp)
+    done
+
+    echo "Making ext4 filesystem on device $device (options: ${opts[*]})"
+    mkfs.ext4 "${opts[@]}" "$device"
+    if [ -n "$mt_point" ];
+    then
+        echo "Remounting fresh fs on $device at $mt_point ($mt_opts)"
+        mount ${mt_opts:+-o} $mt_opts "$device" "$mt_point"
+    fi
+}
+
+for cfg in $FACTORY_RESET_CONFIG_DIR/*.cfg;
+do
+    [ -r $cfg ] || continue
+
+    while read type instance dev opts;
+    do
+        echo "Processing manifest file $cfg (async)"
+        name="${instance##*/}"
+        case $type in
+            EFI)
+                echo "Reset of efi partition ($instance, $dev) is obsolete, ignoring"
+                rm -f "$cfg"
+                ;;
+            VAR|HOME)
+                # these are slow so we want them done in parallel and async
+                # BUT we need to wait until they're all done before proceeding
+                echo "Formatting data partition $dev ($instance)"
+                (reset_device_ext4 $dev "$name" "$opts" && rm -f "$cfg") &
+                RESET_PID=$!
+                WAIT_PIDS+=($RESET_PID)
+                echo "Device $dev ($name) reset by process $RESET_PID"
+                RESET_DEV[$RESET_PID]="$dev $name"
+                ;;
+            *)
+                echo "Unexpected SteamOS reset type $type ($instance, $dev)"
+                rm -f "$cfg"
+                ;;
+        esac
+    done < $cfg
+done
+
+while true;
+do
+    wait -f -p WAITED_FOR -n
+    rc=$?
+    if [ $rc -eq 127 ]; then
+        # nothing left to wait for.
+        echo "${#WAIT_PIDS[@]} reset processes (${WAIT_PIDS[@]}) ok"
+        break;
+    elif [ $rc -ne 0 ]; then
+        echo "Reset of ${RESET_DEV[$WAITED_FOR]} failed, reset incomplete"
+    else
+        echo "Reset of ${RESET_DEV[$WAITED_FOR]} complete"
+    fi
+done
