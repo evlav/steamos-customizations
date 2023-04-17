@@ -17,13 +17,14 @@ reset_device_ext4() {
     local label=$2
     local fs_opts=(${@:3})
     local opts=(-qF)
-    local features=
     local tmp=
     local mt_point=
     local mt_opts=
+    local reserved=0
+    local casefold=1
 
     # not considering it an error if a device we were meant to wipe does not exist
-    if ! [ -b "$device" ]; then
+    if [ ! -b "$device" ]; then
         return 0
     fi
 
@@ -52,7 +53,12 @@ reset_device_ext4() {
     fi
 
     opts+=(-L "$label")
-    if [ "$label" = "home" ]; then
+
+    # if the reserved block count is 0 turn off reserved blocks on the new fs
+    # otherwise let mkfs set the default reserved block level:
+    read -r reserved < <(tune2fs -l "$device" | sed -n 's/^Reserved block count:\s*//p')
+    if [ $reserved -eq 0 ]
+    then
         opts+=(-m 0)
     fi
 
@@ -62,12 +68,9 @@ reset_device_ext4() {
         read -r -a fs_opts < <(tune2fs -l "$device" | sed -n 's/^Filesystem features:\s*//p')
     fi
 
-    # copy the important fs opts explicitly (currently just casefold):
-    for tmp in "${features[@]}"; do
-        if [ "$tmp" = "casefold" ]; then
-            opts+=(-O casefold)
-            break
-        fi
+    # copy fs opts:
+    for tmp in "${fs_opts[@]}"; do
+        opts+=(-O $tmp)
     done
 
     @INFO@ "Making ext4 filesystem on device $device (options: ${opts[*]})"
@@ -122,6 +125,7 @@ do_reset() {
                     (reset_device_ext4 $dev "$name" "$opts" && rm -f "$cfg") &
                     RESET_PID=$!
                     WAIT_PIDS+=($RESET_PID)
+                    @INFO@ "Device $dev ($name) reset by process $RESET_PID"
                     RESET_DEV[$RESET_PID]="$dev $name"
                     ;;
                 *)
@@ -137,9 +141,10 @@ do_reset() {
         rc=$?
         if [ $rc -eq 127 ]; then
             # nothing left to wait for.
+            @INFO@ "${#WAIT_PIDS[@]} reset processes (${WAIT_PIDS[@]}) ok"
             break;
         elif [ $rc -ne 0 ]; then
-            @WARN@ "Reset of ${RESET_DEV[$WAITED_FOR]} failed, factory reset incomplete"
+            @WARN@ "Reset of ${RESET_DEV[$WAITED_FOR]} failed, reset incomplete"
         else
             @INFO@ "Reset of ${RESET_DEV[$WAITED_FOR]} complete"
         fi
