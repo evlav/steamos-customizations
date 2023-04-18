@@ -13,8 +13,8 @@ GEN_MOD_IN += modules.d/steamos-factory-reset.sh.in
 GEN_MOD_IN += modules.d/steamos-udev-rules.sh.in
 GEN_MOD_IN += modules.d/steamos-var-lib-modules.sh.in
 GEN_MOD_IN += modules.d/steamos-var.sh.in
-MODULES_IN := $(wildcard modules.d/*.sh.in) $(GEN_MOD_IN)
-MODULES := $(patsubst %.in,%,$(MODULES_IN))
+MODULES_IN := $(filter-out $(GEN_MOD_IN),$(wildcard modules.d/*.sh.in))
+MODULES := $(patsubst %.in,%,$(MODULES_IN) $(GEN_MOD_IN))
 README := modules.d/README
 CLEANABLE := $(BINARIES) $(ALPM_SCRIPTS) $(ALPM_HOOKS) $(GEN_MOD_IN) $(MODULES)
 
