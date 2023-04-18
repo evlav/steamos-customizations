@@ -3,27 +3,37 @@
 
 set -e
 
+PRESET_TEMPLATE=/usr/share/mkinitcpio/deck.preset
+
+echo "ALPM: $0" >&2
+
 while read -r line; do
     read -r pkgbase < "${line%/vmlinuz}/pkgbase"
     preset="/etc/mkinitcpio.d/${pkgbase}.preset"
 
+    echo "ALPM: processing $line ($pkgbase -> $preset)" >&2
+
     # XXX: Should probably do something smarter
     if [[ -e "$preset" ]]; then
+        echo "ALPM: moving existing $preset to backup .stmsave name" >&2
         mv -- "$preset" "${preset}.stmsave"
     fi
 
     # XXX: use conf snippets, drop this hack
     conf="/etc/mkinitcpio.conf"
     if [[ -e "$conf" ]]; then
+        echo "ALPM: replacing HOOKS in $conf" >&2
         sed -i '/^HOOKS=/d' "$conf"
         echo "HOOKS=(base udev steamos steam-deck modconf keyboard block filesystems)" >> "$conf"
     fi
 
     # create the preset from our template
-    sed "s|%PKGBASE%|${pkgbase}|g" /usr/share/mkinitcpio/deck.preset \
+    echo "ALPM: making $preset from ${PRESET_TEMPLATE} + $pkgbase" >&2
+    sed "s|%PKGBASE%|${pkgbase}|g" ${PRESET_TEMPLATE} \
         | install -Dm644 /dev/stdin "$preset"
 
     # Avoid having a second (identical) initrd
+    echo "ALPM: setting PRESETS to 'default' in $preset" >&2
     sed -i '/^PRESETS=/d' "$preset"
     echo "PRESETS=('default')" >> "$preset"
 done

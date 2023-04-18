@@ -35,3 +35,5 @@ install: all
 	install -m 0644 $(ALPM_HOOKS) $(DESTDIR)$(datadir)/libalpm/hooks
 	install -d $(DESTDIR)$(datadir)/libalpm/scripts
 	install -m 0755 $(ALPM_SCRIPTS) $(DESTDIR)$(datadir)/libalpm/scripts
+	install -d $(DESTDIR)$(prefix)/share/mkinitcpio
+	install -m 0644 share/deck.preset $(DESTDIR)$(prefix)/share/mkinitcpio
