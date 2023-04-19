@@ -26,4 +26,13 @@ declare -a STEAMOS_BINARIES=(
     tr
     tune2fs
     udevadm
+    fsck.btrfs
+    fsck.exfat
+    fsck.ext2
+    fsck.ext3
+    fsck.ext4
+    fsck.ext4
+    fsck.fat
+    fsck.msdos
+    fsck.vfat
 )
