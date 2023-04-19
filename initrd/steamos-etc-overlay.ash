@@ -56,3 +56,15 @@ mount_etc_overlay() {
 
     return 1
 }
+
+setup_etc_overlay () {
+
+    if prepare_etc_overlay; then
+        if mount_etc_overlay; then
+            return 0
+        fi
+    fi
+
+    msg "/etc overlay failed - dropping to emergency shell"
+    emergency_shell
+}
