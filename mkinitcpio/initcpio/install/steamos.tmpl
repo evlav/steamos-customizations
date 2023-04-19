@@ -4,6 +4,7 @@ build() {
     @STEAMOS_BINARIES@
 
     map add_binary "${STEAMOS_BINARIES[@]}"
+    map add_file /usr/lib/steamos/steamos-initrd-do-reset
 
     add_runscript
 }
