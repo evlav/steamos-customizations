@@ -66,8 +66,11 @@ steamos_generate_partsets () {
     done
     umount /mnt
 
+    # These must be separate for mkinitcpio or you will likely get a deadlock
+    # This does not affect dracut initrds. We do not know why.
     udevadm control --reload-rules
-    udevadm trigger --settle
+    udevadm trigger
+    udevadm settle
 }
 
 steamos_setup_partsets() {
