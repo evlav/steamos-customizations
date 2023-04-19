@@ -55,7 +55,7 @@ steamos_parse_cmdline () {
             ;;
         rd.steamos.efi|steamos.efi)
             steamos_efi="$value"
-            info "EFI partition from kernel cmdline is %s" "$steamos_efi"
+            @INFO@ "EFI partition from kernel cmdline is %s" "$steamos_efi"
             ;;
     esac
 
