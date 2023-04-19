@@ -39,6 +39,43 @@ declare -a WAIT_PIDS=()
 declare -A RESET_DEV
 declare -r FACTORY_RESET_CONFIG_DIR=@factory_reset_config_dir@
 
+# not all options reported by e2fsprogs are settable by mkfs/tune2fs et al
+# some are reported in output but will cause the tools to abort if you ask
+# for them to be set ("needs_recovery" is one such 'setting'):
+declare -A KNOWN_EXT_FEATURES=(
+  ["64bit"]=1
+  ["bigalloc"]=1
+  ["casefold"]=1
+  ["dir_index"]=1
+  ["dir_nlink"]=1
+  ["ea_inode"]=1
+  ["encrypt"]=1
+  ["ext_attr"]=1
+  ["extent"]=1
+  ["extra_isize"]=1
+  ["filetype"]=1
+  ["flex_bg"]=1
+  ["has_journal"]=1
+  ["huge_file"]=1
+  ["inline_data"]=1
+  ["journal_dev"]=1
+  ["large_dir"]=1
+  ["large_file"]=1
+  ["meta_bg"]=1
+  ["metadata_csum"]=1
+  ["metadata_csum_seed"]=1
+  ["mmp"]=1
+  ["project"]=1
+  ["quota"]=1
+  ["resize_inode"]=1
+  ["sparse_super"]=1
+  ["sparse_super2"]=1
+  ["stable_inodes"]=1
+  ["uninit_bg"]=1
+  ["verity"]=1
+)
+
+
 if [ -z "$INITRD_FACTORY_RESET" ];
 then
     echo "$0 invoked outside initrd, refusing to run" >&2
@@ -56,7 +93,7 @@ reset_device_ext4()
     local tmp=
     local mt_point=
     local mt_opts=
-    local reserved=0
+    local -i reserved=0
 
     # not considering it an error if a device we were meant to wipe does not exist
     if [ ! -b "$device" ]; then
@@ -95,25 +132,32 @@ reset_device_ext4()
 
     # if the reserved block count is 0 turn off reserved blocks on the new fs
     # otherwise let mkfs set the default reserved block level:
-    read -r reserved < <(tune2fs -l "$device" | sed -n 's/^Reserved block count:\s*//p')
+    reserved=$(tune2fs -l "$device" | sed -n 's/^Reserved block count:\s*//p')
+    echo "Reserved block count for $device is $reserved"
     if [ $reserved -eq 0 ]
     then
         opts+=(-m 0)
     fi
 
-    # use cached opts from FACTORY_RESET_CONFIG_DIR, alternatively read them
-    # from the filesystem
+    # use cached opts from FACTORY_RESET_CONFIG_DIR or read from the filesystem
     if [ ${#fs_opts[@]} -eq 0 ]; then
-        read -r -a fs_opts < <(tune2fs -l "$device" | sed -n 's/^Filesystem features:\s*//p')
+        for tmp in $(tune2fs -l "$device" | sed -n 's/^Filesystem features:\s*//p'); do
+            fs_opts+=($tmp)
+        done
     fi
 
-    # copy fs opts:
+    # copy fs opts, filtering out pseudo-options that cannot actually be set:
     for tmp in "${fs_opts[@]}"; do
-        opts+=(-O $tmp)
+        if [ ${KNOWN_EXT_FEATURES["$tmp"]:-0} -eq 1 ]; then
+            opts+=(-O $tmp)
+        else
+            echo "Dropping unsupported fs feature '$tmp' from $device"
+        fi
     done
 
     echo "Making ext4 filesystem on device $device (options: ${opts[*]})"
     mkfs.ext4 "${opts[@]}" "$device"
+
     if [ -n "$mt_point" ];
     then
         echo "Remounting fresh fs on $device at $mt_point ($mt_opts)"
