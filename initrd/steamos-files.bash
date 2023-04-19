@@ -6,6 +6,15 @@ declare -a STEAMOS_BINARIES=(
     dirname
     echo
     findmnt
+    fsck.btrfs
+    fsck.exfat
+    fsck.ext2
+    fsck.ext3
+    fsck.ext4
+    fsck.ext4
+    fsck.fat
+    fsck.msdos
+    fsck.vfat
     ls
     lsblk
     mkdir
