@@ -1,3 +1,16 @@
+#  SPDX-License-Identifier: LGPL-2.1+
+#
+#  This file is part of steamos-customizations.
+#
+#  steamos-customizations is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU Lesser General Public License as
+#  published by the Free Software Foundation; either version 2.1 of the License,
+#  or (at your option) any later version.
+
+# NOTE: we trigger this at prio 91 so that _just_ in case you have
+# both dracut and mkinitcpio installed, the mkinitcpio initrd gets
+# written last and "wins".
+
 [Trigger]
 Type = Path
 Operation = Install

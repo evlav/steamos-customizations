@@ -7,6 +7,16 @@ PRESET_TEMPLATE=/usr/share/mkinitcpio/deck.preset
 
 echo "ALPM: $0" >&2
 
+if ! type -t mkinitcpio > /dev/null; then
+    echo "ALPM: $0 - mkinitcpio not installed" >&2
+    exit 0
+fi
+
+if [ ! -f "${PRESET_TEMPLATE:-/dev/null}" ]; then
+    echo "ALPM: $0 - no mkinitcpio template at '${PRESET_TEMPLATE:-}'" >&2
+    exit 1
+fi
+
 while read -r line; do
     read -r pkgbase < "${line%/vmlinuz}/pkgbase"
     preset="/etc/mkinitcpio.d/${pkgbase}.preset"
