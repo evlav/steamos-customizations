@@ -12,6 +12,7 @@ bin/steamos-verity
 libexec/steamos-cfs-debugfs-settings
 libexec/steamos-create-homedir
 libexec/steamos-finish-oobe-migration
+libexec/steamos-initrd-do-reset
 systemd/etc.mount
 systemd/steamos-cfs-debugfs-tunings.service
 systemd/steamos-create-homedir.service
