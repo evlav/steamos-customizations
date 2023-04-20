@@ -9,6 +9,21 @@
 # The recovery tool/reset tool _does_ have vanilla data sources for those,
 # so it is able to reset them.
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> X <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+#
+# The current design suffers a few additional issues, namely:
+#
+# Currently if the formatting fails, we simply log it and continue booting.
+# Which means that if the user has exxpected to have the data wiped, they would
+# be surprised. Then on their next (re)boot the formatting will trigger again,
+# causing even further confusion/annoyance.
+#
+# One way to resolve that is to have the system reboot on format failure.
+# Although that in itself could lead to the device boot-looping if the failure
+# is consistent.
+#
+# So overall, we should do some reasearch how Android, Apple, others are doing
+# it and redesign, or at least reconsider our approach.
+#
 
 reset_device_ext4() {
     local device=$1
