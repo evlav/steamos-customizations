@@ -126,7 +126,7 @@ factory_reset() {
         if ! ismounted "$dev"; then
             @INFO@ "Mounting $dev at /esp"
             mkdir -p /esp
-            mount "$dev" /esp
+            mount "$dev" /esp 2>&1 | vinfo
             cleanup_esp=1
         fi
     fi
