@@ -34,8 +34,6 @@ steamos_generate_partsets() {
     @INFO@ "Mounting $dev on /mnt"
 
     mkdir -p /mnt
-    trap "if ismounted /mnt; then umount /mnt; fi" 0
-
     mount -o ro "$dev" /mnt 2>&1 | vinfo
     if ! ismounted /mnt; then
         @WARN@ "Mounting $dev failed"
