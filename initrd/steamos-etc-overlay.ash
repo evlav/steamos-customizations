@@ -19,15 +19,13 @@
 # For these reasons, we do the job manually here.
 
 
-sysroot="$NEWROOT"
-overlaydir="/var/lib/overlays/etc"
-upperdir="${sysroot}${overlaydir}/upper"
-lowerdir="${sysroot}/etc"
-workdir="${sysroot}${overlaydir}/work"
+setup_etc_overlay() {
+    local lowerdir="$NEWROOT/etc"
+    local upperdir="$NEWROOT/var/lib/overlays/etc/upper"
+    local workdir="$NEWROOT/var/lib/overlays/etc/work"
 
-prepare_etc_overlay() {
     # upper dir contains persistent data, create it only if it doesn't exist
-    @INFO@ "Preparing /etc overlay { $overlaydir $upperdir $workdir }"
+    @INFO@ "Preparing /etc overlay"
     if [ ! -d "$upperdir" ]; then
         @INFO@ "Creating overlay upper directory '$upperdir'"
         rm -fr "$upperdir"
@@ -38,9 +36,6 @@ prepare_etc_overlay() {
     @INFO@ "Clearing overlay work directory $workdir"
     rm -fr "$workdir"
     mkdir -p "$workdir"
-}
-
-mount_etc_overlay() {
 
     # Mount the /etc overlay
     @INFO@ "Mounting overlay $upperdir on $lowerdir ($workdir)"
@@ -51,17 +46,7 @@ mount_etc_overlay() {
         "$lowerdir" 2>&1 | vinfo
 
     if ismounted "$lowerdir"; then
-        return 0
-    fi
-
-    return 1
-}
-
-setup_etc_overlay() {
-    if prepare_etc_overlay; then
-        if mount_etc_overlay; then
-            return
-        fi
+        return
     fi
 
     @WARN@ "Mounting $upperdir failed: Compile the kernel with CONFIG_OVERLAY_FS!"
