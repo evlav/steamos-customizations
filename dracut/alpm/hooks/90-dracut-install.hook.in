@@ -11,6 +11,7 @@
 Type = File
 Operation = Install
 Operation = Upgrade
+Target = usr/lib/modules/*/vmlinuz
 Target = usr/lib/steamos/modules/*/vmlinuz
 Target = usr/lib/dracut/modules.d/*
 

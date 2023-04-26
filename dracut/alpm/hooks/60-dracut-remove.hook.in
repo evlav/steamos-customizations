@@ -10,6 +10,7 @@
 [Trigger]
 Type = File
 Operation = Remove
+Target = usr/lib/modules/*/vmlinuz
 Target = usr/lib/steamos/modules/*/vmlinuz
 
 [Trigger]
