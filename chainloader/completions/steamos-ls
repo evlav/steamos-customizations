@@ -1,0 +1,45 @@
+# -*- mode: sh; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
+# vim: et sts=4 sw=4
+
+#  SPDX-License-Identifier: LGPL-2.1+
+#
+#  Copyright © 2021 Collabora Ltd.
+#  Copyright © 2021 Valve Corporation.
+#
+#  This file is part of steamos-customizations.
+#
+#  steamos-customizations is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU Lesser General Public License as
+#  published by the Free Software Foundation; either version 2.1 of the License,
+#  or (at your option) any later version.
+
+_steamos-ls()
+{
+    local cur prev words cword
+    _init_completion || return
+
+    case "$prev" in
+        --output)
+            local realcur wordlist prefix outputs
+            realcur="${cur##*,}"
+            prefix="${cur%$realcur}"
+            read -a outputs < <(steamos-ls --output help 2>/dev/null)
+            for w in "${outputs[@]}"; do
+                if ! [[ $prefix == *"$w"* ]]; then
+                    wordlist="$w ${wordlist:-""}"
+                fi
+            done
+            compopt -o nospace
+            COMPREPLY=($(compgen -P "$prefix" -W "$wordlist" -S ',' -- "$realcur"))
+            return
+            ;;
+    esac
+
+    if [[ "$cur" == -* ]]; then
+        COMPREPLY=($(compgen -W "-h --help --output" -- "$cur"))
+        return
+    fi
+
+    COMPREPLY=($(compgen -W "$(lsblk -pnro name)" -- "$cur"))
+} &&
+complete -F _steamos-ls steamos-ls
