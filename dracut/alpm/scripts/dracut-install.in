@@ -55,6 +55,11 @@ if (( all )) && compgen -G usr/lib/modules/"*"/vmlinuz > /dev/null; then
     done < <(compgen -G usr/lib/modules/"*"/vmlinuz)
 fi
 
+# Don't try and call dracut if it's not there
+if ! type -t dracut >/dev/null; then
+    exit 0
+fi
+
 for pkgbase in "${!kern[@]}"; do
     dracut --force --hostonly --persistent-policy by-partuuid "/boot/initramfs-$pkgbase.img" "${kern[$pkgbase]}"
     # Create a symlink as per https://github.com/dracutdevs/dracut/pull/1434
