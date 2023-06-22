@@ -27,5 +27,7 @@ done
 conf="/etc/mkinitcpio.conf"
 if [ -e $conf ]; then
     sed -i '/^HOOKS=/d' $conf
+    sed -i '/^MODULES=/d' $conf
     echo "HOOKS=(base udev steamos steam-deck modconf keyboard block filesystems) # set by $0" >> $conf
+    echo "MODULES=(nvme) # set by $0" >> $conf
 fi
