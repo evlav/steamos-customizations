@@ -25,13 +25,15 @@ EOF
 }
 
 update_now() {
-    if ! steamos-atomupd-client "$@"; then
+    if ! steamos-update "$@"; then
         echo "SteamOS cannot be updated!" >&2
         sleep 5s
     fi
 
     echo "Reboot to run the new version of SteamOS." >&2
 }
+
+echo "This script is deprecated. Please use 'steamos-update' instead." >&2
 
 if [[ $# -eq 0 ]]; then
     usage
