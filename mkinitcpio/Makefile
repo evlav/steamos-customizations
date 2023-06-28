@@ -6,8 +6,7 @@ HOOKS := $(patsubst %.in,%,$(HOOKS_IN))
 GEN_INSTS_IN := initcpio/install/steamos.in
 INSTS_IN := $(filter-out $(GEN_INSTS_IN),$(wildcard initcpio/install/*.in))
 INSTS := $(patsubst %.in,%,$(INSTS_IN) $(GEN_INSTS_IN))
-ALPM_HOOKS  := $(wildcard libalpm/hooks/*)
-ALPM_SCRIPTS := $(wildcard libalpm/scripts/*)
+CONFS := $(wildcard mkinitcpio.conf.d/*)
 CLEANABLE := $(GEN_HOOKS_IN) $(HOOKS) $(GEN_INSTS_IN) $(INSTS)
 
 initcpio/hooks/steamos.in: initcpio/hooks/steamos.tmpl ../initrd/steamos-etc-overlay.ash \
@@ -31,7 +30,5 @@ install: all
 	install -m 0644 $(HOOKS) $(DESTDIR)$(libdir)/initcpio/hooks
 	install -d $(DESTDIR)$(libdir)/initcpio/install
 	install -m 0644 $(INSTS) $(DESTDIR)$(libdir)/initcpio/install
-	install -d $(DESTDIR)$(datadir)/libalpm/hooks
-	install -m 0644 $(ALPM_HOOKS) $(DESTDIR)$(datadir)/libalpm/hooks
-	install -d $(DESTDIR)$(datadir)/libalpm/scripts
-	install -m 0755 $(ALPM_SCRIPTS) $(DESTDIR)$(datadir)/libalpm/scripts
+	install -d $(DESTDIR)$(sysconfdir)/mkinitcpio.conf.d
+	install -m 0644 $(DESTDIR)$(sysconfdir)/mkinitcpio.conf.d/
