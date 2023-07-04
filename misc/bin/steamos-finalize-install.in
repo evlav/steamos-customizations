@@ -139,6 +139,19 @@ function migrate_home_steamos_update
 
 }
 
+function migrate_pacman_faked_time
+{
+    # a debos snippet with 3.4 added faked-system-time to workaround
+    # failure to install packages with expired signatures.
+    grep -q "^faked-system-time 20230101T000000$" /etc/pacman.d/gnupg/gpg.conf || return 0
+
+    # Purging the existing config/gnupg storage isn't great, but otherwise
+    # we cannot get the new keyring without the funky time
+    rm -rf /etc/pacman.d/gnupg/ || :
+    pacman-key --init || :
+    pacman-key --populate || :
+}
+
 while [[ "$#" -ne 0 ]]
 do
     if [[ "$1" =~ ^(-h|--help)$ ]]
@@ -178,6 +191,7 @@ then
     then
         migrate_network
         migrate_home_steamos_update
+        migrate_pacman_faked_time # added via debos snippet with 3.4
     else
         echo "Skipping configuration migration steps as this is not running in a chroot."
     fi
