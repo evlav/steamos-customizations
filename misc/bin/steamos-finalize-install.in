@@ -152,6 +152,17 @@ function migrate_pacman_faked_time
     pacman-key --populate || :
 }
 
+function update_pacman_dbpath
+{
+    # DBPath is on the RO rootfs with 3.5+
+    local -i path_ok=1
+    grep -q "^DBPath = /usr/lib/holo/pacmandb/$" /etc/pacman.conf || path_ok=0
+
+    if (( ! path_ok )); then
+        sed -i "s|^#*DBPath.*$|DBPath = /usr/lib/holo/pacmandb/|" /etc/pacman.conf
+    fi
+}
+
 while [[ "$#" -ne 0 ]]
 do
     if [[ "$1" =~ ^(-h|--help)$ ]]
@@ -192,6 +203,7 @@ then
         migrate_network
         migrate_home_steamos_update
         migrate_pacman_faked_time # added via debos snippet with 3.4
+        update_pacman_dbpath # DBPath is on the RO rootfs with 3.5+
     else
         echo "Skipping configuration migration steps as this is not running in a chroot."
     fi
