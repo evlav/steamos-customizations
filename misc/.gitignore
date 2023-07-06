@@ -1,6 +1,7 @@
 bin/steamos-boot-install
 bin/steamos-chroot
 bin/steamos-devmode
+bin/steamos-dump-info
 bin/steamos-factory-reset
 bin/steamos-factory-reset-config
 bin/steamos-finalize-install
@@ -15,4 +16,5 @@ libexec/steamos-finish-oobe-migration
 systemd/etc.mount
 systemd/steamos-cfs-debugfs-tunings.service
 systemd/steamos-create-homedir.service
+systemd/steamos-dump-info.service
 systemd/steamos-finish-oobe-migration.service
