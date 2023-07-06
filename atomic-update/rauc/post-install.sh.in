@@ -230,8 +230,13 @@ sync_var_mountpoints() {
     # was rebuilt to include nvidia drivers built by DKMS. Once again, this is
     # not a state that we want to keep.
     #
-    # Finally we exclude any potential user changes to the RAUC configuration
+    # We also exclude any potential user changes to the RAUC configuration
     # to avoid the risk of breaking the updates by using an unexpected config.
+    #
+    # Do not copy the gnupg keyring - the new image is RO and it makes little
+    # sense to have keyring around. People will either use steamos-devmode
+    # enable - which will regenerate it for them, or if they manually flip off
+    # the RO mode, they can issue pacman-key manually.
 
     fsfreeze -f "$src"
     rsync \
@@ -245,6 +250,7 @@ sync_var_mountpoints() {
         --exclude="/lib/NetworkManager/" \
         --exclude="/lost+found/" \
         --exclude="/lib/overlays/etc/upper/rauc" \
+        --exclude="/lib/overlays/etc/upper/pacman.d/gnupg" \
         "$src/" "$dst/"
     fsfreeze -u "$src"
 }
