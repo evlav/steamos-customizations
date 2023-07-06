@@ -31,4 +31,4 @@ install: all
 	install -d $(DESTDIR)$(libdir)/initcpio/install
 	install -m 0644 $(INSTS) $(DESTDIR)$(libdir)/initcpio/install
 	install -d $(DESTDIR)$(sysconfdir)/mkinitcpio.conf.d
-	install -m 0644 $(DESTDIR)$(sysconfdir)/mkinitcpio.conf.d/
+	install -m 0644 $(CONFS) $(DESTDIR)$(sysconfdir)/mkinitcpio.conf.d/
