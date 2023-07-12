@@ -1,0 +1,37 @@
+declare -a STEAMOS_BINARIES=(
+    basename
+    blkid
+    btrfs
+    cat
+    dirname
+    echo
+    findmnt
+    fsck.btrfs
+    fsck.exfat
+    fsck.ext2
+    fsck.ext3
+    fsck.ext4
+    fsck.ext4
+    fsck.fat
+    fsck.msdos
+    fsck.vfat
+    ls
+    lsblk
+    mkdir
+    mkfs.ext4
+    mktemp
+    mountpoint
+    plymouth
+    printf
+    realpath
+    rmdir
+    sed
+    sfdisk
+    sleep
+    sort
+    steamos-factory-reset-config
+    tail
+    tr
+    tune2fs
+    udevadm
+)

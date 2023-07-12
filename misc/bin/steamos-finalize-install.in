@@ -13,9 +13,7 @@
 #  published by the Free Software Foundation; either version 2.1 of the License,
 #  or (at your option) any later version.
 
-set -e
-set -o pipefail
-set -u
+set -euo pipefail
 
 function usage
 {
@@ -76,22 +74,8 @@ function install_bootloaders
 
     if [[ ! "${no_kernel:-}" ]]
     then
-        mapfile -t moduledirs < <(ls -1d /usr/lib/steamos/modules/* 2>/dev/null)
-        for moduledir in "${moduledirs[@]}"
-        do
-            if ! read -r pkgbase > /dev/null 2>&1 < "$moduledir/pkgbase"
-            then
-                # if the kernel has no pkgbase, we skip it
-                continue
-            fi
-
-            kver="${moduledir##*/}"
-            install -Dm644 "@datadir@/factory/var/lib/modules/$kver/vmlinuz" "/boot/vmlinuz-$pkgbase"
-            mkdir -p "/var/lib/modules/$kver"
-            cp -a "@datadir@/factory/var/lib/modules/$kver" "/var/lib/modules/"
-            dracut --force --hostonly "/boot/initramfs-$pkgbase.img" "$kver"
-            dracut --force --no-hostonly "/boot/initramfs-$pkgbase-fallback.img" "$kver"
-        done
+        echo "Runnign ${0##*/} without --no-kernel is not supported"
+        exit 1
     fi
     if [[ "${roothash:-}" ]]
     then
@@ -155,6 +139,17 @@ function migrate_home_steamos_update
 
 }
 
+function update_pacman_dbpath
+{
+    # DBPath is on the RO rootfs with 3.5+
+    local -i path_ok=1
+    grep -q "^DBPath = /usr/lib/holo/pacmandb/$" /etc/pacman.conf || path_ok=0
+
+    if (( ! path_ok )); then
+        sed -i "s|^#*DBPath.*$|DBPath = /usr/lib/holo/pacmandb/|" /etc/pacman.conf
+    fi
+}
+
 while [[ "$#" -ne 0 ]]
 do
     if [[ "$1" =~ ^(-h|--help)$ ]]
@@ -194,6 +189,7 @@ then
     then
         migrate_network
         migrate_home_steamos_update
+        update_pacman_dbpath # DBPath is on the RO rootfs with 3.5+
     else
         echo "Skipping configuration migration steps as this is not running in a chroot."
     fi

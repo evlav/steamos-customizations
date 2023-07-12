@@ -14,22 +14,55 @@
 #  published by the Free Software Foundation; either version 2.1 of the License,
 #  or (at your option) any later version.
 
-set -e
-set -u
+set -euo pipefail
 
 DISK=       # --disk
 PARTSET=    # --partset
 NO_OVERLAY= # --no-overlay
 ALLOW_SELF= # --allow-self
 
-SYMLINKS_DIR=@udev_symlinks_absdir@
+DEV_DIR=
+DEV_SHARED_LOCK_FD=
 
-[ -e @libdir@/steamos/steamos-partitions-lib ] && \
-    . @libdir@/steamos/steamos-partitions-lib  || \
-    { echo "Failed to source '@libdir@/steamos/steamos-partitions-lib'"; exit 1; }
+SYMLINKS_DIR=@udev_symlinks_absdir@
 
 # Helpers
 
+get_device_by_partlabel() {
+
+    # Get the block device for a given disk and partition label, for example:
+    # /dev/sda, efi-A -> /dev/sda2
+
+    local disk=$(realpath "$1")
+    local partlabel=$2
+
+    [ -b "$disk" ] || return
+    [ "$partlabel" ] || return
+
+    while read device name; do
+        # FIXME return first match
+        if [ "$name" == "$partlabel" ]; then echo "$device"; return; fi
+    done < <(sfdisk -ql -o device,name "$disk" | tail +2)
+}
+
+get_device_by_typeuuid() {
+
+    # Get the block device for a given disk and partition type uuid, for example:
+    # /dev/sda, c12a7328-f81f-11d2-ba4b-00a0c93ec93b -> /dev/sda1
+
+    local disk=$(realpath "$1")
+    local typeuuid=${2,,}
+
+    [ -b "$disk" ] || return
+    [ "$typeuuid" ] || return
+
+    while read device uuid; do
+        # FIXME return first match
+        if [ "${uuid,,}" == "$typeuuid" ]; then echo "$device"; return; fi
+    done < <(sfdisk -ql -o device,type-uuid "$disk" | tail +2)
+}
+
+log () { echo >&2 "$@"; }
 fail() { echo >&2 "$@"; exit 1; }
 
 usage() {
@@ -47,8 +80,7 @@ usage() {
     echo
     echo "By default, also the overlayed /etc will be mounted. Please note that the"
     echo "overlay can only be mounted once, so you can't re-mount the /etc overlay"
-    echo "for 'self', or run multiple chroots for the same disk."
-    echo "Instead, to skip mounting the overlay, you can use the option '--no-overlay'."
+    echo "for 'self'. To workaround this, you can use the option '--no-overlay'."
     echo
     echo "If you want to chroot into the already booted partset, you should explicitly"
     echo "set the option '--allow-self'."
@@ -161,6 +193,40 @@ prepare_chroot_at() {
     local dir=$1
 
     mount -o ro "$ROOTFS_DEVICE" $dir
+
+    if [ -z "$NO_OVERLAY" ]; then
+        local dev_name=${DISK:-this}-${PARTSET}
+        local dev_lock="/run/lock/${dev_name}.flock"
+        local run_steamos_chroot="/run/steamos-chroot"
+        DEV_DIR="${run_steamos_chroot}/${dev_name}"
+
+        mkdir -p "$run_steamos_chroot"
+
+        # Get the shared lock to signal that other chroot instances should not unmount the /etc overlay
+        exec {DEV_SHARED_LOCK_FD}>$dev_lock
+        flock --shared $DEV_SHARED_LOCK_FD
+
+        if [ ! -d "$DEV_DIR" ]; then
+            local dev_exclusive_lock="/run/lock/${dev_name}-exclusive.flock"
+            local lockfd=-1
+
+            exec {lockfd}>$dev_exclusive_lock
+            flock --exclusive --timeout 3 $lockfd || fail "Failed to get the exclusive lock to mount the /etc overlay"
+
+            # Now that we have the lock, check again if the directory is still missing.
+            if [ ! -d "$DEV_DIR" ]; then
+                mkdir -p "$DEV_DIR"
+                mount -o ro "$ROOTFS_DEVICE" "$DEV_DIR"
+                mount "$VAR_DEVICE" "$DEV_DIR/var"
+                mount -t overlay -o "lowerdir=${DEV_DIR}/etc,upperdir=${DEV_DIR}/var/lib/overlays/etc/upper,workdir=${DEV_DIR}/var/lib/overlays/etc/work" none "${DEV_DIR}/etc" || \
+                    fail "Failed to mount the /etc overlay. If it's not required, you could set the '--no-overlay' option"
+            fi
+            flock --unlock --close $lockfd
+        fi
+
+        mount --bind "$DEV_DIR/etc" "$dir/etc"
+    fi
+
     mount --bind /dev  $dir/dev
     mount --bind /proc $dir/proc
     mount --bind /run  $dir/run
@@ -170,10 +236,6 @@ prepare_chroot_at() {
     mount "$EFI_DEVICE" $dir/efi
     mount "$ESP_DEVICE" $dir/esp
     mount "$VAR_DEVICE" $dir/var
-    if [ -z "$NO_OVERLAY" ]; then
-        mount -t overlay -o "lowerdir=$dir/etc,upperdir=$dir/var/lib/overlays/etc/upper,workdir=$dir/var/lib/overlays/etc/work" none "$dir/etc" || \
-        fail "Failed to mount the /etc overlay. You should either set the '--no-overlay' option or, if possible, manually unmount the /etc overlay"
-    fi
     if [ -d $dir/var/boot ]; then
         mount --bind $dir/var/boot $dir/boot
     fi
@@ -188,6 +250,20 @@ cleanup_chroot_at() {
     fi
     if [ -z "$NO_OVERLAY" ]; then
         umount $dir/etc  || :
+
+        if [ -n "$DEV_SHARED_LOCK_FD" ]; then
+            # Try to convert the shared lock into an exlusive one
+            flock --exclusive --timeout 1 "$DEV_SHARED_LOCK_FD" && {
+                # We are the only one that were using this /etc overlay. Clean it up.
+                umount "$DEV_DIR/etc" || :
+                umount "$DEV_DIR/var" || :
+                umount "$DEV_DIR" || :
+                rmdir "$DEV_DIR" || :
+            } || {
+                log "There are other active steamos-chroot instances, do not unmount the /etc overlay"
+            }
+            flock --unlock --close "$DEV_SHARED_LOCK_FD" || :
+        fi
     fi
     umount $dir/var  || :
     umount $dir/esp  || :

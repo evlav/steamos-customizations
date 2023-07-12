@@ -6,12 +6,6 @@ steamos.efi=
         The efi partition that was booted. Similar to root=, the value can fed
         "as is" to mount.
 
-rd.steamos.novar
-	Do not mount /var overlay.
-
-rd.steamos.nooverlay
-	Do not mount /etc overlay.
-
 Here's a brief description of the hooks:
 steamos-udev-rules.sh		(pre-mount)
 	Create udev rules for SteamOS partitions.

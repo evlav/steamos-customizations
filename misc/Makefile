@@ -2,7 +2,6 @@ include ../common.mk
 
 BINARIES_IN := $(wildcard bin/*.in)
 BINARIES := $(patsubst %.in,%,$(BINARIES_IN))
-LIBRARIES := $(wildcard lib/*)
 LIBRARIES_EXEC_IN := $(wildcard libexec/*.in)
 LIBRARIES_EXEC := $(patsubst %.in,%,$(LIBRARIES_EXEC_IN))
 COMPLETIONS := $(wildcard completions/*)
@@ -14,6 +13,7 @@ PROFILE_CONFIG := profile.d/steamos.sh
 XORG_CONFIG := xorg.conf.d/10-steamos-virtualdisplaysize.conf
 SYSTEMD_REMOUNT_FS_CONFIG := systemd-remount-fs.service.d/steamos-remount-rw.conf
 PROTON_LIMITS_CONFIG := limits.d/15-proton-nice.conf
+SYSTEMD_LOGIND_CONFIG := systemd-logind.service.d/homedir-override.conf
 
 MOUNTS_IN := $(wildcard systemd/*.mount.in)
 MOUNTS := $(patsubst %.in,%,$(MOUNTS_IN))
@@ -21,6 +21,7 @@ SERVICES_IN := $(wildcard systemd/*.service.in)
 SERVICES := $(patsubst %.in,%,$(SERVICES_IN))
 SYSUSERS := $(wildcard sysusers/*)
 UNITS := $(SERVICES) $(MOUNTS)
+CLEANABLE := $(BINARIES) $(LIBRARIES_EXEC) $(UNITS)
 
 all: $(BINARIES) $(LIBRARIES_EXEC) $(UNITS)
 
@@ -28,8 +29,6 @@ install: all
 	install -d $(DESTDIR)$(sbindir)
 	install -m 0755 $(BINARIES) $(DESTDIR)$(sbindir)
 	ln -sfv steamos-mount $(DESTDIR)$(sbindir)/mount.steamos
-	install -d $(DESTDIR)$(libdir)/steamos
-	install -m 0755 $(LIBRARIES) $(DESTDIR)$(libdir)/steamos
 	install -d $(DESTDIR)$(libexecdir)/steamos
 	install -m 0755 $(LIBRARIES_EXEC) $(DESTDIR)$(libexecdir)/steamos
 	install -d $(DESTDIR)$(completionsdir)
@@ -56,3 +55,5 @@ install: all
 	install -m 0644 $(SYSUSERS) $(DESTDIR)$(libdir)/sysusers.d
 	install -d $(DESTDIR)$(sysconfdir)/systemd/system/systemd-remount-fs.service.d
 	install -m 0644 $(SYSTEMD_REMOUNT_FS_CONFIG) $(DESTDIR)$(sysconfdir)/systemd/system/systemd-remount-fs.service.d
+	install -d $(DESTDIR)$(sysconfdir)/systemd/system/systemd-logind.service.d
+	install -m 0644 $(SYSTEMD_LOGIND_CONFIG) $(DESTDIR)$(sysconfdir)/systemd/system/systemd-logind.service.d

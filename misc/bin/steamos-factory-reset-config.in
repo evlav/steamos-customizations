@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # -*- mode: sh; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
 # vim: et sts=4 sw=4
 
@@ -14,30 +14,24 @@
 #  published by the Free Software Foundation; either version 2.1 of the License,
 #  or (at your option) any later version.
 
-set -eu
+set -euo pipefail
 
-SYMLINKS_DIR=@udev_symlinks_absdir@
-FACTORY_RESET_CONFIG_DIR=@factory_reset_config_dir@
-HOME_DEVICE=$SYMLINKS_DIR/all/home
-ESP_DEVICE=$SYMLINKS_DIR/all/esp
-
-cdir=${1:-$FACTORY_RESET_CONFIG_DIR}
 wdir=$(mktemp -t -d rest-conf-XXXXXXXXXX)
-dev=
-opts=
 
-for dev in $SYMLINKS_DIR/all/efi-*; do
-    echo EFI $dev $(readlink -f $dev) > ${wdir}/${dev##*/}.cfg
+has_feature() { tune2fs -l "$1" | grep -q "$2" && echo 1 || echo 0; }
+get_casefold() { has_feature "$1" "Filesystem features:.*\<casefold\>"; }
+get_noreserved() { has_feature "$1" "Reserved block count:\s*\<0\>"; }
+
+print_cfg() {
+    echo "$1" "$2" "$(readlink -f "$2")" "$(get_casefold "$2")" "$(get_noreserved "$2")"
+}
+
+for dev in "@udev_symlinks_absdir@"/all/var-*; do
+    print_cfg "VAR" "$dev" > "$wdir/${dev##*/}.cfg"
 done
 
-for dev in $SYMLINKS_DIR/all/var-*; do
-    opts=$(tune2fs -l "$dev" | sed -n 's/^Filesystem features:\s*//p')
-    echo VAR $dev $(readlink -f $dev) "$opts" > ${wdir}/${dev##*/}.cfg
-done
+print_cfg "HOME" "@udev_symlinks_absdir@/all/home" > "$wdir/home.cfg"
 
-opts=$(tune2fs -l "$HOME_DEVICE" | sed -n 's/^Filesystem features:\s*//p')
-echo HOME $HOME_DEVICE $(readlink -f $HOME_DEVICE) "$opts" > ${wdir}/home.cfg
-
-mkdir -p "$cdir"
-mv "${wdir}"/* "$cdir"
+mkdir -p "@factory_reset_config_dir@"
+mv "$wdir"/* "@factory_reset_config_dir@"
 rmdir "$wdir"

@@ -1,2 +1,10 @@
-systemd/*.mount
-tmpfiles.d/*.conf
+systemd/opt.mount
+systemd/root.mount
+systemd/srv.mount
+systemd/var-cache-pacman.mount
+systemd/var-lib-docker.mount
+systemd/var-lib-flatpak.mount
+systemd/var-lib-systemd-coredump.mount
+systemd/var-log.mount
+systemd/var-tmp.mount
+tmpfiles.d/steamos-offload.conf

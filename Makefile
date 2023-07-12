@@ -13,9 +13,6 @@ $(info "DESTDIR: $(DESTDIR)")
 SUBDIRS :=		\
 	atomic-update	\
 	chainloader	\
-	dracut		\
-	gpd-quirks	\
-	glx		\
 	grub		\
 	misc		\
 	NetworkManager	\

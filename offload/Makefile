@@ -7,6 +7,7 @@ MOUNTS_IN := $(wildcard systemd/*.mount.in)
 MOUNTS := $(patsubst %.in,%,$(MOUNTS_IN))
 TARGETS := $(wildcard systemd/*.target)
 UNITS := $(MOUNTS) $(TARGETS)
+CLEANABLE := $(MOUNTS) $(TMPFILES)
 
 all: $(MOUNTS) $(TMPFILES)
 

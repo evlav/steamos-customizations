@@ -7,7 +7,7 @@ SERVICES := $(patsubst %.in,%,$(SERVICES_IN))
 GENERATORS_IN := $(wildcard generator/*-generator.in)
 GENERATORS := $(patsubst %.in,%,$(GENERATORS_IN))
 UNITS := $(SERVICES)
-CLEANABLE := $(GENERATORS)
+CLEANABLE := $(SERVICES) $(GENERATORS)
 
 all: $(SERVICES) $(GENERATORS)
 

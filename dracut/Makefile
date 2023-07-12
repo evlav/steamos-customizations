@@ -7,12 +7,37 @@ ALPM_SCRIPTS := $(patsubst %.in,%,$(ALPM_SCRIPTS_IN))
 BINARIES_IN := $(wildcard bin/*.in)
 BINARIES := $(patsubst %.in,%,$(BINARIES_IN))
 COMPLETIONS := $(wildcard completions/*)
-MODULES_IN := $(wildcard modules.d/*.sh.in)
-MODULES := $(patsubst %.in,%,$(MODULES_IN))
+GEN_MOD_IN := modules.d/module-setup.sh.in
+GEN_MOD_IN += modules.d/steamos-etc-overlay.sh.in
+GEN_MOD_IN += modules.d/steamos-factory-reset.sh.in
+GEN_MOD_IN += modules.d/steamos-udev-rules.sh.in
+GEN_MOD_IN += modules.d/steamos-var-lib-modules.sh.in
+GEN_MOD_IN += modules.d/steamos-var.sh.in
+MODULES_IN := $(filter-out $(GEN_MOD_IN),$(wildcard modules.d/*.sh.in))
+MODULES := $(patsubst %.in,%,$(MODULES_IN) $(GEN_MOD_IN))
 README := modules.d/README
-CLEANABLE := $(ALPM_HOOKS) $(ALPM_SCRIPTS) $(MODULES)
+CLEANABLE := $(BINARIES) $(ALPM_SCRIPTS) $(ALPM_HOOKS) $(GEN_MOD_IN) $(MODULES)
 
-all: $(BINARIES) $(ALPM_SCRIPTS) $(ALPM_HOOKS) $(MODULES)
+modules.d/module-setup.sh.in: modules.d/module-setup.tmpl ../initrd/steamos-files.bash
+	../initrd/inline-file.sh "@STEAMOS_BINARIES@" $^ > $@
+
+modules.d/steamos-etc-overlay.sh.in: modules.d/steamos-etc-overlay.tmpl ../initrd/steamos-etc-overlay.ash
+	../initrd/inline-file.sh "@STEAMOS_ETC_OVERLAY@" $^ | sed -e 's|@INFO@|info|g;s|@WARN@|warn|g' > $@
+
+modules.d/steamos-factory-reset.sh.in: modules.d/steamos-factory-reset.tmpl ../initrd/steamos-factory-reset.ash
+	../initrd/inline-file.sh "@STEAMOS_FACTORY_RESET@" $^ | sed -e 's|@INFO@|info|g;s|@WARN@|warn|g' > $@
+
+modules.d/steamos-udev-rules.sh.in: modules.d/steamos-udev-rules.tmpl ../initrd/steamos-udev-rules.ash
+	../initrd/inline-file.sh "@STEAMOS_UDEV_RULES@" $^ | \
+		sed -e 's|@INFO@|info|g;s|@WARN@|warn|g;s|@WAIT_FOR_DEV@|wait_for_dev|g' > $@
+
+modules.d/steamos-var-lib-modules.sh.in: modules.d/steamos-var-lib-modules.tmpl ../initrd/steamos-var-lib-modules.ash
+	../initrd/inline-file.sh "@STEAMOS_VAR_LIB@" $^ | sed -e 's|@INFO@|info|g;s|@WARN@|warn|g' > $@
+
+modules.d/steamos-var.sh.in: modules.d/steamos-var.tmpl ../initrd/steamos-var.ash
+	../initrd/inline-file.sh "@STEAMOS_VAR@" $^ | sed -e 's|@INFO@|info|g;s|@WARN@|warn|g' > $@
+
+all: $(BINARIES) $(ALPM_SCRIPTS) $(ALPM_HOOKS) $(GEN_MOD_IN) $(MODULES)
 
 install: all
 	install -d $(DESTDIR)$(sbindir)
