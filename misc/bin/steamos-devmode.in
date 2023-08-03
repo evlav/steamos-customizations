@@ -64,6 +64,7 @@ enable_devmode() {
     if steamos-readonly status >/dev/null 2>&1; then
         steamos-readonly disable
     fi
+    rm -rf /etc/pacman.d/gnupg/ || :
     pacman-key --init
     pacman-key --populate
     pacman -Sy --noconfirm --needed archlinux-keyring
