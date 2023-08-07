@@ -141,12 +141,16 @@ function migrate_home_steamos_update
 
 function update_pacman_dbpath
 {
+    local pacman_conf="/var/lib/overlays/etc/upper/pacman.conf"
+    if [[ ! -f "$pacman_conf" ]]; then
+        return 0
+    fi
+
     # DBPath is on the RO rootfs with 3.5+
     local -i path_ok=1
-    grep -q "^DBPath = /usr/lib/holo/pacmandb/$" /etc/pacman.conf || path_ok=0
-
+    grep -q "^DBPath = /usr/lib/holo/pacmandb/$" "$pacman_conf" || path_ok=0
     if (( ! path_ok )); then
-        sed -i "s|^#*DBPath.*$|DBPath = /usr/lib/holo/pacmandb/|" /etc/pacman.conf
+        sed -i "s|^#*DBPath.*$|DBPath = /usr/lib/holo/pacmandb/|" "$pacman_conf" || :
     fi
 }
 

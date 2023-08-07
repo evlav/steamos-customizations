@@ -253,6 +253,17 @@ sync_var_mountpoints() {
         --exclude="/lib/overlays/etc/upper/pacman.d/gnupg" \
         "$src/" "$dst/"
     fsfreeze -u "$src"
+
+    # Explicitly remove and mask/whiteout the .updated files in /var and /etc
+    # respectively. Counter intuitively The timestamp stored is for the /usr
+    # folder. Without this services like ldconfig won't trigger and we'll end up
+    # with potential references to the other partset.
+    #
+    # Note: We want the explicit -r here since the user may have removed the
+    # file and created a folder in its place.
+    rm -rf "$dst/.updated" || :
+    rm -rf "$dst/lib/overlays/etc/upper/.updated" || :
+    mknod -m 000 "$dst/lib/overlays/etc/upper/.updated" || :
 }
 
 log "Syncing the var partitions from 'self' to 'other'"
