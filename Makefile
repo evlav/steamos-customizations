@@ -11,7 +11,6 @@ $(info "TOPDIR: $(TOPDIR)")
 $(info "DESTDIR: $(DESTDIR)")
 
 SUBDIRS :=		\
-	atomic-update	\
 	chainloader	\
 	grub		\
 	misc		\
