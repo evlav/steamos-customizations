@@ -146,6 +146,21 @@ function migrate_network
     rm -f /var/lib/NetworkManager/*
 }
 
+function downgrade_pacman_dbpath
+{
+    local pacman_conf="/var/lib/overlays/etc/upper/pacman.conf"
+    if [[ ! -f "$pacman_conf" ]]; then
+        return 0
+    fi
+
+    # DBPath is on the RW /var with 3.4-
+    local -i path_ok=1
+    grep -q "^#\?DBPath[[:space:]]\+=[[:space:]]\+/var/lib/pacman/[[:space:]]*$" "$pacman_conf" || path_ok=0
+    if (( ! path_ok )); then
+        sed -i "s|^#*DBPath.*$|DBPath = /var/lib/pacman/|" "$pacman_conf" || :
+    fi
+}
+
 while [[ "$#" -ne 0 ]]
 do
     if [[ "$1" =~ ^(-h|--help)$ ]]
@@ -184,6 +199,7 @@ then
     if in_chroot || [[ ${force_migrate:-} ]]
     then
         migrate_network
+        downgrade_pacman_dbpath # DBPath is on the RW /var with 3.4-
     else
         echo "Skipping configuration migration steps as this is not running in a chroot."
     fi
