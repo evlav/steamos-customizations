@@ -97,29 +97,33 @@ get_fstype() {
     esac
 }
 
-# Ideally status will be root-free, alas tune2fs (ext4 rootfs)
-# does not like that.
-if [[ "$(id -u)" -ne 0 ]]; then
-    echo "$(basename $0) needs to be run as root"
-    exit 1
-fi
-
 get_fstype
 
+# actions can override this to allow execution as a non-root user when they
+# don't need to be root
+needs_root=true
 case "${1:-}" in
     disable)
-        read_write
+        action=read_write
         ;;
     enable)
-        read_only
+        action=read_only
         ;;
     toggle)
-        toggle
+        action=toggle
         ;;
     status)
-        status
+        action=status
+        needs_root=false
         ;;
     *)
         usage
         exit 1
 esac
+
+if "$needs_root" && [[ "$(id -u)" -ne 0 ]]; then
+    echo "$(basename "$0") needs to be run as root"
+    exit 1
+fi
+
+"$action"
