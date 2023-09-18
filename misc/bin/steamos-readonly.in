@@ -30,10 +30,6 @@ EOF
 }
 
 # mark root partition writable
-read_write_extfs() {
-    tune2fs -O ^read-only "$ROOTDEV"
-    mount -o remount,rw /
-}
 read_write_btrfs() {
     mount -o remount,rw /
     btrfs property set / ro false
@@ -53,10 +49,6 @@ read_write() {
 read_only_btrfs() {
     btrfs property set / ro true
 }
-read_only_extfs() {
-    mount -o remount,ro /
-    tune2fs -O read-only "$ROOTDEV"
-}
 read_only() {
     if status >/dev/null; then
         echo "Warning: The rootfs is already read-only!" >&2
@@ -67,16 +59,6 @@ read_only() {
     read_only_$fstype
 }
 
-status_extfs() {
-    if tune2fs -l "$ROOTDEV" | grep -q '^Filesystem features: .*read-only.*$'
-    then
-        echo "enabled"
-        return
-    else
-        echo "disabled"
-        return 1
-    fi
-}
 status_btrfs() {
     prop_val=$(btrfs property get / ro)
     if [[ $prop_val = "ro=true" ]]
@@ -106,9 +88,6 @@ toggle() {
 get_fstype() {
     declare -r FSTYPE=$(findmnt -fn --output FSTYPE /)
     case "$FSTYPE" in
-    ext4)
-        fstype=extfs
-        ;;
     btrfs)
         fstype=btrfs
         ;;
