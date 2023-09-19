@@ -4,6 +4,7 @@ BINARIES := $(wildcard bin/*)
 COMPLETIONS := $(wildcard completions/*)
 RAUC_CONFIG_IN := rauc/system.conf.in
 RAUC_CONFIG :=  $(patsubst %.in,%,$(RAUC_CONFIG_IN))
+RAUC_FALLBACK_CONFIG := $(sed '/install-args=/d;/use-desync=/d' < $(RAUC_CONFIG) > rauc/fallback-system.conf)
 RAUC_HOOKS_IN := $(wildcard rauc/*.sh.in)
 RAUC_HOOKS := $(patsubst %.in,%,$(RAUC_HOOKS_IN))
 STEAMOS_ATOMUPD_CONFIG_IN := steamos-atomupd/client.conf.in
@@ -12,9 +13,9 @@ SERVICES_OVERRIDE_IN := $(wildcard systemd/*/override.conf.in)
 SERVICES_OVERRIDE := $(patsubst %.in,%,$(SERVICES_OVERRIDE_IN))
 TMPFILES_IN := $(wildcard tmpfiles.d/*.conf.in)
 TMPFILES := $(patsubst %.in,%,$(TMPFILES_IN))
-CLEANABLE := $(RAUC_CONFIG) $(RAUC_HOOKS) $(SERVICES_OVERRIDE) $(TMPFILES) $(STEAMOS_ATOMUPD_CONFIG)
+CLEANABLE := $(RAUC_CONFIG) $(RAUC_FALLBACK_CONFIG) $(RAUC_HOOKS) $(SERVICES_OVERRIDE) $(TMPFILES) $(STEAMOS_ATOMUPD_CONFIG)
 
-all: $(RAUC_CONFIG) $(RAUC_HOOKS) $(SERVICES_OVERRIDE) $(TMPFILES) $(STEAMOS_ATOMUPD_CONFIG)
+all: $(RAUC_CONFIG) $(RAUC_FALLBACK_CONFIG) $(RAUC_HOOKS) $(SERVICES_OVERRIDE) $(TMPFILES) $(STEAMOS_ATOMUPD_CONFIG)
 
 install: all
 	install -d $(DESTDIR)$(sbindir)
@@ -22,7 +23,7 @@ install: all
 	install -d $(DESTDIR)$(completionsdir)
 	install -m 0644 $(COMPLETIONS) $(DESTDIR)$(completionsdir)
 	install -d $(DESTDIR)$(sysconfdir)/rauc
-	install -m 0644 $(RAUC_CONFIG) $(DESTDIR)$(sysconfdir)/rauc
+	install -m 0644 $(RAUC_CONFIG) $(RAUC_FALLBACK_CONFIG) $(DESTDIR)$(sysconfdir)/rauc
 	install -d $(DESTDIR)$(libdir)/rauc
 	install -m 0755 $(RAUC_HOOKS) $(DESTDIR)$(libdir)/rauc
 	install -d $(DESTDIR)$(sysconfdir)/steamos-atomupd
