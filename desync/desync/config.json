@@ -2,10 +2,6 @@
   "store-options": {
     "https://steamdeck-images.steamos.cloud/steamdeck/*/*/": {
       "error-retry-base-interval": 500000000
-    },
-    "https://images.steamos.cloud/steamos-holo/*/*/*/": {
-      "http-auth": "Basic aG9sby1pbWFnZS0yMDIxOjg4OTEyMzNjLWE3NDEtNGEwZS1hNDhhLTU2OTUwMzU0MmYxYQ==",
-      "error-retry-base-interval": 500000000
     }
   }
 }
