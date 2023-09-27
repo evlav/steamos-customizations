@@ -41,6 +41,7 @@ It does the following:
   - Disables read-only mode.
   - Populates the pacman keyring.
   - Restores missing files stripped from the shipping image of SteamOS (ie. headers, etc) so you can build your own software.
+  - Installs base development tools.
 
 If you wish to re-enable readonly mode after using this script, you can use the "steamos-readonly disable" command.
 
@@ -68,8 +69,8 @@ enable_devmode() {
     pacman-key --init
     pacman-key --populate
     pacman -Sy --noconfirm --needed archlinux-keyring
-    pacman --noconfirm -S $(pacman -Qnkq | cut -d' ' -f1 | sort | uniq)
-    pacman -S base-devel multilib-devel --needed
+    pacman -S --noconfirm $(pacman -Qnkq | cut -d' ' -f1 | sort | uniq)
+    pacman -S --noconfirm --needed base-devel multilib-devel
     touch "$touch_file"
 }
 
