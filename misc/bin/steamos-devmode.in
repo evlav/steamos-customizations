@@ -68,7 +68,6 @@ enable_devmode() {
     rm -rf /etc/pacman.d/gnupg/ || :
     pacman-key --init
     pacman-key --populate
-    pacman -Sy --noconfirm --needed archlinux-keyring
     pacman -S --noconfirm $(pacman -Qnkq | cut -d' ' -f1 | sort | uniq)
     pacman -S --noconfirm --needed base-devel multilib-devel
     touch "$touch_file"
