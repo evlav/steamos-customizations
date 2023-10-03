@@ -336,7 +336,8 @@ steamos-chroot --partset $UPDATED_SLOT -- steamos-finalize-install --no-kernel |
 if [ $ERR == 0 ]; then
   update_manifest=$(steamos-chroot --partset $UPDATED_SLOT -- cat "/etc/steamos-atomupd/manifest.json")
   update_buildid=$(jq -r '.buildid | select(type == "string")' <<< "$update_manifest")
-  echo "$update_buildid" > "$REBOOT_FOR_UPDATE"
+  update_version=$(jq -r '.version | select(type == "string")' <<< "$update_manifest")
+  echo "${update_buildid}-${update_version}" > "$REBOOT_FOR_UPDATE"
   label=$(boot_label "$UPDATED_SLOT" "$update_manifest")
   if [ -n "${label:-}" ]; then
       steamos-chroot --partset $UPDATED_SLOT -- \
