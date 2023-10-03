@@ -230,6 +230,10 @@ sync_var_mountpoints() {
     # was rebuilt to include nvidia drivers built by DKMS. Once again, this is
     # not a state that we want to keep.
     #
+    # Exclude `/etc/os-release` changes because that file is used by the Steam
+    # client to show the current image version, and we don't want to preserve
+    # outdated info across updates.
+    #
     # We also exclude any potential user changes to the RAUC configuration
     # to avoid the risk of breaking the updates by using an unexpected config.
     #
@@ -249,6 +253,7 @@ sync_var_mountpoints() {
         --exclude="/lib/pacman/" \
         --exclude="/lib/NetworkManager/" \
         --exclude="/lost+found/" \
+        --exclude="/lib/overlays/etc/upper/os-release" \
         --exclude="/lib/overlays/etc/upper/rauc" \
         --exclude="/lib/overlays/etc/upper/pacman.d/gnupg" \
         "$src/" "$dst/"
