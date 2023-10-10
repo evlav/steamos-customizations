@@ -17,6 +17,7 @@ build() {
         overlay
         sdhci-pci
         serio-raw
+        spi-amd
         usbhid
         usb-storage
         vfat
