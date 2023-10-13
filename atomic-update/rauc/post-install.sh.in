@@ -268,7 +268,7 @@ sync_var_mountpoints() {
     # file and created a folder in its place.
     rm -rf "$dst/.updated" || :
     rm -rf "$dst/lib/overlays/etc/upper/.updated" || :
-    mknod -m 000 "$dst/lib/overlays/etc/upper/.updated" || :
+    mknod -m 000 "$dst/lib/overlays/etc/upper/.updated" c 0 0 || :
 }
 
 log "Syncing the var partitions from 'self' to 'other'"
