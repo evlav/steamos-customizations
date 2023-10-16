@@ -241,7 +241,7 @@ sync_var_mountpoints() {
     # enable - which will regenerate it for them, or if they manually flip off
     # the RO mode, they can issue pacman-key manually.
 
-    rsync \
+    if ! rsync \
         --archive \
         --delete \
         --one-file-system \
@@ -254,7 +254,11 @@ sync_var_mountpoints() {
         --exclude="/lib/overlays/etc/upper/os-release" \
         --exclude="/lib/overlays/etc/upper/rauc" \
         --exclude="/lib/overlays/etc/upper/pacman.d/gnupg" \
-        "$src/" "$dst/"
+        "$src/" "$dst/"; then
+
+        warn "rsync failed to sync \"$src\" to \"$dst\""
+        return 1
+    fi
 
     # Explicitly remove and mask/whiteout the .updated files in /var and /etc
     # respectively. Counter intuitively The timestamp stored is for the /usr
