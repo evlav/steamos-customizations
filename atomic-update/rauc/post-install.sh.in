@@ -241,7 +241,6 @@ sync_var_mountpoints() {
     # enable - which will regenerate it for them, or if they manually flip off
     # the RO mode, they can issue pacman-key manually.
 
-    fsfreeze -f "$src"
     rsync \
         --archive \
         --delete \
@@ -256,7 +255,6 @@ sync_var_mountpoints() {
         --exclude="/lib/overlays/etc/upper/rauc" \
         --exclude="/lib/overlays/etc/upper/pacman.d/gnupg" \
         "$src/" "$dst/"
-    fsfreeze -u "$src"
 
     # Explicitly remove and mask/whiteout the .updated files in /var and /etc
     # respectively. Counter intuitively The timestamp stored is for the /usr
@@ -299,8 +297,10 @@ reformat_device_ext4 "$VAR_DEVICE_OTHER" || \
     err "Failed to reformat other var partition"
 
 mount "$VAR_DEVICE_OTHER" /mnt
+fsfreeze -f "$VAR_FROM"
 sync_var_mountpoints "$VAR_FROM" /mnt || \
     err "Failed to sync var partitions"
+fsfreeze -u "$VAR_FROM"
 # Remove the old rootfs index to ensure that we either have the correct one
 # or that we don't have it at all.
 rm -f /mnt/lib/steamos-atomupd/rootfs.caibx
