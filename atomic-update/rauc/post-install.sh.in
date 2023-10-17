@@ -84,7 +84,6 @@ configure_other_efi() {
     local confdir=
     local partsets=
     local roothash=
-    local title=
     local ident=
     local self_partsets=
 
