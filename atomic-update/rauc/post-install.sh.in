@@ -122,7 +122,7 @@ configure_other_efi() {
     roothash=$efi/$ROOTHASH_RELPATH
     if [ -e "$RAUC_UPDATE_SOURCE/roothash" ]; then
         mkdir -p "$(dirname "$roothash")"
-        cp -f "$roothash_update_file" "$roothash"
+        cp -f "$RAUC_UPDATE_SOURCE/roothash" "$roothash"
     fi
 }
 
