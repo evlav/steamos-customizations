@@ -329,7 +329,7 @@ steamos-chroot --partset $UPDATED_SLOT -- steamos-finalize-install --no-kernel |
 
 # Mark the new partition valid, otherwise it will not boot
 # (note; you can't call rauc status mark-good here)
-(( $ERR == 0 )) && steamos-bootconf config --image $UPDATED_SLOT --set image-invalid 0
+(( ERR == 0 )) && steamos-bootconf config --image $UPDATED_SLOT --set image-invalid 0
 
 # Store the installed update version in a temporary file to record that we
 # have a pending reboot to switch to the new image
