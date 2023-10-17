@@ -290,8 +290,7 @@ esac
 [ -b "$VAR_DEVICE_OTHER" ] || \
     fail "Other var device '$VAR_DEVICE_OTHER' not found"
 
-if [ -n "$VAR_DEVICE_FROM" ]
-then
+if [ -n "$VAR_DEVICE_FROM" ]; then
     [ -b "$VAR_DEVICE_FROM" ] ||
         fail "Source var device '$VAR_DEVICE_FROM' not found"
     mount "$VAR_DEVICE_FROM" "$VAR_FROM"
@@ -311,8 +310,7 @@ cp "$RAUC_BUNDLE_MOUNT_POINT"/rootfs.img.caibx /mnt/lib/steamos-atomupd/rootfs.c
     warn "Failed to copy the rootfs seed index file"
 umount /mnt
 
-if [ -n "$VAR_DEVICE_FROM" ]
-then
+if [ -n "$VAR_DEVICE_FROM" ]; then
     umount "$VAR_FROM"
 fi
 
