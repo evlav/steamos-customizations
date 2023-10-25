@@ -41,6 +41,10 @@ read_write() {
     needs_root
 
     btrfs property set / ro false
+
+    # Write token file to easily distinguish when the FS have been toggled. This
+    # is a quick and dirty check (as used by steamos-systemreport) and by no
+    # means an comprehensive solution.
     date > /.ROOTFS_RW
 }
 
