@@ -24,6 +24,13 @@ Enable or disable read-only on the current running SteamOS.
 EOF
 }
 
+needs_root() {
+    if [[ "$(id -u)" -ne 0 ]]; then
+        echo "$(basename "$0") needs to be run as root"
+        exit 1
+    fi
+}
+
 # mark root partition writable
 read_write() {
     if ! status >/dev/null; then
@@ -31,6 +38,8 @@ read_write() {
         echo "         Nothing is performed." >&2
         return
     fi
+    needs_root
+
     mount -o remount,rw /
     btrfs property set / ro false
     date > /.ROOTFS_RW
@@ -44,6 +53,8 @@ read_only() {
         echo "         Nothing is performed." >&2
         return
     fi
+    needs_root
+
     sync /
     btrfs property set / ro true
 }
@@ -82,9 +93,6 @@ get_fstype() {
 
 get_fstype
 
-# actions can override this to allow execution as a non-root user when they
-# don't need to be root
-needs_root=true
 case "${1:-}" in
     disable)
         action=read_write
@@ -97,16 +105,10 @@ case "${1:-}" in
         ;;
     status)
         action=status
-        needs_root=false
         ;;
     *)
         usage
         exit 1
 esac
-
-if "$needs_root" && [[ "$(id -u)" -ne 0 ]]; then
-    echo "$(basename "$0") needs to be run as root"
-    exit 1
-fi
 
 "$action"
