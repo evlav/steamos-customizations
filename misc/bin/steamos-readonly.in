@@ -40,7 +40,6 @@ read_write() {
     fi
     needs_root
 
-    mount -o remount,rw /
     btrfs property set / ro false
     date > /.ROOTFS_RW
 }
