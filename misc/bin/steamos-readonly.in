@@ -63,6 +63,7 @@ status() {
     prop_val=$(btrfs property get / ro)
     if [[ $prop_val = "ro=true" ]]; then
         echo "enabled"
+        return 0
     else
         echo "disabled"
         return 1
