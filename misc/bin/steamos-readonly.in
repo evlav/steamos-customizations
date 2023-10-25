@@ -16,8 +16,6 @@
 
 set -euo pipefail
 
-declare -r ROOTDEV=@udev_symlinks_absdir@/self/rootfs
-
 usage() {
     cat <<EOF
 Usage: ${0##*/} enable|disable|status
