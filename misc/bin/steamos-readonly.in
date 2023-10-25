@@ -50,8 +50,7 @@ read_only() {
 
 status() {
     prop_val=$(btrfs property get / ro)
-    if [[ $prop_val = "ro=true" ]]
-    then
+    if [[ $prop_val = "ro=true" ]]; then
         echo "enabled"
     else
         echo "disabled"
@@ -61,8 +60,7 @@ status() {
 
 
 toggle() {
-    if status >/dev/null
-    then
+    if status >/dev/null; then
         read_write
     else
         read_only
@@ -74,11 +72,11 @@ toggle() {
 get_fstype() {
     declare -r FSTYPE=$(findmnt -fn --output FSTYPE /)
     case "$FSTYPE" in
-    btrfs)
-        ;;
-    *)
-        echo "Unrecognized root filesystem type $FSTYPE"
-        exit 1
+        btrfs)
+            ;;
+        *)
+            echo "Unrecognized root filesystem type $FSTYPE"
+            exit 1
     esac
 }
 
