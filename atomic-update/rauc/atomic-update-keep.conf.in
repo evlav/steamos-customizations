@@ -56,6 +56,9 @@
 /etc/subgid
 /etc/subuid
 
+## Atomic update development configuration
+/etc/steamos-atomupd/client-dev.conf
+
 
 ## These examples include common files that users may wish to include.
 #
