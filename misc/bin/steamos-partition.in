@@ -13,14 +13,19 @@
 #  modify it under the terms of the GNU Lesser General Public License as
 #  published by the Free Software Foundation; either version 2.1 of the License,
 #  or (at your option) any later version.
+#
+#  This script is used by kinfocenter to show whether we are currently using
+#  A or B partition. But will only show up once jupiter gets a kcm-about-distrorc
+#  file specifying this script to run.
 
 set -euo pipefail
 
 partition=$(findmnt -no partlabel /)
+echo -e "Partition:"
 if [[ "$partition" == "rootfs-A" ]]; then
-	echo -e "Partition:\tA"
+    echo -e "A"
 elif [[ "$partition" == "rootfs-B" ]]; then
-	echo -e "Partition:\tB"
+    echo -e "B"
 else
-    echo -e "Partition:\tUnknown"
+    echo -e "Unknown"
 fi

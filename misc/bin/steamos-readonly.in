@@ -45,6 +45,7 @@ read_write() {
         return
     fi
     read_write_$fstype
+    date > /.ROOTFS_RW
 }
 
 #

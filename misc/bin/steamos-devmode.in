@@ -69,6 +69,7 @@ enable_devmode() {
     pacman-key --populate
     pacman -Sy --noconfirm --needed archlinux-keyring
     pacman --noconfirm -S $(pacman -Qnkq | cut -d' ' -f1 | sort | uniq)
+    pacman -S base-devel multilib-devel --needed
     touch "$touch_file"
 }
 
