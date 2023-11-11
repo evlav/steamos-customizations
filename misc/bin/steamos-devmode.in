@@ -69,7 +69,7 @@ enable_devmode() {
     pacman-key --init
     pacman-key --populate
     pacman -S --noconfirm $(pacman -Qnkq | cut -d' ' -f1 | sort | uniq)
-    pacman -S --noconfirm --needed base-devel multilib-devel
+    pacman -S --noconfirm --needed base-devel multilib-devel --overwrite /etc/ld.so.conf.d/fakeroot.conf --overwrite /etc/ld.so.conf.d/lib32-fakeroot.conf
     touch "$touch_file"
 }
 
