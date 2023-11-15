@@ -110,10 +110,6 @@ STEAMOS_ATOMUPD_RUNTIME_DIR := /run/steamos-atomupd
 # record that we have a pending reboot to switch to the new image.
 REBOOT_FOR_UPDATE := $(STEAMOS_ATOMUPD_RUNTIME_DIR)/reboot_for_update
 
-# Drop-in directory where users can list additional "/etc" files and
-# directories that they want to preserve across updates
-ATOMIC_UPDATE_CONF_D := $(DESTDIR)$(sysconfdir)/atomic-update.conf.d
-
 # NOTE: Don't use the semicolon as a separator for sed because it will
 # clash with the semicolons used in the variants list
 %: %.in
@@ -145,7 +141,6 @@ ATOMIC_UPDATE_CONF_D := $(DESTDIR)$(sysconfdir)/atomic-update.conf.d
 	  -e 's|@rauc_runtime_dir@|$(RAUC_RUNTIME_DIR)|g' \
 	  -e 's|@steamos_atomupd_runtime_dir@|$(STEAMOS_ATOMUPD_RUNTIME_DIR)|g' \
 	  -e 's|@reboot_for_update@|$(REBOOT_FOR_UPDATE)|g' \
-	  -e 's|@atomic_update_conf_d@|$(ATOMIC_UPDATE_CONF_D)|g' \
 	  $< > $@
 	@if grep -q '@[[:alnum:]_]*@' $@; then \
 	  echo >&2 "Substitution error!!!"; \
