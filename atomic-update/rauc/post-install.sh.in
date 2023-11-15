@@ -18,6 +18,7 @@ set -e
 set -u
 
 ERR=0 # the error code returned by this script
+BACKUP_TEMP_DIR= # temporary directory used to store the /etc backup
 
 SYMLINKS_DIR=@udev_symlinks_absdir@
 BOOTCONF_RELDIR=@bootconf_reldir@
@@ -26,11 +27,26 @@ ROOTHASH_RELPATH=@roothash_relpath@
 RAUC_RUNTIME_DIR=@rauc_runtime_dir@
 REBOOT_FOR_UPDATE=@reboot_for_update@
 ETC_OVERLAY_ABSDIR=@etc_overlay_absdir@
+ETC_BACKUP_DIR=@etc_backup_dir@
 ATOMIC_UPDATE_CONF_D=@atomic_update_conf_d@
 
 ATOMIC_UPDATE_KEEP_CONF="atomic-update-keep.conf"
 
 OWD="$(dirname "$(readlink -f "$0")")"
+
+#
+# Final cleanup before exiting
+#
+
+cleanup () {
+    if [ -n "$BACKUP_TEMP_DIR" ]; then
+        rm -rf "$BACKUP_TEMP_DIR" || :
+    fi
+
+    exit $ERR
+}
+
+trap cleanup EXIT
 
 #
 # Helpers
@@ -218,6 +234,87 @@ reformat_device_ext4() {
     mkfs.ext4 -q -F $opts "$device"
 }
 
+remove_old_files() {
+    local dir=$1
+    local n_to_remove=$2
+
+    if (( $(find "${dir}" -maxdepth 1 -type f | wc -l) == 0 )); then
+        log "No files left to delete in ${dir}"
+        return 1
+    fi
+
+    find "${dir}" -maxdepth 1 -type f | \
+        sort | \
+        head -n "${n_to_remove}" | \
+        xargs rm -f
+}
+
+backup_etc_changes() {
+    local src=$1
+    local dst=$2
+    local backup_name
+    local backup_size
+    local old_backups_size
+    local free_space
+    # This is mounted at $dst, so we change the sysroot from `/var` to $dst
+    local backup_dir="${dst}${ETC_BACKUP_DIR#"/var"}"
+    local upper_dir="${ETC_OVERLAY_ABSDIR#"/var"}/upper"
+
+    BACKUP_TEMP_DIR=$(mktemp --tmpdir -d "etc_backup.XXXXXX")
+    if [ -z "${BACKUP_TEMP_DIR}" ]; then
+        warn "Failed to create a temporary directory for the /etc backup"
+        return 1
+    fi
+
+    mkdir -p "${backup_dir}"
+    backup_name="$(date '+%F_%H-%M-%S').tar.xz"
+
+    if ! tar -cf "${BACKUP_TEMP_DIR}/${backup_name}" -I 'xz -T0' "${src}${upper_dir}"; then
+        warn "Failed to archive the content of /etc"
+        return 1
+    fi
+
+    backup_size=$(du -s --block-size=1K "${BACKUP_TEMP_DIR}" | cut -f1)
+
+    old_backups_size=$(du -s --block-size=1K "${backup_dir}" | cut -f1)
+
+    free_space=$(df --output=avail --block-size=1K "${backup_dir}" | tail -n 1)
+
+    # Maximum amount of free space that we can achieve if we delete
+    # all the older backups
+    maximum_free_space=$((free_space + old_backups_size))
+
+    # It is not guaranteed that we have enough space. If there are large files
+    # in /etc, it might happen that we are unable to keep a backup of them.
+    if (( maximum_free_space < backup_size )); then
+        warn "Even if we remove every old /etc backup, there is still not enough free space"
+        return 1
+    fi
+
+    # Remove older backups until we have enough space
+    while true; do
+        free_space=$(df --output=avail --block-size=1K "${backup_dir}" | tail -n 1)
+
+        if (( backup_size <= free_space )); then
+            break
+        fi
+
+        if ! remove_old_files "${backup_dir}" 1; then
+            warn "Failed to remove the oldest /etc backup"
+            return 1
+        fi
+    done
+
+    if ! cp "${BACKUP_TEMP_DIR}/${backup_name}" "${backup_dir}/"; then
+        warn "Failed to copy the new /etc backup"
+        return 1
+    fi
+
+    # Keep the latest 5 backups and remove the others. We don't want this to
+    # grow unconditionally.
+    remove_old_files "${backup_dir}" -5 || :
+}
+
 sync_var_mountpoints() {
     local src=$1
     local dst=$2
@@ -288,7 +385,7 @@ sync_var_mountpoints() {
     log "Running rsync with the following config file:"
     log "$(cat "${config}")"
 
-    # `--prune-empty-dirs` plus `--include="*/"` allows us to retain the
+    # `--prune-empty-dirs` plus `--include="*/"` allow us to retain the
     # directory structure while excluding empty directories.
     # `--include-from="${config}"` is used to list all the files that we
     # want to preserve.
@@ -368,6 +465,10 @@ mount "$VAR_DEVICE_OTHER" /mnt
 fsfreeze -f "$VAR_FROM"
 sync_var_mountpoints "$VAR_FROM" /mnt || \
     err "Failed to sync var partitions"
+if [ $ERR == 0 ]; then
+    backup_etc_changes "$VAR_FROM" /mnt || \
+        warn "Failed to create an /etc backup"
+fi
 fsfreeze -u "$VAR_FROM"
 # Remove the old rootfs index to ensure that we either have the correct one
 # or that we don't have it at all.
