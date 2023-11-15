@@ -5,8 +5,6 @@
 ## Indiscriminately preserving /etc files increases the risk of encountering
 ## unexpected behavior, please proceed only if you know what you are doing.
 ##
-## Before /etc changes gets removed, a backup is created in @etc_backup_dir@
-##
 ## The wildcard '*' will match every character, except forward slashes.
 ## The wildcard '**' is like '*', but it will include forward slashes.
 

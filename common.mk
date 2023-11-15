@@ -114,10 +114,6 @@ REBOOT_FOR_UPDATE := $(STEAMOS_ATOMUPD_RUNTIME_DIR)/reboot_for_update
 # directories that they want to preserve across updates
 ATOMIC_UPDATE_CONF_D := $(DESTDIR)$(sysconfdir)/atomic-update.conf.d
 
-# When applying an update, this is the directory where the edited /etc files
-# will be backed up
-ETC_BACKUP_DIR := /var/lib/steamos-atomupd/etc_backup
-
 # NOTE: Don't use the semicolon as a separator for sed because it will
 # clash with the semicolons used in the variants list
 %: %.in
@@ -150,7 +146,6 @@ ETC_BACKUP_DIR := /var/lib/steamos-atomupd/etc_backup
 	  -e 's|@steamos_atomupd_runtime_dir@|$(STEAMOS_ATOMUPD_RUNTIME_DIR)|g' \
 	  -e 's|@reboot_for_update@|$(REBOOT_FOR_UPDATE)|g' \
 	  -e 's|@atomic_update_conf_d@|$(ATOMIC_UPDATE_CONF_D)|g' \
-	  -e 's|@etc_backup_dir@|$(ETC_BACKUP_DIR)|g' \
 	  $< > $@
 	@if grep -q '@[[:alnum:]_]*@' $@; then \
 	  echo >&2 "Substitution error!!!"; \
