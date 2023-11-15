@@ -25,6 +25,12 @@ PARTSETS_RELDIR=@partsets_reldir@
 ROOTHASH_RELPATH=@roothash_relpath@
 RAUC_RUNTIME_DIR=@rauc_runtime_dir@
 REBOOT_FOR_UPDATE=@reboot_for_update@
+ETC_OVERLAY_ABSDIR=@etc_overlay_absdir@
+ATOMIC_UPDATE_CONF_D=@atomic_update_conf_d@
+
+ATOMIC_UPDATE_KEEP_CONF="atomic-update-keep.conf"
+
+OWD="$(dirname "$(readlink -f "$0")")"
 
 #
 # Helpers
@@ -216,9 +222,16 @@ sync_var_mountpoints() {
     local src=$1
     local dst=$2
 
+    # Remove the "/var" prefix to use this path in rsync. This effectively
+    # changes the sysroot from "/" to "/var".
+    local etc_overlay_in_var=${ETC_OVERLAY_ABSDIR#"/var"}
+    local upper_dir="${etc_overlay_in_var}/upper"
+    local config
+
     # --one-file-system makes sure that we ignore all the directories from /home
     # that are bind-mounted onto /var directories.
-    #
+    local -a common_options=( --archive --delete --one-file-system )
+
     # We exclude the directories /var/lib/{dkms,modules,pacman}, as they don't
     # really represent a state that we want to keep, but rather a part of the
     # rootfs that ends up leaving in /var for technical reasons. These pieces
@@ -229,36 +242,87 @@ sync_var_mountpoints() {
     # was rebuilt to include nvidia drivers built by DKMS. Once again, this is
     # not a state that we want to keep.
     #
-    # Exclude `/etc/os-release` changes because that file is used by the Steam
-    # client to show the current image version, and we don't want to preserve
-    # outdated info across updates.
-    #
-    # We also exclude any potential user changes to the RAUC configuration
-    # to avoid the risk of breaking the updates by using an unexpected config.
-    #
-    # Do not copy the gnupg keyring - the new image is RO and it makes little
-    # sense to have keyring around. People will either use steamos-devmode
-    # enable - which will regenerate it for them, or if they manually flip off
-    # the RO mode, they can issue pacman-key manually.
+    # Exclude the /etc overlay because that's handled separately.
 
     if ! rsync \
-        --archive \
-        --delete \
-        --one-file-system \
+        "${common_options[@]}" \
         --exclude="/boot/" \
         --exclude="/lib/dkms/" \
         --exclude="/lib/modules/" \
         --exclude="/lib/pacman/" \
         --exclude="/lib/NetworkManager/" \
         --exclude="/lost+found/" \
-        --exclude="/lib/overlays/etc/upper/os-release" \
-        --exclude="/lib/overlays/etc/upper/rauc" \
-        --exclude="/lib/overlays/etc/upper/pacman.d/gnupg" \
+        --exclude="${etc_overlay_in_var}" \
         "$src/" "$dst/"; then
 
         warn "rsync failed to sync \"$src\" to \"$dst\""
         return 1
     fi
+
+    config=$(mktemp --tmpdir "etc_config.XXXXXX")
+    if [ -z "${config}" ]; then
+        warn "Failed to create a temporary file for rsync"
+        return 1
+    fi
+
+    # Remove the leading "/etc" because we are syncing those files from
+    # the overlayfs and not directly from "/etc".
+    sed 's#^/etc##' "${OWD}/${ATOMIC_UPDATE_KEEP_CONF}" >> "${config}"
+
+    # Apart from the default config file, we also include all the eventual
+    # user defined configuration files
+    for file in "${ATOMIC_UPDATE_CONF_D}"/*.conf; do
+        if [ -f "${file}" ]; then
+            log "Keeping user defined files from '${file}'"
+            printf "\n%s" "$(sed 's#^/etc##' "${file}")" >> "${config}"
+        fi
+    done
+
+    # Create both upper and work directory, so steamos-chroot works correctly.
+    #
+    # Work directory should be clean, since it handles temporary state, and
+    # expected to be wiped on boot - see prepare_etc_overlay for details.
+    mkdir -p "${dst}${upper_dir}"
+    mkdir -p "${dst}${etc_overlay_in_var}/work"
+
+    log "Running rsync with the following config file:"
+    log "$(cat "${config}")"
+
+    # `--prune-empty-dirs` plus `--include="*/"` allows us to retain the
+    # directory structure while excluding empty directories.
+    # `--include-from="${config}"` is used to list all the files that we
+    # want to preserve.
+    # `--exclude="*"` is the final catch-all, to exclude all the files that
+    # were not explicitly listed in the config file.
+    if ! rsync \
+        "${common_options[@]}" \
+        --prune-empty-dirs \
+        --include="*/" \
+        --include-from="${config}" \
+        --exclude="*" \
+        "${src}${upper_dir}/" "${dst}${upper_dir}/"; then
+
+        warn "rsync failed to sync the /etc changes"
+        rm -f "${config}"
+        return 1
+    fi
+
+    rm -f "${config}"
+
+    # Force the removal of user changes from `/etc/os-release`, because that
+    # file is used by the Steam client to show the current image version, and
+    # we don't want to preserve outdated info across updates.
+    #
+    # Remove any potential user changes to the RAUC configuration to avoid
+    # the risk of breaking subsequent updates by using an unexpected config.
+    #
+    # Remove the eventual gnupg keyring - the new image is RO and it makes
+    # little sense to have keyring around. People will either use
+    # steamos-devmode enable - which will regenerate it for them, or if they
+    # manually flip off the RO mode, they can issue pacman-key manually.
+    rm -rf "$dst/lib/overlays/etc/upper/os-release" || :
+    rm -rf "$dst/lib/overlays/etc/upper/rauc" || :
+    rm -rf "$dst/lib/overlays/etc/upper/pacman.d/gnupg" || :
 
     # Explicitly remove and mask/whiteout the .updated files in /var and /etc
     # respectively. Counter intuitively The timestamp stored is for the /usr

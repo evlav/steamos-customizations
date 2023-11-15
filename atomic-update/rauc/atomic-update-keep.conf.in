@@ -1,0 +1,73 @@
+## When an atomic update is applied, all changes made in /etc will be lost.
+## The only exceptions are the files and directories listed below.
+## If you want to preserve additional files, you can create drop-in '*.conf'
+## files in "@atomic_update_conf_d@/".
+## Indiscriminately preserving /etc files increases the risk of encountering
+## unexpected behavior, please proceed only if you know what you are doing.
+##
+## The wildcard '*' will match every character, except forward slashes.
+## The wildcard '**' is like '*', but it will include forward slashes.
+
+## Eventual additional user drop-in configs
+@atomic_update_conf_d@/*.conf
+
+## IBus configuration
+/etc/dconf/**
+
+## Wi-Fi configuration
+/etc/NetworkManager/system-connections/*
+
+## Display manager configs
+/etc/sddm.conf.d/*
+
+## SSH public and private keys
+/etc/ssh/*_key
+/etc/ssh/*_key.pub
+
+## Systemd enabled/disabled/masked services and mount units
+/etc/systemd/system/*.wants/**
+/etc/systemd/system/*.service
+/etc/systemd/system/*.service.d/**
+/etc/systemd/system/*.mount
+/etc/systemd/system/*.mount.d/**
+
+## Devkit canary file
+/etc/.devkit-service-on-os-update
+
+## Name of the machine
+/etc/hostname
+
+## Chosen Timezone
+/etc/localtime
+
+## This machine unique id
+/etc/machine-id
+
+## DNS configuration
+/etc/resolv.conf
+
+## Groups and users account information
+/etc/group
+/etc/gshadow
+/etc/passwd
+/etc/shadow
+/etc/subgid
+/etc/subuid
+
+
+## These examples include common files that users may wish to include.
+#
+## Please be careful with what you whitelist here -- `pacman -Syu` may touch
+## these files and thus prevent atomic updates from adjusting them in the future.
+
+## Keep changes to systemd config
+# /etc/systemd/*.conf
+
+## Keep drop-in changes for mkinitcpio
+# /etc/mkinitcpio.conf.d/*.conf
+
+## Keep all edits to any files.
+## DANGEROUS! Any files you (or pacman) touch in /etc will forever shadow all
+## upstream changes from future atomic updates, leading to hard to diagnose
+## breakage. You get to keep the pieces.
+# /etc/**
