@@ -23,6 +23,19 @@ build() {
         vfat
         xhci-pci
         xxhash_generic
+
+        # Needed for full USB on galileo units probably
+        xhci-plat-hcd
+        steamdeck
+        steamdeck_hwmon
+        leds_steamdeck
+        extcon_steamdeck
+        dwc3
+        dwc3_pci
+        roles
+        ulpi
+        udc_core
+        xhci_pci_renesas
     )
 
     # Handful of qemu modules, cribbed from dracut's qemu module. We would be
