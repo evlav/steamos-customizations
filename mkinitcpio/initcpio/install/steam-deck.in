@@ -36,6 +36,8 @@ build() {
         ulpi
         udc_core
         xhci_pci_renesas
+        # Some usb drives are usb-attached-scsi
+        uas
     )
 
     # Handful of qemu modules, cribbed from dracut's qemu module. We would be
