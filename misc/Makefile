@@ -11,7 +11,6 @@ SDDM_CONFIG := sddm.conf.d/steamos.conf
 LODIND_CONFIG := $(wildcard journald.conf.d/*.conf)
 PROFILE_CONFIG := profile.d/steamos.sh
 XORG_CONFIG := xorg.conf.d/10-steamos-virtualdisplaysize.conf
-SYSTEMD_REMOUNT_FS_CONFIG := systemd-remount-fs.service.d/steamos-remount-rw.conf
 PROTON_LIMITS_CONFIG := limits.d/15-proton-nice.conf
 SYSTEMD_LOGIND_CONFIG := systemd-logind.service.d/homedir-override.conf
 
@@ -53,7 +52,5 @@ install: all
 	$(call enable-systemd-units,$(DESTDIR)$(systemdunitsdir),$(notdir $(UNITS)))
 	install -d $(DESTDIR)$(libdir)/sysusers.d
 	install -m 0644 $(SYSUSERS) $(DESTDIR)$(libdir)/sysusers.d
-	install -d $(DESTDIR)$(sysconfdir)/systemd/system/systemd-remount-fs.service.d
-	install -m 0644 $(SYSTEMD_REMOUNT_FS_CONFIG) $(DESTDIR)$(sysconfdir)/systemd/system/systemd-remount-fs.service.d
 	install -d $(DESTDIR)$(sysconfdir)/systemd/system/systemd-logind.service.d
 	install -m 0644 $(SYSTEMD_LOGIND_CONFIG) $(DESTDIR)$(sysconfdir)/systemd/system/systemd-logind.service.d
