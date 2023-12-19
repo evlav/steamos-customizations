@@ -324,9 +324,6 @@ while read device partuuid typeuuid partlabel; do
         ("$SELF")
             group=self
             echo "$linkname $partuuid"  >> "$OUTDIR/$partset"
-            if [ "$SELF" == "dev" ]; then
-                echo "$linkname $partuuid"  >> "$OUTDIR/dev"
-            fi
             ;;
         ("$OTHER")
             group=other
