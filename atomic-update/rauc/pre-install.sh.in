@@ -72,10 +72,88 @@ rm -f -- "$REBOOT_FOR_UPDATE"
 # Check the target partitions for corruption
 #
 
+ismounted() {
+    local device=$1
+
+    findmnt --real --source "$device" >/dev/null 2>&1
+}
+
+remountcmd() {
+    local device=$1
+
+    local WHERE=$(findmnt -n --raw --real --source "$device" | cut -f1 -d' ')
+    local OPTS=$(findmnt -n --raw --real --source "$device" | cut -f4 -d' ')
+    echo "mount -o $OPTS $device $WHERE"
+}
+
 fstype() {
     local device="$1"
 
     blkid -s TYPE -o value "$device"
+}
+
+get_parent_device() {
+
+    # Get the parent of a block device, for example:
+    # /dev/sda3 -> /dev/sda
+
+    local device=$(realpath "$1")
+    [ -b "$device" ] || return
+
+    local devname=$(basename "$device")
+    local diskname=$(basename "$(realpath "/sys/class/block/$devname/..")")
+    local disk="/dev/$diskname"
+    [ -b "$disk" ] || return
+
+    echo "$disk"
+}
+
+get_partlabel() {
+
+    # Get the partlabel for a given block device, for example:
+    # /dev/sda2 -> efi-A
+
+    local device=$(realpath "$1")
+    [ -b "$device" ] || return
+
+    local disk=$(get_parent_device "$device")
+    [ -b "$disk" ] || return
+
+    while read -r dev name; do
+        if [ "$dev" == "$device" ]; then echo "$name"; return; fi
+    done < <(sfdisk -ql -o device,name "$disk" | tail +2)
+}
+
+reformat_device_vfat() {
+    local device="$1"
+    local opts=
+    local label=
+
+    device=$(readlink -f "$device")
+    if ! [ -b "$device" ]; then
+        warn "'$device' is not a block device"
+        return
+    fi
+
+    if ismounted "$device"; then
+        REMOUNTCMD=$(remountcmd "$device")
+        umount -v "$device"
+    fi
+
+    if ismounted "$device"; then
+        umount -v -f "$device"
+    fi
+
+    label=$(get_partlabel "$device")
+    if [ "$label" ]; then
+        opts="$opts -n $label"
+    fi
+
+    mkfs.vfat $opts "$device"
+
+    if [ -n "${REMOUNTCMD:-}" ]; then
+        $REMOUNTCMD
+    fi
 }
 
 check_fat() {
@@ -90,16 +168,18 @@ check_fat() {
         ;;
         exfat)
             # Merits at least a warning
-            warn "Preserving unexpected exFAT EFI filesystem in ${device}."
+            warn "Found unexpected exFAT EFI filesystem in ${device}."
             return 1
         ;;
         ntfs)
             # Things have gone bad
-            fail "Aborting after finding invalid NTFS filesystem in ${device}."
+            warn "Found invalid NTFS filesystem in ${device}."
+            return 1
         ;;
         *)
             # Things have gone really bad
-            fail "Aborting after finding ${TYPE} filesystem on ${device}."
+            warn "Found invalid ${TYPE} filesystem on ${device}."
+            return 1
         ;;
     esac
 }
@@ -142,12 +222,36 @@ case $BOOTED_SLOT in
         ;;
 esac
 
+WIPE_EFI=false
 if check_fat $EFI_DEVICE; then
     if ! fsck.vfat -n $EFI_DEVICE; then
         # Errors found for $EFI_DEVICE
         warn "Found errors for ${EFI_DEVICE}, attempting repair."
-        fsck.vfat -a $EFI_DEVICE
+        if ! fsck.vfat -a $EFI_DEVICE; then
+            # Unfixable errors found for EFI_DEVICE
+            warn "Unable to repair ${EFI_DEVICE}, rebuilding filesystem as VFAT."
+            WIPE_EFI=true
+        fi
     fi
+else
+    warn "Rebuilding filesystem on $EFI_DEVICE as VFAT."
+    WIPE_EFI=true
+fi
+
+if $WIPE_EFI; then
+    TEMPDIR=$(mktemp -d)
+    reformat_device_vfat $EFI_DEVICE
+    mount $EFI_DEVICE "$TEMPDIR/mnt"
+
+    # Recreate the partsets
+    steamos-partsets "$TEMPDIR/mnt"
+    # steamos-partsets doesn't create self and other, just A and B
+    rm -f "$TEMPDIR/mnt/self" "$TEMPDIR/mnt/other"
+    cp "$TEMPDIR/mnt/$PARTSETS_RELDIR/$UPDATED_SLOT"   "$TEMPDIR/mnt/$PARTSETS_RELDIR/self"
+    cp "$TEMPDIR/mnt/$PARTSETS_RELDIR/$PRESERVED_SLOT" "$TEMPDIR/mnt/$PARTSETS_RELDIR/other"
+
+    umount "$TEMPDIR/mnt"
+    rm -rf "$TEMPDIR"
 fi
 
 ESP_DEVICE=$(realpath $SYMLINKS_DIR/shared/esp)
