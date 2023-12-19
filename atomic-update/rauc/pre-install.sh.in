@@ -150,6 +150,16 @@ if check_fat $EFI_DEVICE; then
     fi
 fi
 
+ESP_DEVICE=$(realpath $SYMLINKS_DIR/shared/esp)
+
+if check_fat $ESP_DEVICE; then
+    if ! fsck.vfat -n $ESP_DEVICE; then
+        # Errors found for $ESP_DEVICE
+        warn "Found errors for ${ESP_DEVICE}, attempting repair."
+        fsck.vfat -a $ESP_DEVICE
+    fi
+fi
+
 #
 # Disable all systemd timers
 #
