@@ -260,8 +260,21 @@ if check_fat $ESP_DEVICE; then
     if ! fsck.vfat -n $ESP_DEVICE; then
         # Errors found for $ESP_DEVICE
         warn "Found errors for ${ESP_DEVICE}, attempting repair."
-        fsck.vfat -a $ESP_DEVICE
+        if ! fsck.vfat -a $ESP_DEVICE; then
+            # Unfixable errors found for ESP_DEVICE
+            WIPE_ESP=true
+        fi
     fi
+else
+    WIPE_ESP=true
+fi
+
+if $WIPE_ESP; then
+    TEMPDIR=$(mktemp -d)
+    rsync -rltopgoDAXUH /esp/ "${TEMPDIR}/"
+    reformat_device_vfat $ESP_DEVICE
+    rsync -rltopgoDAXUH "${TEMPDIR}/" /esp/
+    rm -rf "$TEMPDIR"
 fi
 
 #
