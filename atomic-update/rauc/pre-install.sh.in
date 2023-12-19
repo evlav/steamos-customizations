@@ -22,9 +22,11 @@ set -u
 #
 
 log () { echo >&2 "$@"; }
+warn() { echo >&2 "Warning:" "$@"; }
 fail() { echo >&2 "Error:" "$@"; exit 1; }
 
 SYMLINKS_DIR=@udev_symlinks_absdir@
+PARTSETS_RELDIR=@partsets_reldir@
 RAUC_RUNTIME_DIR=@rauc_runtime_dir@
 REBOOT_FOR_UPDATE=@reboot_for_update@
 
@@ -65,6 +67,88 @@ fi
 #
 
 rm -f -- "$REBOOT_FOR_UPDATE"
+
+#
+# Check the target partitions for corruption
+#
+
+fstype() {
+    local device="$1"
+
+    blkid -s TYPE -o value "$device"
+}
+
+check_fat() {
+    declare -r device="$1"
+    declare -r TYPE=$(fstype "$device")
+
+    case "$TYPE" in
+        vfat)
+            # Everything is okay, we expected this
+            log "Found expected VFAT EFI filesystem in ${device}."
+            return 0
+        ;;
+        exfat)
+            # Merits at least a warning
+            warn "Preserving unexpected exFAT EFI filesystem in ${device}."
+            return 1
+        ;;
+        ntfs)
+            # Things have gone bad
+            fail "Aborting after finding invalid NTFS filesystem in ${device}."
+        ;;
+        *)
+            # Things have gone really bad
+            fail "Aborting after finding ${TYPE} filesystem on ${device}."
+        ;;
+    esac
+}
+
+log "Detecting 'other' efi partition"
+
+BOOTED_SLOT=$(steamos-bootconf this-image)
+declare -r BOOTED_SLOT
+PRESERVED_SLOT=
+UPDATED_SLOT=
+
+log "Booted into slot $BOOTED_SLOT"
+
+case $BOOTED_SLOT in
+    A)
+        PRESERVED_SLOT=A
+        UPDATED_SLOT=B
+        EFI_DEVICE=$(realpath $SYMLINKS_DIR/other/efi)
+        ;;
+    B)
+        PRESERVED_SLOT=B
+        UPDATED_SLOT=A
+        EFI_DEVICE=$(realpath $SYMLINKS_DIR/other/efi)
+        ;;
+    *)
+        while read -r valid slot x
+        do
+            case $valid$slot in
+                +A)
+                    UPDATED_SLOT=B
+                    PRESERVED_SLOT=A
+                    ;;
+                +B)
+                    UPDATED_SLOT=A
+                    PRESERVED_SLOT=B
+                    ;;
+            esac
+        done < <(steamos-bootconf list-images)
+        EFI_DEVICE=$(realpath $SYMLINKS_DIR/$UPDATED_SLOT/efi)
+        ;;
+esac
+
+if check_fat $EFI_DEVICE; then
+    if ! fsck.vfat -n $EFI_DEVICE; then
+        # Errors found for $EFI_DEVICE
+        warn "Found errors for ${EFI_DEVICE}, attempting repair."
+        fsck.vfat -a $EFI_DEVICE
+    fi
+fi
 
 #
 # Disable all systemd timers
