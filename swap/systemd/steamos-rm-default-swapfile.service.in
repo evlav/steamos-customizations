@@ -1,5 +1,8 @@
 #  SPDX-License-Identifier: LGPL-2.1+
 #
+#  Copyright © 2023-2024 Igalia S.L.
+#  Copyright © 2023-2024 Valve Corporation.
+#
 #  This file is part of steamos-customizations.
 #
 #  steamos-customizations is free software; you can redistribute it and/or
@@ -8,18 +11,18 @@
 #  or (at your option) any later version.
 
 [Unit]
-Description=Create Swap File
+Description=Remove default swapfile created by SteamOS in previous releases
 DefaultDependencies=no
-Before=shutdown.target home-swapfile.swap
+Before=multi-user.target
 Conflicts=shutdown.target
-ConditionFileIsExecutable=@sbindir@/mkswapfile
-ConditionPathExists=!/home/swapfile
 RequiresMountsFor=/home/swapfile
+ConditionPathExists=/home/swapfile
+ConditionFileIsExecutable=@libexecdir@/steamos/steamos-rm-default-swapfile
 
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=@sbindir@/mkswapfile /home/swapfile 1024
+ExecStart=@libexecdir@/steamos/steamos-rm-default-swapfile /home/swapfile
 
 [Install]
 WantedBy=swap.target

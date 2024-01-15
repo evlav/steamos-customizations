@@ -11,6 +11,7 @@
 Description=Swap
 Requires=swapfile.service
 After=swapfile.service
+ConditionPathExists=/home/swapfile
 
 [Swap]
 What=/home/swapfile
