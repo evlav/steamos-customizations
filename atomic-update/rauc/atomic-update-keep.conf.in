@@ -29,6 +29,9 @@
 ## WireGuard configs, including private keys
 /etc/wireguard/*.conf
 
+## Preferences for the system updates, e.g. which branch to follow
+/etc/steamos-atomupd/preferences.conf
+
 ## Systemd enabled/disabled/masked services and mount units
 /etc/systemd/system/*.wants/**
 /etc/systemd/system/*.service
