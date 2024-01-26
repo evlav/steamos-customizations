@@ -26,6 +26,9 @@
 /etc/ssh/*_key
 /etc/ssh/*_key.pub
 
+## WireGuard configs, including private keys
+/etc/wireguard/*.conf
+
 ## Systemd enabled/disabled/masked services and mount units
 /etc/systemd/system/*.wants/**
 /etc/systemd/system/*.service
