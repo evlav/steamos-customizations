@@ -1,0 +1,70 @@
+#!/usr/bin/python3
+
+#  SPDX-License-Identifier: LGPL-2.1+
+#
+#  Copyright © 2024 Igalia, S.L.
+#
+#  This file is part of steamos-customizations.
+#
+#  steamos-customizations is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU Lesser General Public License as
+#  published by the Free Software Foundation; either version 2.1 of the License,
+#  or (at your option) any later version.
+
+import argparse
+import difflib
+import html.parser
+import re
+import sys
+import urllib.request
+
+default_url = 'https://steamdeck-images.steamos.cloud/steamdeck/'
+pacman_manifest_regex = r'.*\.manifest\.pacman$'
+
+# This class parses an HTML document and extracts all links
+class LinkExtractor(html.parser.HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.links = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag == 'a':
+            for attr in attrs:
+                if attr[0] == 'href':
+                    self.links.append(attr[1])
+
+# Get all links from a URL that match a given regex
+def get_matching_links(url, regex):
+    try:
+        index = urllib.request.urlopen(url).read()
+    except:
+        sys.exit("Error retrieving %s" % url)
+    linkparser = LinkExtractor()
+    linkparser.feed(index.decode('utf-8'))
+    matches = [url + s for s in linkparser.links if re.match(regex, s)]
+    if not matches:
+        sys.exit("Error parsing data from %s" % url)
+    return matches
+
+# Parse the command-line arguments
+parser = argparse.ArgumentParser(description='Show the packages that changed between two SteamOS images')
+parser.add_argument('--base-url', help='Base URL of the repository (default: %s)' % default_url, default=default_url)
+parser.add_argument('id1', help="Build ID of the first image")
+parser.add_argument('id2', help="Build ID of the second image")
+args = parser.parse_args()
+
+# Ensure that the base url has a trailing slash
+base_url = args.base_url
+if not base_url.endswith('/'):
+    base_url += '/'
+
+# Get the URLs of the Pacman manifests from both images
+manifest_url1 = get_matching_links(base_url + args.id1 + '/', pacman_manifest_regex)[0]
+manifest_url2 = get_matching_links(base_url + args.id2 + '/', pacman_manifest_regex)[0]
+
+# Download the manifests
+manifest1 = urllib.request.urlopen(manifest_url1).read().decode('utf-8').split('\n')
+manifest2 = urllib.request.urlopen(manifest_url2).read().decode('utf-8').split('\n')
+
+# Compare them
+print('\n'.join(difflib.unified_diff(manifest1, manifest2, fromfile=manifest_url1, tofile=manifest_url2, lineterm='')))
