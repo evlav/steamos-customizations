@@ -363,16 +363,13 @@ keep_previous_etc_copy() {
 sync_var_mountpoints() {
     local src=$1
     local dst=$2
+    local lower_dir=$3
 
     # Remove the "/var" prefix to use this path in rsync. This effectively
     # changes the sysroot from "/" to "/var".
     local etc_overlay_in_var=${ETC_OVERLAY_ABSDIR#"/var"}
     local upper_dir="${etc_overlay_in_var}/upper"
     local config
-
-    # --one-file-system makes sure that we ignore all the directories from /home
-    # that are bind-mounted onto /var directories.
-    local -a common_options=( --archive --delete --one-file-system )
 
     # We exclude the directories /var/lib/{dkms,modules,pacman}, as they don't
     # really represent a state that we want to keep, but rather a part of the
@@ -385,9 +382,14 @@ sync_var_mountpoints() {
     # not a state that we want to keep.
     #
     # Exclude the /etc overlay because that's handled separately.
+    #
+    # --one-file-system makes sure that we ignore all the directories from /home
+    # that are bind-mounted onto /var directories.
 
     if ! rsync \
-        "${common_options[@]}" \
+        --archive \
+        --delete \
+        --one-file-system \
         --exclude="/boot/" \
         --exclude="/lib/dkms/" \
         --exclude="/lib/modules/" \
@@ -430,6 +432,9 @@ sync_var_mountpoints() {
     log "Running rsync with the following config file:"
     log "$(cat "${config}")"
 
+    # `-rlpgoD` is `--archive` without the `--times` option. We don't care about the
+    # modification times, just the content.
+    # `--compare-dest` allows us to synchronize only the files that actually changed.
     # `--prune-empty-dirs` plus `--include="*/"` allow us to retain the
     # directory structure while excluding empty directories.
     # `--include-from="${config}"` is used to list all the files that we
@@ -437,8 +442,12 @@ sync_var_mountpoints() {
     # `--exclude="*"` is the final catch-all, to exclude all the files that
     # were not explicitly listed in the config file.
     if ! rsync \
-        "${common_options[@]}" \
+        -rlpgoD \
+        --delete \
+        --one-file-system \
+        --checksum \
         --prune-empty-dirs \
+        --compare-dest="${lower_dir}" \
         --include="*/" \
         --include-from="${config}" \
         --exclude="*" \
@@ -480,6 +489,7 @@ sync_var_mountpoints() {
 
 log "Syncing the var partitions from 'self' to 'other'"
 
+ROOTFS_DEVICE_OTHER=$(realpath $SYMLINKS_DIR/$UPDATED_SLOT/rootfs)
 VAR_DEVICE_OTHER=$(realpath $SYMLINKS_DIR/$UPDATED_SLOT/var)
 VAR_DEVICE_FROM=
 VAR_FROM=
@@ -506,24 +516,28 @@ fi
 reformat_device_ext4 "$VAR_DEVICE_OTHER" || \
     err "Failed to reformat other var partition"
 
-mount "$VAR_DEVICE_OTHER" /mnt
+# Mount the rootfs device because we want to compare the upper /etc
+# with the lowerdir
+mount -o ro "$ROOTFS_DEVICE_OTHER" /mnt
+mount "$VAR_DEVICE_OTHER" /mnt/var
 fsfreeze -f "$VAR_FROM"
-sync_var_mountpoints "$VAR_FROM" /mnt || \
+sync_var_mountpoints "$VAR_FROM" /mnt/var /mnt/etc || \
     err "Failed to sync var partitions"
 if [ $ERR == 0 ]; then
-    keep_previous_etc_copy "$VAR_FROM" /mnt || \
+    keep_previous_etc_copy "$VAR_FROM" /mnt/var || \
         warn "Failed to copy the /etc changes to /etc/previous"
 
-    backup_etc_changes "$VAR_FROM" /mnt || \
+    backup_etc_changes "$VAR_FROM" /mnt/var || \
         warn "Failed to create an /etc backup"
 fi
 fsfreeze -u "$VAR_FROM"
 # Remove the old rootfs index to ensure that we either have the correct one
 # or that we don't have it at all.
-rm -f /mnt/lib/steamos-atomupd/rootfs.caibx
-mkdir -p /mnt/lib/steamos-atomupd
-cp "$RAUC_BUNDLE_MOUNT_POINT"/rootfs.img.caibx /mnt/lib/steamos-atomupd/rootfs.caibx || \
+rm -f /mnt/var/lib/steamos-atomupd/rootfs.caibx
+mkdir -p /mnt/var/lib/steamos-atomupd
+cp "$RAUC_BUNDLE_MOUNT_POINT"/rootfs.img.caibx /mnt/var/lib/steamos-atomupd/rootfs.caibx || \
     warn "Failed to copy the rootfs seed index file"
+umount /mnt/var
 umount /mnt
 
 if [ -n "$VAR_DEVICE_FROM" ]; then
