@@ -2,3 +2,4 @@
 ImagesUrl = @atomupd_images_url@
 MetaUrl = @atomupd_meta_url@
 Variants = @atomupd_variants_list@
+Branches = @atomupd_branches_list@
