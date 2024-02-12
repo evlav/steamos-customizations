@@ -96,6 +96,14 @@ ATOMUPD_META_URL := https://atomupd.steamos.cloud/meta
 # separator.
 ATOMUPD_VARIANTS_LIST := holo;holo-beta
 
+# Semicolon separated list of known suggested branches that could be chosen.
+# This list is currently parsed by atomupd-daemon and exposed in the
+# property "BranchesList"
+# Please note that the only allowed symbols are lowercase and uppercase
+# word characters, numbers, underscore, hyphen and the semicolon as a
+# separator.
+ATOMUPD_BRANCHES_LIST := stable;rc;beta;bc;main
+
 # Directory where RAUC will mount the update bundle
 RAUC_RUNTIME_DIR := /run/rauc
 
@@ -141,6 +149,7 @@ ETC_BACKUP_DIR := /var/lib/steamos-atomupd/etc_backup
 	  -e 's|@atomupd_images_url@|$(ATOMUPD_IMAGES_URL)|g' \
 	  -e 's|@atomupd_meta_url@|$(ATOMUPD_META_URL)|g' \
 	  -e 's|@atomupd_variants_list@|$(ATOMUPD_VARIANTS_LIST)|g' \
+	  -e 's|@atomupd_branches_list@|$(ATOMUPD_BRANCHES_LIST)|g' \
 	  -e 's|@rauc_runtime_dir@|$(RAUC_RUNTIME_DIR)|g' \
 	  -e 's|@steamos_atomupd_runtime_dir@|$(STEAMOS_ATOMUPD_RUNTIME_DIR)|g' \
 	  -e 's|@reboot_for_update@|$(REBOOT_FOR_UPDATE)|g' \
