@@ -108,7 +108,7 @@ REBOOT_FOR_UPDATE := $(STEAMOS_ATOMUPD_RUNTIME_DIR)/reboot_for_update
 
 # Drop-in directory where users can list additional "/etc" files and
 # directories that they want to preserve across updates
-ATOMIC_UPDATE_CONF_D := $(DESTDIR)$(sysconfdir)/atomic-update.conf.d
+ATOMIC_UPDATE_CONF_D := $(sysconfdir)/atomic-update.conf.d
 
 # When applying an update, this is the directory where the edited /etc files
 # will be backed up
