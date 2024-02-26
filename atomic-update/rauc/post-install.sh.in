@@ -269,7 +269,14 @@ backup_etc_changes() {
     mkdir -p "${backup_dir}"
     backup_name="$(date '+%F_%H-%M-%S').tar.xz"
 
-    if ! tar -cf "${BACKUP_TEMP_DIR}/${backup_name}" -I 'xz -T0' "${src}${upper_dir}"; then
+    # When creating the backup we transform the directory structure so that instead of having
+    # the files under something like `var/lib/overlays/etc/upper/...` we end up with `etc/...`
+    if ! tar \
+        -cf "${BACKUP_TEMP_DIR}/${backup_name}" \
+        -I 'xz -T0' \
+        --transform "s,^${src#/}${upper_dir},etc," \
+        "${src}${upper_dir}"; then
+
         warn "Failed to archive the content of /etc"
         return 1
     fi
