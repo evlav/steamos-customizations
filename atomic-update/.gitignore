@@ -1,4 +1,6 @@
+rauc/atomic-update-keep.conf
 rauc/bootloader-custom-backend.sh
+rauc/example-additional-keep-list.conf
 rauc/post-install.sh
 rauc/pre-install.sh
 rauc/rauc-override.sh
