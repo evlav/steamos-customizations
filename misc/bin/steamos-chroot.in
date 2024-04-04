@@ -196,7 +196,7 @@ prepare_chroot_at() {
 
     if [ -z "$NO_OVERLAY" ]; then
         local dev_name=${DISK:-this}-${PARTSET}
-        local dev_lock="/run/lock/${dev_name}.flock"
+        local dev_lock="/run/lock/${dev_name//\//-}.flock"
         local run_steamos_chroot="/run/steamos-chroot"
         DEV_DIR="${run_steamos_chroot}/${dev_name}"
 
@@ -207,7 +207,7 @@ prepare_chroot_at() {
         flock --shared $DEV_SHARED_LOCK_FD
 
         if [ ! -d "$DEV_DIR" ]; then
-            local dev_exclusive_lock="/run/lock/${dev_name}-exclusive.flock"
+            local dev_exclusive_lock="/run/lock/${dev_name//\//-}-exclusive.flock"
             local lockfd=-1
 
             exec {lockfd}>$dev_exclusive_lock
