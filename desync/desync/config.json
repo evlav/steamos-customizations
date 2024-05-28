@@ -1,6 +1,6 @@
 {
   "store-options": {
-    "https://steamdeck-images.steamos.cloud/steamdeck/*/*/": {
+    "https://steamdeck-images.steamos.cloud/*/*/*/": {
       "error-retry-base-interval": 500000000
     }
   }
