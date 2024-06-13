@@ -33,6 +33,7 @@
 /etc/steamos-atomupd/preferences.conf
 
 ## Systemd enabled/disabled/masked services and mount units
+/etc/systemd/system/*.requires/**
 /etc/systemd/system/*.wants/**
 /etc/systemd/system/*.service
 /etc/systemd/system/*.service.d/**
