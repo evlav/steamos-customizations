@@ -1,0 +1,35 @@
+#!/bin/sh
+# -*- mode: sh; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
+# vim: et sts=4 sw=4
+
+#  SPDX-License-Identifier: LGPL-2.1+
+#
+#  Copyright © 2021 Collabora Ltd.
+#  Copyright © 2021 Valve Corporation.
+#
+#  This file is part of steamos-customizations.
+#
+#  steamos-customizations is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU Lesser General Public License as
+#  published by the Free Software Foundation; either version 2.1 of the License,
+#  or (at your option) any later version.
+
+set -euo pipefail
+
+wdir=$(mktemp -t -d rest-conf-XXXXXXXXXX)
+
+has_feature() { tune2fs -l "$1" | grep -q "$2" && echo 1 || echo 0; }
+get_casefold() { has_feature "$1" "Filesystem features:.*\<casefold\>"; }
+get_noreserved() { has_feature "$1" "Reserved block count:\s*\<0\>"; }
+
+print_cfg() {
+    echo "$1" "$2" "$(readlink -f "$2")" "$(get_casefold "$2")" "$(get_noreserved "$2")"
+}
+
+for dev in "@udev_symlinks_absdir@"/all/var-*; do
+    print_cfg "VAR" "$dev" > "$wdir/${dev##*/}.cfg"
+done
+
+mkdir -p "@factory_reset_config_dir@"
+mv "$wdir"/* "@factory_reset_config_dir@"
+rmdir "$wdir"

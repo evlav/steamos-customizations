@@ -30,6 +30,7 @@ declare -a STEAMOS_BINARIES=(
     sleep
     sort
     steamos-factory-reset-config
+    steamos-factory-reset-os-config
     tail
     tr
     tune2fs

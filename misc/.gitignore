@@ -4,6 +4,7 @@ bin/steamos-devmode
 bin/steamos-dump-info
 bin/steamos-factory-reset
 bin/steamos-factory-reset-config
+bin/steamos-factory-reset-os-config
 bin/steamos-finalize-install
 bin/steamos-mount
 bin/steamos-partition
