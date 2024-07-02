@@ -43,7 +43,7 @@ It does the following:
   - Restores missing files stripped from the shipping image of SteamOS (ie. headers, etc) so you can build your own software.
   - Installs base development tools.
 
-If you wish to re-enable readonly mode after using this script, you can use the "steamos-readonly disable" command.
+If you wish to re-enable readonly mode after using this script, you can use the "steamos-readonly enable" command.
 
 If status reports "enabled", you can still run "enable" again to restore packages if you mess up. ;)
 EOF
