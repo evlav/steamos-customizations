@@ -34,6 +34,10 @@ ATOMIC_UPDATE_KEEP_CONF="atomic-update-keep.conf"
 
 OWD="$(dirname "$(readlink -f "$0")")"
 
+# List of directories under /etc that we don't want masked by the
+# overlayfs upper dir. See whiteout_dir_contents() for more details.
+handle_masked_dirs=("systemd")
+
 #
 # Final cleanup before exiting
 #
@@ -360,6 +364,31 @@ keep_previous_etc_copy() {
     fi
 }
 
+# If we have a directory that is deleted or opaque in the upper dir of the /etc overlay
+# (therefore masking the contents of the lower dir) this function converts it into
+# a normal transparent directory where the contents are individually deleted.
+# This way files added to the new rootfs after an OS update will be visible.
+whiteout_dir_contents() {
+    local dir=$1
+    local src=$2
+    local dst=$3
+    local i
+    for i in "${src_etc_nondirs[@]}"; do
+        # Create whiteouts for all the entries that are inside $dir
+        # but are missing from the overlay.
+        # We check the src overlay because some visible files won't be copied
+        # to the dst overlay if there is an identical copy in the dst lower dir.
+        # (see rsync's --compare-dest option).
+        if [[ $i =~ ^"$dir/" && ! -e "$src/$i" ]]; then
+            # Before creating the whiteout ensure that the parent directory exists
+            [ -c "$dst/$dir" ] && rm -v "$dst/$dir" >&2
+            [ -d "$dst/$dir" ] || mkdir -pv "$dst/$dir" >&2
+            log "Creating whiteout for $dst/$i"
+            mknod -m 0 "$dst/$i" c 0 0
+        fi
+    done
+}
+
 sync_var_mountpoints() {
     local src=$1
     local dst=$2
@@ -460,6 +489,74 @@ sync_var_mountpoints() {
 
     rm -f "${config}"
 
+
+    # Overlayfs represents deleted files and directories using a "whiteout":
+    # a character device with the major and minor numbers set to 0.
+    # A deleted directory will remain deleted after an OS update if the
+    # whiteout is copied to ${dst}${upper_dir} during the rsync operation.
+    # Because of that if the deleted directory has new files in the
+    # new rootfs they won't be visible either.
+    # There is no universal solution to handle this automatically
+    # because the expected behavior depends on the particular case.
+    # However this is known to be a problem for systemd activation symlinks.
+    # Consider this example where an OS update adds a new service that
+    # is enabled by default:
+    #
+    # /etc/systemd/system/basic.target.wants/
+    #
+    # source rootfs             destination rootfs
+    # -------------             ------------------
+    # foo.service               foo.service
+    # bar.service               bar.service
+    #                           baz.service
+    #
+    # If the user disables 'foo' and 'bar' before the OS update then systemctl will
+    # remove the 'basic.target.wants' directory. After an OS update this directory will
+    # remain deleted and therefore 'baz' won't be enabled.
+    #
+    # We can work around this problem by replacing the 'basic.target.wants' whiteout with
+    # an empty directory where the original contents (foo.service and bar.service)
+    # are deleted individually.
+    local dir i
+    for dir in "${handle_masked_dirs[@]}"; do
+        if [ -d "${src}${upper_dir}/${dir}" ]; then
+            find "${src}${upper_dir}/${dir}" -type c -printf "${dir}/%P\n" | while IFS= read -r i; do
+                if [ -d "${lower_dir}/${i}" ]; then
+                    whiteout_dir_contents "$i" "${src}${upper_dir}" "${dst}${upper_dir}"
+                fi
+            done
+        fi
+    done
+
+    # In the example above, if 'basic.target.wants' is removed and re-added before the OS
+    # update then it will be created as an empty, opaque directory in the overlay.
+    # Opaque directories ignore the contents of the lower dir and because of that they
+    # don't have individual whiteout entries (foo.service and bar.service in the example).
+    # However the trusted.overlay.opaque xattr is lost during rsync so the directory
+    # becomes transparent and the deleted files will reappear.
+    # We can solve this by adding whiteouts for the original (deleted) contents.
+    for dir in "${handle_masked_dirs[@]}"; do
+        if [ -d "${src}${upper_dir}/${dir}" ]; then
+            find "${src}${upper_dir}/${dir}" -depth -type d -printf "${dir}/%P\n" | while IFS= read -r i; do
+                local is_opaque=$(getfattr -n trusted.overlay.opaque --absolute-names --only-values -h "${src}${upper_dir}/${i}" 2> /dev/null || true)
+                if [ "$is_opaque" = y ]; then
+                    whiteout_dir_contents "$i" "${src}${upper_dir}" "${dst}${upper_dir}"
+                fi
+            done
+        fi
+    done
+
+
+    # Finally, if a whiteout has no corresponding file or dir in lower_dir then it should be removed.
+    # Otherwise it can confuse the overlayfs driver and appear as an unreadable file.
+    # This can happen if /etc/foo is present in the src rootfs but absent in the dst rootfs.
+    # Do this with everything under /etc, not just dirs listed in handle_masked_dirs.
+    find "${dst}${upper_dir}" -type c -printf "%P\n" | while IFS= read -r i; do
+        if [ ! -e "${lower_dir}/${i}" ]; then
+            rm -f "${dst}${upper_dir}/${i}"
+        fi
+    done
+
     # Force the removal of user changes from `/etc/os-release`, because that
     # file is used by the Steam client to show the current image version, and
     # we don't want to preserve outdated info across updates.
@@ -515,6 +612,16 @@ fi
 
 reformat_device_ext4 "$VAR_DEVICE_OTHER" || \
     err "Failed to reformat other var partition"
+
+# Store the contents of the original /etc lowerdir in src_etc_nondirs.
+src_etc_nondirs=()
+mount --bind / /mnt -o ro
+for i in "${handle_masked_dirs[@]}"; do
+    if [ -d "/mnt/etc/$i" ]; then
+        readarray -d '' -O "${#src_etc_nondirs[*]}" src_etc_nondirs < <(find "/mnt/etc/$i" \! -type d -printf "$i/%P\0")
+    fi
+done
+umount /mnt
 
 # Mount the rootfs device because we want to compare the upper /etc
 # with the lowerdir
