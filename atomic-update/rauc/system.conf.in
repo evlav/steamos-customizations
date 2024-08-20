@@ -2,6 +2,7 @@
 compatible=steamos-amd64
 bootloader=custom
 max-bundle-download-size=268435456
+activate-installed=false
 
 [keyring]
 path=/etc/rauc/keyring.pem
