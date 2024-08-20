@@ -39,6 +39,8 @@ OWD="$(dirname "$(readlink -f "$0")")"
 #
 
 cleanup () {
+    ERR=$?
+
     if [ -n "$BACKUP_TEMP_DIR" ]; then
         rm -rf "$BACKUP_TEMP_DIR" || :
     fi
