@@ -156,9 +156,9 @@ ETC_BACKUP_DIR := /var/lib/steamos-atomupd/etc_backup
 	  -e 's|@atomic_update_conf_d@|$(ATOMIC_UPDATE_CONF_D)|g' \
 	  -e 's|@etc_backup_dir@|$(ETC_BACKUP_DIR)|g' \
 	  $< > $@
-	@if grep -q '@[[:alnum:]_]*@' $@; then \
+	@if grep -q '@[[:alnum:]_]+@' $@; then \
 	  echo >&2 "Substitution error!!!"; \
-	  grep -Hn '@[[:alnum:]_]*@' $@; \
+	  grep -Hn '@[[:alnum:]_]+@' $@; \
 	  false; \
 	fi
 
