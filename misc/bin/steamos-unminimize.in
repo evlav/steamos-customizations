@@ -16,7 +16,7 @@
 
 set -euo pipefail
 # shellcheck source=../libexec/steamos-shellutil.sh.in
-source @libexecdir@/steamos-shellutil.sh
+source @libexecdir@/steamos/steamos-shellutil.sh
 
 # Additional packages/groups we should install as part of enabling devmode
 DEVMODE_PACKAGES=(base-devel multilib-devel)
