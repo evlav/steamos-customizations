@@ -15,7 +15,7 @@
 
 set -euo pipefail
 
-# shellcheck source=../libexec/steamos-shellutil.sh
+# shellcheck source=../libexec/steamos-shellutil.sh.in
 source @libexecdir@/steamos-shellutil.sh
 
 # a file that gets removed when the image changes that we can touch to see if this script has previously been run on
