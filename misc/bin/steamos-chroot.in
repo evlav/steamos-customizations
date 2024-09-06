@@ -218,6 +218,8 @@ prepare_chroot_at() {
                 mkdir -p "$DEV_DIR"
                 mount -o ro "$ROOTFS_DEVICE" "$DEV_DIR"
                 mount "$VAR_DEVICE" "$DEV_DIR/var"
+                mkdir -p "${DEV_DIR}/var/lib/overlays/etc/upper"
+                mkdir -p "${DEV_DIR}/var/lib/overlays/etc/work"
                 mount -t overlay -o "lowerdir=${DEV_DIR}/etc,upperdir=${DEV_DIR}/var/lib/overlays/etc/upper,workdir=${DEV_DIR}/var/lib/overlays/etc/work" none "${DEV_DIR}/etc" || \
                     fail "Failed to mount the /etc overlay. If it's not required, you could set the '--no-overlay' option"
             fi
