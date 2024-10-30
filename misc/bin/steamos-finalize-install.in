@@ -154,6 +154,15 @@ function update_pacman_dbpath
     fi
 }
 
+function cleanup_atomupd_conf
+{
+    # When updating from SteamOS 3.5 and earlier, we usually preserved /etc/ user edits.
+    # This could be problematic for atomupd, because older configurations could miss new
+    # required fields.
+    # Force the removal of the eventual user edited `client.conf`.
+    rm -f "/var/lib/overlays/etc/upper/steamos-atomupd/client.conf"
+}
+
 while [[ "$#" -ne 0 ]]
 do
     if [[ "$1" =~ ^(-h|--help)$ ]]
@@ -194,6 +203,7 @@ then
         migrate_network
         migrate_home_steamos_update
         update_pacman_dbpath # DBPath is on the RO rootfs with 3.5+
+        cleanup_atomupd_conf
     else
         echo "Skipping configuration migration steps as this is not running in a chroot."
     fi
