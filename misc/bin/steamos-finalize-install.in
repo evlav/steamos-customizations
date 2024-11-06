@@ -214,3 +214,8 @@ then
     install_bootloaders
 fi
 
+if in_chroot
+then
+    # Trigger steamos-post-update.service on the next boot
+    touch /var/lib/steamos-atomupd/system-updated
+fi
