@@ -32,11 +32,13 @@
 ## Preferences for the system updates, e.g. which branch to follow
 /etc/steamos-atomupd/preferences.conf
 
-## Systemd enabled/disabled/masked services and mount units
+## Systemd enabled/disabled/masked services, sockets and mount units
 /etc/systemd/system/*.requires/**
 /etc/systemd/system/*.wants/**
 /etc/systemd/system/*.service
 /etc/systemd/system/*.service.d/**
+/etc/systemd/system/*.socket
+/etc/systemd/system/*.socket.d/**
 /etc/systemd/system/*.mount
 /etc/systemd/system/*.mount.d/**
 
