@@ -50,7 +50,7 @@ if [[ ${target_uuid} ]]; then
     log "Target image rootfs UUID: $target_uuid"
 
     if [[ ${root_uuid} == ${target_uuid} ]]; then
-        log "Trying to install an update with an existing UUID match. trying to continue."
+        fail "Cannot install an image with the same rootfs UUID as the current active one"
     fi
 else
     log "Trying to install an update that doesn't provide its UUID, trying to continue anyway"
