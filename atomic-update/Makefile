@@ -34,8 +34,10 @@ install: all
 	install -m 0644 $(KEEP_CONFIG) $(DESTDIR)$(libdir)/rauc
 	install -d $(DESTDIR)$(sysconfdir)/$(ATOMIC_UPDATE_CONF_D_DIR)
 	install -m 0644 $(CONF_D_EXAMPLE) $(DESTDIR)$(sysconfdir)/$(ATOMIC_UPDATE_CONF_D_DIR)
+	install -d $(DESTDIR)$(libdir)/steamos-atomupd
+	install -m 0644 $(STEAMOS_ATOMUPD_CONFIG) $(DESTDIR)$(libdir)/steamos-atomupd
 	install -d $(DESTDIR)$(sysconfdir)/steamos-atomupd
-	install -m 0644 $(STEAMOS_ATOMUPD_CONFIG) $(DESTDIR)$(sysconfdir)/steamos-atomupd
+	ln -sfv $(DESTDIR)$(libdir)/$(STEAMOS_ATOMUPD_CONFIG) $(DESTDIR)$(sysconfdir)/$(STEAMOS_ATOMUPD_CONFIG)
 	install -d $(DESTDIR)$(systemdunitsdir)
 	for i in $(SERVICES_OVERRIDE); do \
 		install -D -m 644 $$i $(DESTDIR)$(systemdunitsdir)/$${i#systemd/}; \
