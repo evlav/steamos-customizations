@@ -37,7 +37,7 @@ install: all
 	install -d $(DESTDIR)$(libdir)/steamos-atomupd
 	install -m 0644 $(STEAMOS_ATOMUPD_CONFIG) $(DESTDIR)$(libdir)/steamos-atomupd
 	install -d $(DESTDIR)$(sysconfdir)/steamos-atomupd
-	ln -sfv $(DESTDIR)$(libdir)/$(STEAMOS_ATOMUPD_CONFIG) $(DESTDIR)$(sysconfdir)/$(STEAMOS_ATOMUPD_CONFIG)
+	ln -sfv $(libdir)/$(STEAMOS_ATOMUPD_CONFIG) $(DESTDIR)$(sysconfdir)/$(STEAMOS_ATOMUPD_CONFIG)
 	install -d $(DESTDIR)$(systemdunitsdir)
 	for i in $(SERVICES_OVERRIDE); do \
 		install -D -m 644 $$i $(DESTDIR)$(systemdunitsdir)/$${i#systemd/}; \
