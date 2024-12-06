@@ -31,8 +31,24 @@ needs_root() {
     fi
 }
 
+# Test whether systemd system extension images are loaded. If so,
+# /usr may be read-only, regardless of the value of the btrfs ro property.
+# This is not a guarantee though, extensions may be merged in mutable mode.
+has_loaded_sysexts() {
+    if systemd-sysext status --json=short | \
+        jq -e '.[] | select(.hierarchy=="/usr").extensions | type == "array" and length > 0' >/dev/null; then
+        return 0
+    fi
+    return 1
+}
+
 # mark root partition writable
 read_write() {
+    if has_loaded_sysexts; then
+        echo "Warning: loaded sysexts may result in some parts" \
+            "of the filesystem being read-only." >&2
+    fi
+
     if ! status >/dev/null; then
         echo "Warning: The rootfs is already read-write!" >&2
         echo "         Nothing is performed." >&2
@@ -68,7 +84,12 @@ status() {
         echo "enabled"
         return 0
     else
-        echo "disabled"
+        if has_loaded_sysexts; then
+            echo "disabled, but loaded sysexts may result in" \
+                "some parts of the filesystem being read-only"
+        else
+            echo "disabled"
+        fi
         return 1
     fi
 }
