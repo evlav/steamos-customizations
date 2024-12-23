@@ -73,7 +73,6 @@ install() {
     inst_hook mount     90 "$moddir/steamos-root.sh"
     inst_hook pre-pivot 88 "$moddir/steamos-factory-reset.sh"
     inst_hook pre-pivot 89 "$moddir/steamos-var.sh"
-    inst_hook pre-pivot 90 "$moddir/steamos-etc-overlay.sh"
     inst_hook pre-pivot 90 "$moddir/steamos-var-lib-modules.sh"
     inst_hook pre-pivot 99 "$moddir/steamos-emergency.sh"
 }

@@ -11,8 +11,6 @@ steamos-udev-rules.sh		(pre-mount)
 	Create udev rules for SteamOS partitions.
 steamos-factory-reset.sh	(pre-pivot)
         Reset user data partitions to factory state.
-steamos-etc-overlay.sh		(pre-pivot)
-	Mount a writable /etc overlay.
 steamos-var-lib-modules.sh	(pre-pivot)
 	Initialize /var/lib/modules from factory.
 steamos-emergency.sh		(pre-pivot)

@@ -14,7 +14,7 @@ Description=Etc Overlay
 Where=/etc
 What=overlay
 Type=overlay
-Options=lowerdir=/etc,upperdir=@etc_overlay_absdir@/upper,workdir=@etc_overlay_absdir@/work
+Options=x-initrd.mount,lowerdir=/etc,upperdir=@etc_overlay_absdir@/upper,workdir=@etc_overlay_absdir@/work
 
 [Install]
 WantedBy=local-fs.target

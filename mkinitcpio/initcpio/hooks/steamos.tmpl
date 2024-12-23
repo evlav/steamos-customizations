@@ -147,10 +147,6 @@ run_hook() {
 
 ############################################################################
 
-@STEAMOS_ETC_OVERLAY@
-
-############################################################################
-
 @STEAMOS_VAR_LIB@
 
 ############################################################################
@@ -168,9 +164,6 @@ run_latehook() {
 
     # reuse dracut : pre-pivot : 89 : steamos-var.sh
     mount_var
-
-    # reuse dracut : pre-pivot : 90 : steamos-etc-overlay.sh
-    setup_etc_overlay
 
     # reuse dracut : pre-pivot : 90 : steamos-var-lib-modules.sh
     initialize_var_lib_modules

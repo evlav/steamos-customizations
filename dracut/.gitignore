@@ -6,8 +6,6 @@ bin/update-dracut
 modules.d/module-setup.sh.in
 modules.d/module-setup.sh
 modules.d/steamos-emergency.sh
-modules.d/steamos-etc-overlay.sh.in
-modules.d/steamos-etc-overlay.sh
 modules.d/steamos-factory-reset.sh.in
 modules.d/steamos-factory-reset.sh
 modules.d/steamos-root.sh

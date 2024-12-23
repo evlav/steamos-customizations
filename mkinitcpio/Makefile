@@ -9,11 +9,11 @@ INSTS := $(patsubst %.in,%,$(INSTS_IN) $(GEN_INSTS_IN))
 CONFS := $(wildcard mkinitcpio.conf.d/*)
 CLEANABLE := $(GEN_HOOKS_IN) $(HOOKS) $(GEN_INSTS_IN) $(INSTS)
 
-initcpio/hooks/steamos.in: initcpio/hooks/steamos.tmpl ../initrd/steamos-etc-overlay.ash \
+initcpio/hooks/steamos.in: initcpio/hooks/steamos.tmpl \
 		../initrd/steamos-factory-reset.ash ../initrd/steamos-udev-rules.ash \
 		../initrd/steamos-var-lib-modules.ash ../initrd/steamos-var.ash
 
-	cat $< | ../initrd/inline-file.sh "@STEAMOS_ETC_OVERLAY@" ../initrd/steamos-etc-overlay.ash | \
+	cat $< | \
 		../initrd/inline-file.sh "@STEAMOS_FACTORY_RESET@" ../initrd/steamos-factory-reset.ash | \
 		../initrd/inline-file.sh "@STEAMOS_UDEV_RULES@" ../initrd/steamos-udev-rules.ash | \
 		../initrd/inline-file.sh "@STEAMOS_VAR_LIB@" ../initrd/steamos-var-lib-modules.ash | \
