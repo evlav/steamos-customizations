@@ -81,6 +81,9 @@ UDEV_SYMLINKS_RELDIR := disk/by-partsets
 # Directory where partition symlinks are created
 UDEV_SYMLINKS_ABSDIR := /dev/$(UDEV_SYMLINKS_RELDIR)
 
+# Escaped path for inclusion in unit names
+UDEV_SYMLINKS_ESCAPED_PATH := $(subst \,\\,$(shell systemd-escape --path $(UDEV_SYMLINKS_ABSDIR)))
+
 # URL to query for updates in atomupd -- maps to ImagesUrl in client.conf
 ATOMUPD_IMAGES_URL := https://atomupd-images.steamos.cloud/steamos-holo
 
@@ -146,6 +149,7 @@ ETC_BACKUP_DIR := /var/lib/steamos-atomupd/etc_backup
 	  -e 's|@offload_absdir@|$(OFFLOAD_ABSDIR)|g' \
 	  -e 's|@udev_symlinks_reldir@|$(UDEV_SYMLINKS_RELDIR)|g' \
 	  -e 's|@udev_symlinks_absdir@|$(UDEV_SYMLINKS_ABSDIR)|g' \
+	  -e 's|@udev_symlinks_escaped_path@|$(UDEV_SYMLINKS_ESCAPED_PATH)|g' \
 	  -e 's|@atomupd_images_url@|$(ATOMUPD_IMAGES_URL)|g' \
 	  -e 's|@atomupd_meta_url@|$(ATOMUPD_META_URL)|g' \
 	  -e 's|@atomupd_variants_list@|$(ATOMUPD_VARIANTS_LIST)|g' \
