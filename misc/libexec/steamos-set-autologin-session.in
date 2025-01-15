@@ -1,0 +1,19 @@
+#!/bin/sh
+
+#  SPDX-License-Identifier: LGPL-2.1+
+#
+#  Copyright © 2025 Igalia S.L.
+#  Copyright © 2025 Valve Corporation.
+#
+#  This file is part of steamos-customizations.
+#
+#  steamos-customizations is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU Lesser General Public License as
+#  published by the Free Software Foundation; either version 2.1 of the License,
+#  or (at your option) any later version.
+
+echo "SteamOS is running in a virtual machine, defaulting to a desktop session"
+{
+  echo "[Autologin]"
+  echo "Session=plasmax11.desktop"
+} > @sddm_autologin_conf@
