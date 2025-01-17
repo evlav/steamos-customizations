@@ -12,14 +12,14 @@ Description=Create Swap File
 DefaultDependencies=no
 Before=shutdown.target home-swapfile.swap
 Conflicts=shutdown.target
-ConditionFileIsExecutable=@sbindir@/mkswapfile
+ConditionFileIsExecutable=@sbindir@/mkswap
 ConditionPathExists=!/home/swapfile
 RequiresMountsFor=/home/swapfile
 
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=@sbindir@/mkswapfile /home/swapfile 1024
+ExecStart=@sbindir@/mkswap --file /home/swapfile --size 1024M
 
 [Install]
 WantedBy=swap.target
