@@ -14,6 +14,8 @@ XORG_CONFIG := xorg.conf.d/10-steamos-virtualdisplaysize.conf
 PROTON_LIMITS_CONFIG := limits.d/15-proton-nice.conf
 SYSTEMD_LOGIND_CONFIG := systemd-logind.service.d/homedir-override.conf
 MODULES_LOAD_CONFIG := $(wildcard modules-load.d/*.conf)
+UDEV_RULES := $(wildcard rules.d/*.rules)
+UDEV_HWDB := $(wildcard hwdb.d/*.hwdb)
 
 MOUNTS_IN := $(wildcard systemd/*.mount.in)
 MOUNTS := $(patsubst %.in,%,$(MOUNTS_IN))
@@ -57,3 +59,7 @@ install: all
 	install -m 0644 $(SYSTEMD_LOGIND_CONFIG) $(DESTDIR)$(sysconfdir)/systemd/system/systemd-logind.service.d
 	install -d $(DESTDIR)$(libdir)/modules-load.d/
 	install -m 0644 $(MODULES_LOAD_CONFIG) $(DESTDIR)$(libdir)/modules-load.d/
+	install -d $(DESTDIR)$(libdir)/udev/rules.d/
+	install -m 0644 $(UDEV_RULES) $(DESTDIR)$(libdir)/udev/rules.d/
+	install -d $(DESTDIR)$(libdir)/udev/hwdb.d/
+	install -m 0644 $(UDEV_HWDB) $(DESTDIR)$(libdir)/udev/hwdb.d/

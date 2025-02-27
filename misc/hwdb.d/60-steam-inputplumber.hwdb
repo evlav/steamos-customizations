@@ -1,0 +1,6 @@
+# Lenovo Legion Go S
+dmi:*svnLENOVO:pn83L3:*
+dmi:*svnLENOVO:pn83N6:*
+dmi:*svnLENOVO:pn83Q2:*
+dmi:*svnLENOVO:pn83Q3:*
+  USE_INPUTPLUMBER=1
