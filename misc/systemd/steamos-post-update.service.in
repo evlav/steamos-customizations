@@ -11,7 +11,6 @@
 
 [Unit]
 Description=Run tasks on the first boot after an OS update
-WantedBy=local-fs.target
 After=local-fs.target
 Before=sddm.service
 ConditionPathExists=/var/lib/steamos-atomupd/system-updated
@@ -21,3 +20,6 @@ Type=oneshot
 RemainAfterExit=yes
 ExecStart=@libexecdir@/steamos/steamos-post-update
 ExecStart=rm -f /var/lib/steamos-atomupd/system-updated
+
+[Install]
+WantedBy=local-fs.target
