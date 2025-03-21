@@ -56,6 +56,7 @@ read_write() {
     fi
     needs_root
 
+    mount -o remount,rw /
     btrfs property set / ro false
 
     # Write token file to easily distinguish when the FS have been toggled. This
