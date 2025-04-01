@@ -1,3 +1,9 @@
+# ASUS Rog Ally
+dmi:*svnASUSTeKCOMPUTERINC.:*rnRC71L:*
+# ASUS Rog Ally X
+dmi:*svnASUSTeKCOMPUTERINC.:*rnRC72LA:*
+# Lenovo Legion Go
+dmi:*svnLENOVO:pn83E1:*
 # Lenovo Legion Go S
 dmi:*svnLENOVO:pn83L3:*
 dmi:*svnLENOVO:pn83N6:*
