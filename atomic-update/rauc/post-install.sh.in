@@ -4,8 +4,8 @@
 
 #  SPDX-License-Identifier: LGPL-2.1+
 #
-#  Copyright © 2019-2021 Collabora Ltd.
-#  Copyright © 2019-2021 Valve Corporation.
+#  Copyright © 2019-2025 Collabora Ltd.
+#  Copyright © 2019-2025 Valve Corporation.
 #
 #  This file is part of steamos-customizations.
 #
@@ -16,6 +16,13 @@
 
 set -e
 set -u
+
+# This is expanded and prefixed before each set-x trace line:
+export PS4="+	\${EPOCHREALTIME} @\${LINENO} "
+# This opens a log file and connects its fd to the set-x trace mechanism
+exec {BASH_XTRACEFD}>/home/deck/rauc-postinst.$(date +%Y%m%d-%H%M%S).log
+# Turn on tracing
+set -x
 
 ERR=0 # the error code returned by this script
 BACKUP_TEMP_DIR= # temporary directory used to store the /etc backup
