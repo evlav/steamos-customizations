@@ -8,18 +8,17 @@
 #  or (at your option) any later version.
 
 [Unit]
-Description=Create Swap File
+Description=One-time: Remove old small swapfile if present (for upgrade to larger swap)
 DefaultDependencies=no
-Before=shutdown.target home-swapfile.swap
+Before=swapfile.service shutdown.target home-swapfile.swap
 Conflicts=shutdown.target
-ConditionFileIsExecutable=@sbindir@/mkswap
-ConditionPathExists=!/home/swapfile
+ConditionPathExists=/home/swapfile
 RequiresMountsFor=/home/swapfile
 
 [Service]
 Type=oneshot
-RemainAfterExit=yes
-ExecStart=@sbindir@/mkswap --file /home/swapfile --size 8G
+ExecStart=/bin/sh -c 'if [ $(stat -c%s /home/swapfile) -lt $((8*1024*1024*1024)) ]; then swapoff /home/swapfile 2>/dev/null || true; rm -f /home/swapfile; fi'
+ExecStartPost=/bin/rm -f /etc/systemd/system/remove-old-swap.service
 
 [Install]
-WantedBy=swap.target
+WantedBy=shutdown.target
