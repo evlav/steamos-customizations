@@ -76,16 +76,10 @@ fi
 
 # If there's updates but we're not on AC, stop after refreshing.  This behavior likely needs to move to the
 # steamos-manager interface for further polish.
-if [[ -n $checkmode && -n $bad_power_state ]]; then
+if [[ -n $bad_power_state ]]; then
   ewarn "Updates available, but cannot be applied without at least 20% battery and connected AC"
-  # Return zero to so steam doesn't believe updates are available
-  exit 0
-elif [[ -n $bad_power_state ]]; then
-  # If steam proceeded due to the check happening when the condition was true, best we can do is error. If we return
-  # success steam will think it pushed a firmware update and finish the modal-reboot.
-  die "Available updates cannot be applied without at least 20% battery and connected AC"
+  exit 3
 fi
-
 
 estat "Updates available for devices:"
 echo "$guids"
