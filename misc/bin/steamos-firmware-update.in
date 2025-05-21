@@ -35,7 +35,8 @@ done
 
 check_needs_reboot() {
   # WHEW
-  local pending=$(dofwupd get-devices --json \
+  local pending
+  pending=$(dofwupd get-devices --json \
                     | jq '.Devices[] | select(.Problems | contains(["update-in-progress"]))? | select(.Flags | contains(["needs-reboot"]))?')
   if [[ -n $pending ]]; then
     ewarn "Some updates require a device reboot to complete"
@@ -43,29 +44,21 @@ check_needs_reboot() {
 }
 
 dofwupd() {
-  # --stahp
-  cmd fwupdmgr -y --no-unreported-check \
-                  --no-security-fix     \
-                  --no-authenticate     \
-                  --no-device-prompt    \
-                  --no-reboot-check     \
-                  --no-remote-check     \
-                  --no-metadata-check   \
-                  "$@"
+  cmd fwupdmgr --json "$@"
 }
 
 # Trigger a refresh.  exitcode 2 means no refresh needed.
-dofwupd refresh || [[ $? -eq 2 ]]
+dofwupd refresh || [[ $? -eq 2 ]] || die "Failed to refresh from lvfs"
 
 # Get updates and intersect them with the whitelist
-guids="$(dofwupd get-updates --json \
+guids="$(dofwupd get-updates \
          | jq -r '[.Devices[]?.Guid.[]] as $updates | $updates - ($updates - $ARGS.positional) | .[]' \
               --args "${GUID_WHITELIST[@]}")"
 
 # No updates?
 if [[ -z "$guids" ]]; then
   estat "No updates for supported devices available"
-  ewarn "Some installed updates require a reboot to complete"
+  check_needs_reboot
   exit 0
 fi
 
@@ -89,8 +82,8 @@ if [[ -f /sys/class/power_supply/ACAD/online && $(cat /sys/class/power_supply/AC
 fi
 
 # Send it
-# shellcheck disable=SC2086 # Splitting intentional. There's no globs in these. Shh.
 estat "Performing updates"
+# shellcheck disable=SC2086 # Splitting intentional. There's no globs in these. Shh.
 dofwupd update $guids || die "One or more updates failed :("
 estat "All updates successful"
 check_needs_reboot
