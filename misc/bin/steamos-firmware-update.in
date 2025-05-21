@@ -47,6 +47,18 @@ dofwupd() {
   cmd fwupdmgr --json "$@"
 }
 
+bad_power_state=
+# TODO fwupd will not install BIOS updates when AC isn't present (and always returns 0 on `update` if they are skipped
+#      for that reason, but it's kinda pertenant).  For now we'll pretend there are no updates when not on AC, and
+#      refuse to proceed This may unfortunately not match fwupd's internal logic but is hopefully a superset.
+# TODO In a mix of updates that require AC and not, we should filter down and apply the ones that do?
+# TODO Shouldn't fwupd also be checking battery level?  We do here because 1% + AC is not a good idea.  But we hard-code
+#      BAT0, which will need to change for non-lenovo devices.
+if [[ -f /sys/class/power_supply/ACAD/online && $(cat /sys/class/power_supply/ACAD/online) -ne 1 ]] || \
+   [[ -f /sys/class/power_supply/BAT0/capacity && $(cat /sys/class/power_supply/BAT0/capacity) -lt 20 ]]; then
+  bad_power_state=1
+fi
+
 # Trigger a refresh.  exitcode 2 means no refresh needed.
 dofwupd refresh || [[ $? -eq 2 ]] || die "Failed to refresh from lvfs"
 
@@ -62,23 +74,25 @@ if [[ -z "$guids" ]]; then
   exit 0
 fi
 
+# If there's updates but we're not on AC, stop after refreshing.  This behavior likely needs to move to the
+# steamos-manager interface for further polish.
+if [[ -n $checkmode && -n $bad_power_state ]]; then
+  ewarn "Updates available, but cannot be applied without at least 20% battery and connected AC"
+  # Return zero to so steam doesn't believe updates are available
+  exit 0
+elif [[ -n $bad_power_state ]]; then
+  # If steam proceeded due to the check happening when the condition was true, best we can do is error. If we return
+  # success steam will think it pushed a firmware update and finish the modal-reboot.
+  die "Available updates cannot be applied without at least 20% battery and connected AC"
+fi
+
+
 estat "Updates available for devices:"
 echo "$guids"
 
 # Check mode?
 if [[ -n $checkmode ]]; then
   exit 7 # Signal to steam that we did not apply an update, but could have
-fi
-
-# TODO fwupd simply returns 0 when AC isn't present, but it's kinda pertenant.  This may unfortunately not match their
-#      logic.
-# TODO In a mix of updates that require AC and not, we should filter down and apply the ones that do?
-# TODO Shouldn't fwupd also be checking battery level?  We do here because 1% + AC is not a good idea.  But we hard-code
-#      BAT0, which will need to change for non-lenovo devices.
-if [[ -f /sys/class/power_supply/ACAD/online && $(cat /sys/class/power_supply/ACAD/online) -ne 1 ]] || \
-   [[ -f /sys/class/power_supply/BAT0/capacity && $(cat /sys/class/power_supply/BAT0/capacity) -le 20 ]]; then
-  eerr "Updates available, but cannot be applied without AC adapter connected and 20%."
-  exit 2
 fi
 
 # Send it
