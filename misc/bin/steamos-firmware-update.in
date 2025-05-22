@@ -28,7 +28,7 @@ while [[ ${#@} -gt 0 ]]; do
   if [[ $arg = "check" && -z $checkmode ]]; then
     checkmode=1
   else
-    usage
+    die "!! Usage: $0 [check]"
   fi
   shift
 done
@@ -43,6 +43,7 @@ check_needs_reboot() {
   fi
 }
 
+# Take care to either swallow output or direct to stderr, since steam consumes the output of this script
 dofwupd() {
   cmd fwupdmgr --json "$@"
 }
@@ -60,12 +61,15 @@ if [[ -f /sys/class/power_supply/ACAD/online && $(cat /sys/class/power_supply/AC
 fi
 
 # Trigger a refresh.  exitcode 2 means no refresh needed.
-dofwupd refresh || [[ $? -eq 2 ]] || die "Failed to refresh from lvfs"
+dofwupd >&2 refresh || [[ $? -eq 2 ]] || die "Failed to refresh from lvfs"
 
 # Get updates and intersect them with the whitelist
-guids="$(dofwupd get-updates \
-         | jq -r '[.Devices[]?.Guid.[]] as $updates | $updates - ($updates - $ARGS.positional) | .[]' \
-              --args "${GUID_WHITELIST[@]}")"
+updatejson="$(dofwupd get-updates)"
+guids=$(jq -r '[.Devices[]?.Guid.[]] as $updates | $updates - ($updates - $ARGS.positional) | .[]' \
+           --args "${GUID_WHITELIST[@]}" <<< "$updatejson")
+# Also select formatted Name - Version notes for the same set
+notes=$(jq -r '.Devices[]? | select(.Guid - (.Guid - $ARGS.positional) | length > 0)? | "\(.Name) \(.Version)"?' \
+        --args "${GUID_WHITELIST[@]}" <<< "$updatejson")
 
 # No updates?
 if [[ -z "$guids" ]]; then
@@ -82,7 +86,9 @@ if [[ -n $bad_power_state ]]; then
 fi
 
 estat "Updates available for devices:"
-echo "$guids"
+einfo "$guids"
+# To stdout, consumed by steam as the available updates
+echo "$notes"
 
 # Check mode?
 if [[ -n $checkmode ]]; then
@@ -92,6 +98,6 @@ fi
 # Send it
 estat "Performing updates"
 # shellcheck disable=SC2086 # Splitting intentional. There's no globs in these. Shh.
-dofwupd update $guids || die "One or more updates failed :("
+dofwupd >&2 update $guids || die "One or more updates failed :("
 estat "All updates successful"
 check_needs_reboot
