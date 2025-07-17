@@ -20,14 +20,6 @@ if [[ $board_vendor = "Valve" && ( $board_name = "Jupiter" || $board_name = "Gal
    exec jupiter-biosupdate "$@" || die "Failed to find jupiter-biosupdate"
 fi
 
-# Our whitelist is only Lenovo devices presently, and there are some issues with fwupd disconnecting HID devices on
-# other systems when started.
-sys_vendor="$(cat /sys/class/dmi/id/sys_vendor || true)"
-if [[ $sys_vendor != "LENOVO" ]]; then
-  estat "No updates configured for this vendor"
-  exit 0
-fi
-
 # Commandline. Should retain compatibility with the `jupiter-biosupdate` tool until this is handled through
 # steamos-manager
 checkmode=
